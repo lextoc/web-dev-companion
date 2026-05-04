@@ -55,6 +55,15 @@
     position: static;
   }
 
+  .detail-tabs {
+    width: 100%;
+  }
+
+  .detail-tabs button {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+
   .top-bar,
   .detail-header,
   .add-row {

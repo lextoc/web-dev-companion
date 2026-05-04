@@ -47,6 +47,7 @@ const emit = defineEmits<{
 const commitMessage = ref("");
 const gitLogLimit = ref(10);
 const branchFilter = ref("all");
+const activeDetailTab = ref<"git" | "scripts">("git");
 
 const branchFilters = [
   { key: "all", label: "All" },
@@ -101,6 +102,13 @@ watch(
   () => props.commitClearToken,
   () => {
     commitMessage.value = "";
+  },
+);
+
+watch(
+  () => props.selectedDetails?.path,
+  () => {
+    activeDetailTab.value = "git";
   },
 );
 
@@ -393,7 +401,41 @@ function branchSafetyNotes(
     </div>
 
     <template v-else-if="selectedDetails">
-      <div class="detail-layout">
+      <nav class="detail-tabs" role="tablist" aria-label="Repository detail sections">
+        <button
+          id="git-overview-tab"
+          type="button"
+          class="secondary"
+          role="tab"
+          :class="{ active: activeDetailTab === 'git' }"
+          :aria-selected="activeDetailTab === 'git'"
+          aria-controls="git-overview-panel"
+          @click="activeDetailTab = 'git'"
+        >
+          Git overview
+        </button>
+        <button
+          id="npm-scripts-tab"
+          type="button"
+          class="secondary"
+          role="tab"
+          :class="{ active: activeDetailTab === 'scripts' }"
+          :aria-selected="activeDetailTab === 'scripts'"
+          aria-controls="npm-scripts-panel"
+          @click="activeDetailTab = 'scripts'"
+        >
+          <span>NPM scripts</span>
+          <span class="tab-count">{{ npmScripts.length }}</span>
+        </button>
+      </nav>
+
+      <div
+        v-if="activeDetailTab === 'git'"
+        id="git-overview-panel"
+        class="detail-layout"
+        role="tabpanel"
+        aria-labelledby="git-overview-tab"
+      >
         <section
           class="detail-panel commit-panel"
           :class="{ ready: stagedFileCount(selectedDetails.gitStatus) > 0 }"
@@ -714,6 +756,21 @@ function branchSafetyNotes(
           </div>
         </section>
 
+        <section class="detail-panel remotes-panel">
+          <div class="panel-heading">
+            <h3>Remotes</h3>
+          </div>
+          <pre>{{ selectedDetails.remotes }}</pre>
+        </section>
+      </div>
+
+      <div
+        v-else
+        id="npm-scripts-panel"
+        class="detail-layout scripts-tab-layout"
+        role="tabpanel"
+        aria-labelledby="npm-scripts-tab"
+      >
         <NpmScriptsPanel
           :npm-scripts="npmScripts"
           :script-terminals-by-script="scriptTerminalsByScript"
@@ -722,13 +779,6 @@ function branchSafetyNotes(
           @restart="$emit('restartScript', $event)"
           @open="$emit('openTerminal', $event)"
         />
-
-        <section class="detail-panel remotes-panel">
-          <div class="panel-heading">
-            <h3>Remotes</h3>
-          </div>
-          <pre>{{ selectedDetails.remotes }}</pre>
-        </section>
       </div>
     </template>
 

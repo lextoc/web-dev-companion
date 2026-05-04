@@ -145,6 +145,12 @@ button.secondary:hover:not(:disabled) {
   background: var(--surface-subtle);
 }
 
+button.secondary.active {
+  border-color: var(--brand);
+  background: var(--surface-subtle);
+  color: var(--brand-text-hover);
+}
+
 #app {
   min-height: 100vh;
 }
@@ -640,6 +646,7 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .panel-count {
@@ -739,6 +746,42 @@ pre {
   overflow-wrap: anywhere;
 }
 
+.git-message-cell {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.git-message-cell span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.git-hash-chip {
+  min-height: 24px;
+  padding: 0 7px;
+  color: var(--brand);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.segmented-control,
+.branch-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.segmented-control button,
+.branch-filters button {
+  min-height: 28px;
+  padding: 0 9px;
+  font-size: 0.74rem;
+}
+
 .compact-empty {
   padding: 24px 14px;
 }
@@ -757,6 +800,27 @@ pre {
   border-radius: 8px;
   padding: 10px;
   background: var(--surface);
+}
+
+.commit-form-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.commit-form-heading span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.commit-form-heading strong {
+  display: block;
+  color: var(--muted-strong);
+  font-size: 0.84rem;
 }
 
 .commit-form label {
@@ -796,6 +860,17 @@ pre {
   font-weight: 800;
 }
 
+.status-feedback,
+.branch-feedback {
+  border-radius: 7px;
+  margin-bottom: 0;
+  padding: 8px 10px;
+  background: var(--success-soft);
+  color: var(--success-text);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
 .git-status-summary {
   display: flex;
   align-items: center;
@@ -826,6 +901,45 @@ pre {
 .git-status-groups {
   display: grid;
   gap: 10px;
+}
+
+.status-counts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.status-counts div {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  background: var(--surface);
+}
+
+.status-counts div.active {
+  border-color: var(--brand-ring);
+  background: var(--surface-hover);
+}
+
+.status-counts strong,
+.status-counts span {
+  display: block;
+}
+
+.status-counts strong {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.status-counts span {
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .git-branches,
@@ -885,6 +999,7 @@ pre {
 
 .branch-pending {
   border-radius: 7px;
+  margin-bottom: 0;
   padding: 8px 10px;
   background: var(--warning-soft);
   color: var(--warning-text);
@@ -1006,6 +1121,11 @@ pre {
   padding: 0 10px;
   font-size: 0.76rem;
   white-space: nowrap;
+}
+
+.status-action.pending,
+.branch-action.pending {
+  border-color: var(--focus);
 }
 
 .script-list {

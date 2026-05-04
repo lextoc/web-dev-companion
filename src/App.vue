@@ -16,12 +16,18 @@ const errorMessage = ref('')
 const isLoading = ref(false)
 const isDetailLoading = ref(false)
 const syncingBranchName = ref<string | null>(null)
+const deletingBranchName = ref<string | null>(null)
 const statusActionLabel = ref<string | null>(null)
+const pendingStatusActionKey = ref<string | null>(null)
+const statusFeedbackMessage = ref<string | null>(null)
+const branchFeedbackMessages = ref<Record<string, string>>({})
 const commitClearToken = ref(0)
+const hasCommitDraft = ref(false)
 const autoRefreshRemainingMs = ref(AUTO_REFRESH_INTERVAL_MS)
 const scriptTerminals = ref<Record<string, ScriptTerminal>>({})
 let removeScriptOutputListener: (() => void) | undefined
 let autoRefreshTickTimer: number | undefined
+let statusFeedbackTimer: number | undefined
 let nextAutoRefreshAt = 0
 const appOwnedRunIds = new Set<string>()
 
@@ -147,7 +153,11 @@ async function deleteBranch(branchName: string) {
     return
   }
 
-  isDetailLoading.value = true
+  if (!window.confirm(`Remove local branch "${branchName}"?`)) {
+    return
+  }
+
+  deletingBranchName.value = branchName
   errorMessage.value = ''
 
   try {
@@ -156,10 +166,11 @@ async function deleteBranch(branchName: string) {
       branchName,
     })
     await loadRepositories()
+    showStatusFeedback(`Removed ${branchName}.`)
   } catch (error) {
     errorMessage.value = normalizeError(error)
   } finally {
-    isDetailLoading.value = false
+    deletingBranchName.value = null
     resetAutoRefreshTimer()
   }
 }
@@ -169,7 +180,6 @@ async function syncBranch(branchName: string) {
     return
   }
 
-  isDetailLoading.value = true
   syncingBranchName.value = branchName
   errorMessage.value = ''
 
@@ -179,63 +189,104 @@ async function syncBranch(branchName: string) {
       branchName,
     })
     await loadRepositories()
+    showBranchFeedback(branchName, 'Synced')
   } catch (error) {
     errorMessage.value = normalizeError(error)
   } finally {
-    isDetailLoading.value = false
     syncingBranchName.value = null
     resetAutoRefreshTimer()
   }
 }
 
-async function runStatusAction(actionLabel: string, action: () => Promise<RepositoryDetails>) {
+function showStatusFeedback(message: string) {
+  statusFeedbackMessage.value = message
+
+  if (statusFeedbackTimer !== undefined) {
+    window.clearTimeout(statusFeedbackTimer)
+  }
+
+  statusFeedbackTimer = window.setTimeout(() => {
+    statusFeedbackMessage.value = null
+    statusFeedbackTimer = undefined
+  }, 4000)
+}
+
+function showBranchFeedback(branchName: string, message: string) {
+  branchFeedbackMessages.value = {
+    ...branchFeedbackMessages.value,
+    [branchName]: message,
+  }
+
+  window.setTimeout(() => {
+    const nextFeedbackMessages = { ...branchFeedbackMessages.value }
+    delete nextFeedbackMessages[branchName]
+    branchFeedbackMessages.value = nextFeedbackMessages
+  }, 4000)
+}
+
+async function runStatusAction(
+  actionLabel: string,
+  actionKey: string,
+  successMessage: string,
+  action: () => Promise<RepositoryDetails>,
+) {
   if (!selectedDetails.value) {
     return false
   }
 
-  isDetailLoading.value = true
   statusActionLabel.value = actionLabel
+  pendingStatusActionKey.value = actionKey
+  statusFeedbackMessage.value = null
   errorMessage.value = ''
 
   try {
     selectedDetails.value = await action()
     await loadRepositories()
+    showStatusFeedback(successMessage)
     return true
   } catch (error) {
     errorMessage.value = normalizeError(error)
     return false
   } finally {
-    isDetailLoading.value = false
     statusActionLabel.value = null
+    pendingStatusActionKey.value = null
     resetAutoRefreshTimer()
   }
 }
 
-async function stageFiles(paths: string[]) {
+async function stageFiles(request: { paths: string[]; actionKey: string }) {
   if (!selectedDetails.value) {
     return
   }
 
   const repoPath = selectedDetails.value.path
-  await runStatusAction('Staging files...', () =>
-    window.repositories.stageFiles({
-      repoPath,
-      paths,
-    }),
+  await runStatusAction(
+    'Staging files...',
+    request.actionKey,
+    `Staged ${request.paths.length} file${request.paths.length === 1 ? '' : 's'}.`,
+    () =>
+      window.repositories.stageFiles({
+        repoPath,
+        paths: request.paths,
+      }),
   )
 }
 
-async function unstageFiles(paths: string[]) {
+async function unstageFiles(request: { paths: string[]; actionKey: string }) {
   if (!selectedDetails.value) {
     return
   }
 
   const repoPath = selectedDetails.value.path
-  await runStatusAction('Unstaging files...', () =>
-    window.repositories.unstageFiles({
-      repoPath,
-      paths,
-    }),
+  await runStatusAction(
+    'Unstaging files...',
+    request.actionKey,
+    `Unstaged ${request.paths.length} file${request.paths.length === 1 ? '' : 's'}.`,
+    () =>
+      window.repositories.unstageFiles({
+        repoPath,
+        paths: request.paths,
+      }),
   )
 }
 
@@ -245,15 +296,20 @@ async function commitStatus(message: string) {
   }
 
   const repoPath = selectedDetails.value.path
-  const didCommit = await runStatusAction('Committing...', () =>
-    window.repositories.commit({
-      repoPath,
-      message,
-    }),
+  const didCommit = await runStatusAction(
+    'Committing...',
+    'commit',
+    'Committed staged changes.',
+    () =>
+      window.repositories.commit({
+        repoPath,
+        message,
+      }),
   )
 
   if (didCommit) {
     commitClearToken.value += 1
+    hasCommitDraft.value = false
   }
 }
 
@@ -279,6 +335,7 @@ function closeDetails() {
   stopAutoRefreshTimer()
   selectedPath.value = null
   selectedDetails.value = null
+  hasCommitDraft.value = false
 }
 
 function stopOwnedScripts() {
@@ -321,7 +378,7 @@ function updateAutoRefreshCountdown() {
     return
   }
 
-  if (hasRunningScripts.value) {
+  if (hasRunningScripts.value || hasCommitDraft.value) {
     resetAutoRefreshTimer()
     return
   }
@@ -346,6 +403,10 @@ function stopAutoRefreshTimer() {
 
   nextAutoRefreshAt = 0
   autoRefreshRemainingMs.value = AUTO_REFRESH_INTERVAL_MS
+}
+
+function updateCommitDraft(hasDraft: boolean) {
+  hasCommitDraft.value = hasDraft
 }
 
 async function runScript(scriptName: string) {
@@ -408,6 +469,11 @@ async function stopTerminal(runId: string) {
 }
 
 function handlePageExit() {
+  if (statusFeedbackTimer !== undefined) {
+    window.clearTimeout(statusFeedbackTimer)
+    statusFeedbackTimer = undefined
+  }
+
   stopAutoRefreshTimer()
   stopOwnedScripts()
 }
@@ -454,7 +520,11 @@ onBeforeUnmount(() => {
           :auto-refresh-label="autoRefreshLabel"
           :auto-refresh-progress="autoRefreshProgress"
           :syncing-branch-name="syncingBranchName"
+          :deleting-branch-name="deletingBranchName"
           :status-action-label="statusActionLabel"
+          :pending-status-action-key="pendingStatusActionKey"
+          :status-feedback-message="statusFeedbackMessage"
+          :branch-feedback-messages="branchFeedbackMessages"
           :commit-clear-token="commitClearToken"
           :npm-scripts="npmScripts"
           :script-terminals-by-script="currentRepoScriptTerminals"
@@ -465,6 +535,7 @@ onBeforeUnmount(() => {
           @stage-files="stageFiles"
           @unstage-files="unstageFiles"
           @commit="commitStatus"
+          @commit-draft-change="updateCommitDraft"
           @run-script="runScript"
           @stop-script="stopScript"
         />

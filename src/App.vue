@@ -7,6 +7,7 @@ import RepositoryDetail from './components/RepositoryDetail.vue'
 import type { RepositoryDetails, RepositorySummary, ScriptOutput, ScriptTerminal } from './repositories'
 
 const AUTO_REFRESH_INTERVAL_MS = 60 * 1000
+const FOCUS_REFRESH_THROTTLE_MS = 2000
 
 const repositories = ref<RepositorySummary[]>([])
 const selectedPath = ref<string | null>(null)
@@ -27,9 +28,11 @@ const areTerminalsCollapsed = ref(false)
 const autoRefreshRemainingMs = ref(AUTO_REFRESH_INTERVAL_MS)
 const scriptTerminals = ref<Record<string, ScriptTerminal>>({})
 let removeScriptOutputListener: (() => void) | undefined
+let removeWindowFocusListener: (() => void) | undefined
 let autoRefreshTickTimer: number | undefined
 let statusFeedbackTimer: number | undefined
 let nextAutoRefreshAt = 0
+let lastFocusRefreshAt = 0
 const appOwnedRunIds = new Set<string>()
 
 const selectedSummary = computed(() =>
@@ -147,6 +150,35 @@ async function refreshSelectedRepository() {
 
   await loadRepositories()
   await loadRepositoryDetails(selectedPath.value)
+}
+
+async function refreshOnWindowFocus() {
+  const now = Date.now()
+
+  if (now - lastFocusRefreshAt < FOCUS_REFRESH_THROTTLE_MS) {
+    return
+  }
+
+  if (
+    isLoading.value ||
+    isDetailLoading.value ||
+    pendingStatusActionKey.value ||
+    syncingBranchName.value ||
+    deletingBranchName.value ||
+    hasRunningScripts.value ||
+    hasCommitDraft.value
+  ) {
+    return
+  }
+
+  lastFocusRefreshAt = now
+
+  if (selectedPath.value) {
+    await refreshSelectedRepository()
+    return
+  }
+
+  await loadRepositories()
 }
 
 async function deleteBranch(branchName: string) {
@@ -504,6 +536,9 @@ function handlePageExit() {
 
 onMounted(() => {
   removeScriptOutputListener = window.repositories.onScriptOutput(handleScriptOutput)
+  removeWindowFocusListener = window.repositories.onWindowFocus(() => {
+    void refreshOnWindowFocus()
+  })
   window.addEventListener('pagehide', handlePageExit)
   window.addEventListener('beforeunload', handlePageExit)
   void loadRepositories()
@@ -514,6 +549,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', handlePageExit)
   handlePageExit()
   removeScriptOutputListener?.()
+  removeWindowFocusListener?.()
 })
 </script>
 

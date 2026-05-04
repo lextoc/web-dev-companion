@@ -122,4 +122,5 @@ export interface RepositoryApi {
   stopScript: (runId: string) => Promise<boolean>
   stopScripts: (runIds: string[]) => void
   onScriptOutput: (listener: (output: ScriptOutput) => void) => () => void
+  onWindowFocus: (listener: () => void) => () => void
 }

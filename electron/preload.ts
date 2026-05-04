@@ -28,6 +28,17 @@ const repositories: RepositoryApi = {
       ipcRenderer.off('repositories:script-output', wrappedListener)
     }
   },
+  onWindowFocus: (listener) => {
+    const wrappedListener = () => {
+      listener()
+    }
+
+    ipcRenderer.on('repositories:window-focus', wrappedListener)
+
+    return () => {
+      ipcRenderer.off('repositories:window-focus', wrappedListener)
+    }
+  },
 }
 
 // --------- Expose some API to the Renderer process ---------

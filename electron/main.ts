@@ -111,6 +111,10 @@ function createWindow() {
 
   win.maximize()
 
+  win.on('focus', () => {
+    win?.webContents.send('repositories:window-focus')
+  })
+
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
   })

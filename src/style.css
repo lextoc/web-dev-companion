@@ -612,7 +612,7 @@ h3 {
 
 .detail-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   align-items: start;
 }
@@ -625,6 +625,14 @@ h3 {
 }
 
 .scripts-panel {
+  grid-column: 1 / -1;
+}
+
+.git-overview-panel {
+  min-width: 0;
+}
+
+.remotes-panel {
   grid-column: 1 / -1;
 }
 
@@ -662,7 +670,7 @@ pre {
 }
 
 .git-log-table-wrap {
-  max-height: 420px;
+  max-height: 520px;
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -671,15 +679,15 @@ pre {
 
 .git-log-table {
   width: 100%;
-  min-width: 680px;
+  table-layout: fixed;
   border-collapse: collapse;
-  font-size: 0.86rem;
+  font-size: 0.78rem;
 }
 
 .git-log-table th,
 .git-log-table td {
   border-bottom: 1px solid var(--border-soft);
-  padding: 10px 12px;
+  padding: 8px;
   text-align: left;
   vertical-align: top;
 }
@@ -699,24 +707,29 @@ pre {
   border-bottom: 0;
 }
 
+.git-log-table th:first-child,
 .git-log-table td:first-child {
-  width: 120px;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.git-log-table td:nth-child(2) {
-  width: 190px;
+  width: 132px;
 }
 
 .git-log-table strong,
-.git-log-table small {
+.git-log-table small,
+.git-log-table time {
   display: block;
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.git-log-table small {
+.git-log-table td:first-child strong,
+.git-log-table td:first-child small,
+.git-log-table td:first-child time {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.git-log-table small,
+.git-log-table time {
   margin-top: 2px;
   color: var(--muted);
   font-size: 0.76rem;
@@ -733,6 +746,8 @@ pre {
 .git-status-card {
   display: grid;
   gap: 12px;
+  max-height: 520px;
+  overflow: auto;
 }
 
 .git-status-summary {
@@ -777,6 +792,11 @@ pre {
   background: var(--surface);
 }
 
+.git-branches {
+  max-height: 520px;
+  overflow: auto;
+}
+
 .git-branch-list {
   display: grid;
   gap: 6px;
@@ -787,8 +807,8 @@ pre {
 
 .git-branch-list li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
-  gap: 9px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
   align-items: center;
   border-radius: 7px;
   padding: 8px;
@@ -826,6 +846,7 @@ pre {
 }
 
 .branch-sync {
+  max-width: 100%;
   border-radius: 999px;
   padding: 4px 8px;
   background: var(--warning-soft);
@@ -833,6 +854,13 @@ pre {
   font-size: 0.74rem;
   font-weight: 900;
   white-space: nowrap;
+}
+
+.branch-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
 }
 
 .branch-sync.synced {
@@ -1035,6 +1063,12 @@ code {
   padding: 9px;
   background: var(--terminal-bg);
   font-size: 0.78rem;
+}
+
+@media (max-width: 1280px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 760px) {

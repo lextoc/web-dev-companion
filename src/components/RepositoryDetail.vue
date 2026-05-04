@@ -162,7 +162,7 @@ function branchSyncTitle(
       </div>
 
       <div class="detail-layout">
-        <section class="detail-panel">
+        <section class="detail-panel git-overview-panel git-log-panel">
           <div class="panel-heading">
             <h3>Git log</h3>
           </div>
@@ -173,7 +173,6 @@ function branchSyncTitle(
             <table class="git-log-table">
               <thead>
                 <tr>
-                  <th scope="col">Time</th>
                   <th scope="col">Author</th>
                   <th scope="col">Commit message</th>
                 </tr>
@@ -181,11 +180,9 @@ function branchSyncTitle(
               <tbody>
                 <tr v-for="entry in selectedDetails.gitLog" :key="entry.hash">
                   <td>
-                    <time :datetime="entry.dateTime">{{ entry.time }}</time>
-                  </td>
-                  <td>
                     <strong>{{ entry.authorName }}</strong>
                     <small>{{ entry.authorEmail }}</small>
+                    <time :datetime="entry.dateTime">{{ entry.time }}</time>
                   </td>
                   <td>{{ entry.message }}</td>
                 </tr>
@@ -197,7 +194,7 @@ function branchSyncTitle(
           </div>
         </section>
 
-        <section class="detail-panel">
+        <section class="detail-panel git-overview-panel">
           <div class="panel-heading">
             <h3>Status</h3>
           </div>
@@ -248,7 +245,7 @@ function branchSyncTitle(
           </div>
         </section>
 
-        <section class="detail-panel">
+        <section class="detail-panel git-overview-panel">
           <div class="panel-heading">
             <h3>Local branches</h3>
             <span class="panel-count">{{ selectedDetails.gitBranches.length }}</span>
@@ -271,33 +268,35 @@ function branchSyncTitle(
                   </small>
                   <small v-if="branch.current">Current branch</small>
                 </div>
-                <span class="branch-sync" :class="{ synced: branch.inSyncWithRemote }">
-                  {{ branchSyncLabel(branch) }}
-                </span>
-                <button
-                  v-if="!branch.inSyncWithRemote"
-                  type="button"
-                  class="secondary branch-action"
-                  :class="{ pending: isSyncingBranch(branch.name, syncingBranchName) }"
-                  :disabled="
-                    Boolean(branchSyncDisabledReason(branch, selectedDetails.gitStatus)) ||
-                    isDetailLoading
-                  "
-                  :title="branchSyncTitle(branch, selectedDetails.gitStatus, syncingBranchName)"
-                  :aria-busy="isSyncingBranch(branch.name, syncingBranchName)"
-                  @click="$emit('syncBranch', branch.name)"
-                >
-                  {{ isSyncingBranch(branch.name, syncingBranchName) ? "Syncing..." : "Sync" }}
-                </button>
-                <button
-                  type="button"
-                  class="secondary branch-action"
-                  :disabled="!branch.canDelete || isDetailLoading"
-                  :title="branch.deleteReason ?? 'Delete local branch'"
-                  @click="$emit('deleteBranch', branch.name)"
-                >
-                  Remove
-                </button>
+                <div class="branch-controls">
+                  <span class="branch-sync" :class="{ synced: branch.inSyncWithRemote }">
+                    {{ branchSyncLabel(branch) }}
+                  </span>
+                  <button
+                    v-if="!branch.inSyncWithRemote"
+                    type="button"
+                    class="secondary branch-action"
+                    :class="{ pending: isSyncingBranch(branch.name, syncingBranchName) }"
+                    :disabled="
+                      Boolean(branchSyncDisabledReason(branch, selectedDetails.gitStatus)) ||
+                      isDetailLoading
+                    "
+                    :title="branchSyncTitle(branch, selectedDetails.gitStatus, syncingBranchName)"
+                    :aria-busy="isSyncingBranch(branch.name, syncingBranchName)"
+                    @click="$emit('syncBranch', branch.name)"
+                  >
+                    {{ isSyncingBranch(branch.name, syncingBranchName) ? "Syncing..." : "Sync" }}
+                  </button>
+                  <button
+                    type="button"
+                    class="secondary branch-action"
+                    :disabled="!branch.canDelete || isDetailLoading"
+                    :title="branch.deleteReason ?? 'Delete local branch'"
+                    @click="$emit('deleteBranch', branch.name)"
+                  >
+                    Remove
+                  </button>
+                </div>
               </li>
             </ul>
 
@@ -312,7 +311,7 @@ function branchSyncTitle(
           @stop="$emit('stopScript', $event)"
         />
 
-        <section class="detail-panel">
+        <section class="detail-panel remotes-panel">
           <div class="panel-heading">
             <h3>Remotes</h3>
           </div>

@@ -5,6 +5,8 @@ import { promisify } from 'node:util'
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
 import type { BrowserWindow as BrowserWindowType, OpenDialogOptions } from 'electron'
 import type {
+  DeleteBranchRequest,
+  GitBranchEntry,
   GitLogEntry,
   GitStatusEntry,
   GitStatusSummary,
@@ -453,12 +455,83 @@ async function readGitStatus(repoPath: string): Promise<GitStatusSummary> {
   return summary
 }
 
+function parseTrackingStatus(trackingStatus: string) {
+  const aheadMatch = trackingStatus.match(/ahead (\d+)/)
+  const behindMatch = trackingStatus.match(/behind (\d+)/)
+
+  return {
+    ahead: aheadMatch ? Number(aheadMatch[1]) : 0,
+    behind: behindMatch ? Number(behindMatch[1]) : 0,
+    remoteGone: trackingStatus === 'gone',
+  }
+}
+
+function branchDeleteReason(branch: Pick<GitBranchEntry, 'current' | 'upstream' | 'ahead' | 'behind' | 'remoteGone'>) {
+  if (branch.current) {
+    return 'Current branch cannot be deleted.'
+  }
+
+  if (!branch.upstream) {
+    return 'No upstream remote branch is configured.'
+  }
+
+  if (branch.remoteGone) {
+    return 'Upstream remote branch is gone.'
+  }
+
+  if (branch.ahead > 0 || branch.behind > 0) {
+    return 'Branch is not in sync with its remote.'
+  }
+
+  return undefined
+}
+
+async function readGitBranches(repoPath: string): Promise<GitBranchEntry[]> {
+  const fieldSeparator = '\0'
+  const output = await tryRunGit(repoPath, [
+    'for-each-ref',
+    'refs/heads',
+    `--format=%(HEAD)%00%(refname:short)%00%(upstream:short)%00%(upstream:track,nobracket)`,
+    '--sort=refname',
+  ])
+
+  if (!output) {
+    return []
+  }
+
+  return output
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [head = '', name = '', upstream = '', trackingStatus = ''] = line.split(fieldSeparator)
+      const { ahead, behind, remoteGone } = parseTrackingStatus(trackingStatus)
+      const branch = {
+        name,
+        upstream: upstream || undefined,
+        current: head === '*',
+        ahead,
+        behind,
+        remoteGone,
+      }
+      const deleteReason = branchDeleteReason(branch)
+
+      return {
+        ...branch,
+        inSyncWithRemote: Boolean(branch.upstream) && !remoteGone && ahead === 0 && behind === 0,
+        canDelete: !deleteReason,
+        deleteReason,
+      }
+    })
+}
+
 async function readRepositoryDetails(repoPath: string): Promise<RepositoryDetails> {
   const normalizedPath = await normalizeRepositoryPath(repoPath)
-  const [summary, gitLog, gitStatus, remotes, npmScripts, packageManager] = await Promise.all([
+  const [summary, gitLog, gitStatus, gitBranches, remotes, npmScripts, packageManager] = await Promise.all([
     readRepositorySummary(normalizedPath),
     readGitLogEntries(normalizedPath),
     readGitStatus(normalizedPath),
+    readGitBranches(normalizedPath),
     tryRunGit(normalizedPath, ['remote', '-v']),
     readPackageScripts(normalizedPath),
     detectPackageManager(normalizedPath),
@@ -468,10 +541,34 @@ async function readRepositoryDetails(repoPath: string): Promise<RepositoryDetail
     ...summary,
     gitLog,
     gitStatus,
+    gitBranches,
     remotes: remotes || 'No git remotes configured.',
     npmScripts,
     packageManager,
   }
+}
+
+async function deleteBranch(request: DeleteBranchRequest): Promise<RepositoryDetails> {
+  const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+  const branchName = request.branchName.trim()
+
+  if (!branchName) {
+    throw new Error('Branch name is required.')
+  }
+
+  const branch = (await readGitBranches(normalizedPath)).find((entry) => entry.name === branchName)
+
+  if (!branch) {
+    throw new Error(`Branch "${branchName}" was not found.`)
+  }
+
+  if (!branch.canDelete) {
+    throw new Error(branch.deleteReason || 'Branch cannot be deleted.')
+  }
+
+  await runGit(normalizedPath, ['branch', '-D', '--', branchName])
+
+  return readRepositoryDetails(normalizedPath)
 }
 
 async function listRepositories() {
@@ -518,6 +615,8 @@ function registerRepositoryHandlers() {
   })
 
   ipcMain.handle('repositories:details', (_event, repoPath: string) => readRepositoryDetails(repoPath))
+
+  ipcMain.handle('repositories:delete-branch', (_event, request: DeleteBranchRequest) => deleteBranch(request))
 
   ipcMain.handle('repositories:start-script', (_event, request: ScriptRunRequest) => startScript(request))
 

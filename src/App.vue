@@ -139,6 +139,28 @@ async function refreshSelectedRepository() {
   await loadRepositoryDetails(selectedPath.value)
 }
 
+async function deleteBranch(branchName: string) {
+  if (!selectedDetails.value) {
+    return
+  }
+
+  isDetailLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    selectedDetails.value = await window.repositories.deleteBranch({
+      repoPath: selectedDetails.value.path,
+      branchName,
+    })
+    await loadRepositories()
+  } catch (error) {
+    errorMessage.value = normalizeError(error)
+  } finally {
+    isDetailLoading.value = false
+    resetAutoRefreshTimer()
+  }
+}
+
 async function removeRepository(repoPath: string) {
   isLoading.value = true
   errorMessage.value = ''
@@ -339,6 +361,7 @@ onBeforeUnmount(() => {
           :script-terminals-by-script="currentRepoScriptTerminals"
           @back="closeDetails"
           @refresh="refreshSelectedRepository"
+          @delete-branch="deleteBranch"
           @run-script="runScript"
           @stop-script="stopScript"
         />

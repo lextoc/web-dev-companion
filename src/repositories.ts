@@ -36,12 +36,30 @@ export interface GitStatusSummary {
   raw: string
 }
 
+export interface GitBranchEntry {
+  name: string
+  upstream?: string
+  current: boolean
+  ahead: number
+  behind: number
+  remoteGone: boolean
+  inSyncWithRemote: boolean
+  canDelete: boolean
+  deleteReason?: string
+}
+
 export interface RepositoryDetails extends RepositorySummary {
   gitLog: GitLogEntry[]
   gitStatus: GitStatusSummary
+  gitBranches: GitBranchEntry[]
   remotes: string
   npmScripts: Record<string, string>
   packageManager?: string
+}
+
+export interface DeleteBranchRequest {
+  repoPath: string
+  branchName: string
 }
 
 export interface ScriptRunRequest {
@@ -80,6 +98,7 @@ export interface RepositoryApi {
   addByPath: (repoPath: string) => Promise<RepositorySummary[]>
   remove: (repoPath: string) => Promise<RepositorySummary[]>
   details: (repoPath: string) => Promise<RepositoryDetails>
+  deleteBranch: (request: DeleteBranchRequest) => Promise<RepositoryDetails>
   startScript: (request: ScriptRunRequest) => Promise<ScriptRun>
   stopScript: (runId: string) => Promise<boolean>
   stopScripts: (runIds: string[]) => void

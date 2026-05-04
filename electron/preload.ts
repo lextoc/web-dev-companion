@@ -9,6 +9,7 @@ const repositories: RepositoryApi = {
   addByPath: (repoPath: string) => ipcRenderer.invoke('repositories:add-by-path', repoPath),
   remove: (repoPath: string) => ipcRenderer.invoke('repositories:remove', repoPath),
   details: (repoPath: string) => ipcRenderer.invoke('repositories:details', repoPath),
+  deleteBranch: (request) => ipcRenderer.invoke('repositories:delete-branch', request),
   startScript: (request) => ipcRenderer.invoke('repositories:start-script', request),
   stopScript: (runId: string) => ipcRenderer.invoke('repositories:stop-script', runId),
   stopScripts: (runIds: string[]) => ipcRenderer.send('repositories:stop-scripts', runIds),

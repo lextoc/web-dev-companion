@@ -20,6 +20,7 @@ defineProps<{
 defineEmits<{
   back: [];
   refresh: [];
+  deleteBranch: [branchName: string];
   runScript: [scriptName: string];
   stopScript: [scriptName: string];
 }>();
@@ -35,6 +36,30 @@ function statusGroups(gitStatus: RepositoryDetails["gitStatus"]) {
 
 function statusCode(entry: GitStatusEntry) {
   return `${entry.index}${entry.workingTree}`;
+}
+
+function branchSyncLabel(branch: RepositoryDetails["gitBranches"][number]) {
+  if (!branch.upstream) {
+    return "No upstream";
+  }
+
+  if (branch.inSyncWithRemote) {
+    return "In sync";
+  }
+
+  if (branch.remoteGone) {
+    return "Remote gone";
+  }
+
+  if (branch.ahead > 0 && branch.behind > 0) {
+    return `${branch.ahead} ahead, ${branch.behind} behind`;
+  }
+
+  if (branch.ahead > 0) {
+    return `${branch.ahead} ahead`;
+  }
+
+  return `${branch.behind} behind`;
 }
 </script>
 
@@ -142,6 +167,43 @@ function statusCode(entry: GitStatusEntry) {
                 }}
               </strong>
             </div>
+
+            <section class="git-branches">
+              <div class="git-status-group-heading">
+                <h4>Local branches</h4>
+                <span>{{ selectedDetails.gitBranches.length }}</span>
+              </div>
+
+              <ul v-if="selectedDetails.gitBranches.length > 0" class="git-branch-list">
+                <li
+                  v-for="branch in selectedDetails.gitBranches"
+                  :key="branch.name"
+                  :class="{ current: branch.current }"
+                >
+                  <div>
+                    <strong>{{ branch.name }}</strong>
+                    <small>
+                      {{ branch.upstream ?? "No upstream" }}
+                    </small>
+                    <small v-if="branch.current">Current branch</small>
+                  </div>
+                  <span class="branch-sync" :class="{ synced: branch.inSyncWithRemote }">
+                    {{ branchSyncLabel(branch) }}
+                  </span>
+                  <button
+                    type="button"
+                    class="secondary branch-delete"
+                    :disabled="!branch.canDelete || isDetailLoading"
+                    :title="branch.deleteReason ?? 'Delete local branch'"
+                    @click="$emit('deleteBranch', branch.name)"
+                  >
+                    Remove
+                  </button>
+                </li>
+              </ul>
+
+              <p v-else>No local branches found.</p>
+            </section>
 
             <div v-if="selectedDetails.gitStatus.clean" class="empty-state compact-empty">
               No staged, unstaged, or untracked changes.

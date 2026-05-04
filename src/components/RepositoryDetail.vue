@@ -134,6 +134,36 @@ function statusCounts(gitStatus: RepositoryDetails["gitStatus"]) {
   ];
 }
 
+function stagedFileCount(gitStatus: RepositoryDetails["gitStatus"]) {
+  return gitStatus.staged.length;
+}
+
+function stagedFileLabel(gitStatus: RepositoryDetails["gitStatus"]) {
+  const count = stagedFileCount(gitStatus);
+
+  return count === 1 ? "1 staged file" : `${count} staged files`;
+}
+
+function hasStageableChanges(gitStatus: RepositoryDetails["gitStatus"]) {
+  return gitStatus.unstaged.length > 0 || gitStatus.untracked.length > 0;
+}
+
+function commitSummaryLabel(gitStatus: RepositoryDetails["gitStatus"]) {
+  if (stagedFileCount(gitStatus) > 0) {
+    return "Ready to commit";
+  }
+
+  if (gitStatus.conflicted.length > 0) {
+    return "Resolve conflicts";
+  }
+
+  if (hasStageableChanges(gitStatus)) {
+    return "Stage files first";
+  }
+
+  return "Working tree clean";
+}
+
 function isStagedGroup(groupKey: string) {
   return groupKey === "staged";
 }
@@ -366,7 +396,7 @@ function branchSafetyNotes(
       <div class="detail-layout">
         <section
           class="detail-panel commit-panel"
-          :class="{ ready: selectedDetails.gitStatus.staged.length > 0 }"
+          :class="{ ready: stagedFileCount(selectedDetails.gitStatus) > 0 }"
         >
           <form
             class="commit-form commit-form-wide"
@@ -378,26 +408,18 @@ function branchSafetyNotes(
               <div>
                 <span>Commit</span>
                 <strong>
-                  {{
-                    selectedDetails.gitStatus.staged.length > 0
-                      ? "Ready to commit"
-                      : "No staged files"
-                  }}
+                  {{ commitSummaryLabel(selectedDetails.gitStatus) }}
                 </strong>
               </div>
               <div class="commit-heading-actions">
                 <span
+                  v-if="stagedFileCount(selectedDetails.gitStatus) > 0"
                   class="commit-count-chip"
-                  :class="{ empty: selectedDetails.gitStatus.staged.length === 0 }"
                 >
-                  {{
-                    selectedDetails.gitStatus.staged.length === 1
-                      ? "1 staged"
-                      : `${selectedDetails.gitStatus.staged.length} staged`
-                  }}
+                  {{ stagedFileLabel(selectedDetails.gitStatus) }}
                 </span>
                 <button
-                  v-if="selectedDetails.gitStatus.staged.length > 0"
+                  v-if="stagedFileCount(selectedDetails.gitStatus) > 0"
                   type="button"
                   class="secondary status-action"
                   :disabled="Boolean(pendingStatusActionKey)"

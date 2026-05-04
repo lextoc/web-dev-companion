@@ -365,12 +365,6 @@ pre {
   text-transform: none;
 }
 
-.commit-count-chip.empty {
-  border-color: var(--border-soft);
-  background: var(--surface-subtle);
-  color: var(--muted);
-}
-
 .commit-form label {
   color: var(--muted-strong);
   font-size: 0.78rem;

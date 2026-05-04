@@ -634,6 +634,18 @@ h3 {
   justify-content: space-between;
 }
 
+.panel-count {
+  display: grid;
+  min-width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
 pre {
   min-height: 180px;
   max-height: 420px;

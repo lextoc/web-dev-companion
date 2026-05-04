@@ -213,61 +213,6 @@ function branchSyncTitle(
               </strong>
             </div>
 
-            <section class="git-branches">
-              <div class="git-status-group-heading">
-                <h4>Local branches</h4>
-                <span>{{ selectedDetails.gitBranches.length }}</span>
-              </div>
-              <p v-if="syncingBranchName" class="branch-pending">
-                Syncing {{ syncingBranchName }}...
-              </p>
-
-              <ul v-if="selectedDetails.gitBranches.length > 0" class="git-branch-list">
-                <li
-                  v-for="branch in selectedDetails.gitBranches"
-                  :key="branch.name"
-                  :class="{ current: branch.current }"
-                >
-                  <div>
-                    <strong>{{ branch.name }}</strong>
-                    <small>
-                      {{ branch.upstream ?? "No upstream" }}
-                    </small>
-                    <small v-if="branch.current">Current branch</small>
-                  </div>
-                  <span class="branch-sync" :class="{ synced: branch.inSyncWithRemote }">
-                    {{ branchSyncLabel(branch) }}
-                  </span>
-                  <button
-                    v-if="!branch.inSyncWithRemote"
-                    type="button"
-                    class="secondary branch-action"
-                    :class="{ pending: isSyncingBranch(branch.name, syncingBranchName) }"
-                    :disabled="
-                      Boolean(branchSyncDisabledReason(branch, selectedDetails.gitStatus)) ||
-                      isDetailLoading
-                    "
-                    :title="branchSyncTitle(branch, selectedDetails.gitStatus, syncingBranchName)"
-                    :aria-busy="isSyncingBranch(branch.name, syncingBranchName)"
-                    @click="$emit('syncBranch', branch.name)"
-                  >
-                    {{ isSyncingBranch(branch.name, syncingBranchName) ? "Syncing..." : "Sync" }}
-                  </button>
-                  <button
-                    type="button"
-                    class="secondary branch-action"
-                    :disabled="!branch.canDelete || isDetailLoading"
-                    :title="branch.deleteReason ?? 'Delete local branch'"
-                    @click="$emit('deleteBranch', branch.name)"
-                  >
-                    Remove
-                  </button>
-                </li>
-              </ul>
-
-              <p v-else>No local branches found.</p>
-            </section>
-
             <div v-if="selectedDetails.gitStatus.clean" class="empty-state compact-empty">
               No staged, unstaged, or untracked changes.
             </div>
@@ -300,6 +245,63 @@ function branchSyncTitle(
                 <p v-else>No {{ group.label.toLowerCase() }} changes.</p>
               </section>
             </div>
+          </div>
+        </section>
+
+        <section class="detail-panel">
+          <div class="panel-heading">
+            <h3>Local branches</h3>
+            <span class="panel-count">{{ selectedDetails.gitBranches.length }}</span>
+          </div>
+          <div class="git-branches">
+            <p v-if="syncingBranchName" class="branch-pending">
+              Syncing {{ syncingBranchName }}...
+            </p>
+
+            <ul v-if="selectedDetails.gitBranches.length > 0" class="git-branch-list">
+              <li
+                v-for="branch in selectedDetails.gitBranches"
+                :key="branch.name"
+                :class="{ current: branch.current }"
+              >
+                <div>
+                  <strong>{{ branch.name }}</strong>
+                  <small>
+                    {{ branch.upstream ?? "No upstream" }}
+                  </small>
+                  <small v-if="branch.current">Current branch</small>
+                </div>
+                <span class="branch-sync" :class="{ synced: branch.inSyncWithRemote }">
+                  {{ branchSyncLabel(branch) }}
+                </span>
+                <button
+                  v-if="!branch.inSyncWithRemote"
+                  type="button"
+                  class="secondary branch-action"
+                  :class="{ pending: isSyncingBranch(branch.name, syncingBranchName) }"
+                  :disabled="
+                    Boolean(branchSyncDisabledReason(branch, selectedDetails.gitStatus)) ||
+                    isDetailLoading
+                  "
+                  :title="branchSyncTitle(branch, selectedDetails.gitStatus, syncingBranchName)"
+                  :aria-busy="isSyncingBranch(branch.name, syncingBranchName)"
+                  @click="$emit('syncBranch', branch.name)"
+                >
+                  {{ isSyncingBranch(branch.name, syncingBranchName) ? "Syncing..." : "Sync" }}
+                </button>
+                <button
+                  type="button"
+                  class="secondary branch-action"
+                  :disabled="!branch.canDelete || isDetailLoading"
+                  :title="branch.deleteReason ?? 'Delete local branch'"
+                  @click="$emit('deleteBranch', branch.name)"
+                >
+                  Remove
+                </button>
+              </li>
+            </ul>
+
+            <p v-else>No local branches found.</p>
           </div>
         </section>
 

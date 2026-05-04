@@ -4,12 +4,14 @@ import ActiveTerminalsSidebar from './components/ActiveTerminalsSidebar.vue'
 import AppHeader from './components/AppHeader.vue'
 import RepositoryDashboard from './components/RepositoryDashboard.vue'
 import RepositoryDetail from './components/RepositoryDetail.vue'
+import SettingsPanel from './components/SettingsPanel.vue'
 import TerminalModal from './components/TerminalModal.vue'
 import type { RepositoryDetails, RepositorySummary, ScriptOutput, ScriptTerminal } from './repositories'
+import { DEFAULT_APP_SETTINGS, type AppSettings } from './settings'
 
-const AUTO_REFRESH_INTERVAL_MS = 60 * 1000
 const FOCUS_REFRESH_THROTTLE_MS = 2000
 const PINNED_REPOSITORIES_KEY = 'web-dev-companion:pinned-repositories'
+const APP_SETTINGS_KEY = 'web-dev-companion:settings'
 const MAX_ACTIVITY_ITEMS = 8
 
 interface ConfirmationDialog {
@@ -49,11 +51,14 @@ const commitClearToken = ref(0)
 const hasCommitDraft = ref(false)
 const areTerminalsCollapsed = ref(false)
 const selectedTerminalRunId = ref<string | null>(null)
+const isSettingsOpen = ref(false)
 const confirmationDialog = ref<ConfirmationDialog | null>(null)
 const appFeedback = ref<AppFeedback | null>(null)
+const appSettings = ref<AppSettings>({ ...DEFAULT_APP_SETTINGS })
 const pinnedRepositoryPaths = ref<string[]>([])
 const activityItems = ref<ActivityItem[]>([])
-const autoRefreshRemainingMs = ref(AUTO_REFRESH_INTERVAL_MS)
+const autoRefreshRemainingMs = ref(DEFAULT_APP_SETTINGS.autoRefreshIntervalMs)
+const lastRepositoryListRefreshAt = ref<Date | null>(null)
 const scriptTerminals = ref<Record<string, ScriptTerminal>>({})
 let removeScriptOutputListener: (() => void) | undefined
 let removeWindowFocusListener: (() => void) | undefined
@@ -83,6 +88,19 @@ const activeTerminals = computed(() =>
     return terminalA.scriptName.localeCompare(terminalB.scriptName)
   }),
 )
+const runningScriptsByRepositoryPath = computed(() => {
+  const counts: Record<string, number> = {}
+
+  for (const terminal of Object.values(scriptTerminals.value)) {
+    if (!terminal.isRunning) {
+      continue
+    }
+
+    counts[terminal.repoPath] = (counts[terminal.repoPath] ?? 0) + 1
+  }
+
+  return counts
+})
 const currentRepoScriptTerminals = computed(() => {
   if (!selectedDetails.value) {
     return {}
@@ -98,7 +116,7 @@ const selectedTerminal = computed(() =>
   selectedTerminalRunId.value ? scriptTerminals.value[selectedTerminalRunId.value] : undefined,
 )
 const autoRefreshProgress = computed(() =>
-  Math.max(0, Math.min(100, (autoRefreshRemainingMs.value / AUTO_REFRESH_INTERVAL_MS) * 100)),
+  Math.max(0, Math.min(100, (autoRefreshRemainingMs.value / appSettings.value.autoRefreshIntervalMs) * 100)),
 )
 const autoRefreshLabel = computed(() => {
   const totalSeconds = Math.ceil(autoRefreshRemainingMs.value / 1000)
@@ -106,6 +124,16 @@ const autoRefreshLabel = computed(() => {
   const seconds = totalSeconds % 60
 
   return `${minutes}:${seconds.toString().padStart(2, '0')} until auto refresh`
+})
+const lastRepositoryRefreshLabel = computed(() => {
+  if (!lastRepositoryListRefreshAt.value) {
+    return ''
+  }
+
+  return `Updated ${lastRepositoryListRefreshAt.value.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  })}`
 })
 const appActivityLabel = computed(() => {
   if (statusActionLabel.value) {
@@ -180,6 +208,51 @@ function savePinnedRepositories(repoPaths: string[]) {
   localStorage.setItem(PINNED_REPOSITORIES_KEY, JSON.stringify(repoPaths))
 }
 
+function applyThemeMode(themeMode: AppSettings['themeMode']) {
+  if (themeMode === 'system') {
+    document.documentElement.removeAttribute('data-theme')
+    return
+  }
+
+  document.documentElement.dataset.theme = themeMode
+}
+
+function loadAppSettings() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(APP_SETTINGS_KEY) ?? '{}') as Partial<AppSettings>
+    const autoRefreshIntervalMs = Number(parsed.autoRefreshIntervalMs)
+
+    appSettings.value = {
+      autoRefreshIntervalMs: autoRefreshIntervalMs > 0
+        ? autoRefreshIntervalMs
+        : DEFAULT_APP_SETTINGS.autoRefreshIntervalMs,
+      editorCommand: typeof parsed.editorCommand === 'string'
+        ? parsed.editorCommand
+        : DEFAULT_APP_SETTINGS.editorCommand,
+      themeMode: parsed.themeMode === 'light' || parsed.themeMode === 'dark' || parsed.themeMode === 'system'
+        ? parsed.themeMode
+        : DEFAULT_APP_SETTINGS.themeMode,
+    }
+  } catch {
+    appSettings.value = { ...DEFAULT_APP_SETTINGS }
+  }
+
+  applyThemeMode(appSettings.value.themeMode)
+  autoRefreshRemainingMs.value = appSettings.value.autoRefreshIntervalMs
+}
+
+function saveAppSettings(settings: AppSettings) {
+  appSettings.value = settings
+  localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(settings))
+  applyThemeMode(settings.themeMode)
+  isSettingsOpen.value = false
+  showAppFeedback('Settings saved.')
+
+  if (selectedPath.value) {
+    resetAutoRefreshTimer()
+  }
+}
+
 function togglePinnedRepository(repoPath: string) {
   const repository = repositories.value.find((savedRepository) => savedRepository.path === repoPath)
   const repositoryName = repository?.name ?? repoPath
@@ -219,6 +292,7 @@ async function loadRepositories() {
 
   try {
     repositories.value = await window.repositories.list()
+    lastRepositoryListRefreshAt.value = new Date()
   } catch (error) {
     errorMessage.value = normalizeError(error)
   } finally {
@@ -232,6 +306,7 @@ async function chooseAndAddRepository() {
 
   try {
     repositories.value = await window.repositories.chooseAndAdd()
+    lastRepositoryListRefreshAt.value = new Date()
   } catch (error) {
     errorMessage.value = normalizeError(error)
   } finally {
@@ -245,6 +320,7 @@ async function addRepositoryByPath() {
 
   try {
     repositories.value = await window.repositories.addByPath(repoPathInput.value)
+    lastRepositoryListRefreshAt.value = new Date()
     repoPathInput.value = ''
   } catch (error) {
     errorMessage.value = normalizeError(error)
@@ -533,6 +609,51 @@ async function removeRepository(repoPath: string) {
   }
 }
 
+async function openRepositoryInFileManager(repoPath: string) {
+  errorMessage.value = ''
+
+  try {
+    await window.repositories.openInFileManager({ repoPath })
+    showAppFeedback('Opened repository folder.', 'info')
+  } catch (error) {
+    errorMessage.value = normalizeError(error)
+  }
+}
+
+async function openRepositoryInEditor(repoPath: string) {
+  errorMessage.value = ''
+
+  try {
+    await window.repositories.openInEditor({
+      repoPath,
+      editorCommand: appSettings.value.editorCommand,
+    })
+    showAppFeedback('Opened repository in editor.', 'info')
+  } catch (error) {
+    errorMessage.value = normalizeError(error)
+  }
+}
+
+async function openRepositoryInTerminal(repoPath: string) {
+  errorMessage.value = ''
+
+  try {
+    await window.repositories.openInTerminal({ repoPath })
+    showAppFeedback('Opened repository terminal.', 'info')
+  } catch (error) {
+    errorMessage.value = normalizeError(error)
+  }
+}
+
+async function copyRepositoryPath(repoPath: string) {
+  try {
+    await navigator.clipboard.writeText(repoPath)
+    showAppFeedback('Copied repository path.', 'info')
+  } catch {
+    errorMessage.value = 'Could not copy repository path.'
+  }
+}
+
 function closeDetails() {
   stopAutoRefreshTimer()
   selectedPath.value = null
@@ -589,8 +710,8 @@ function updateAutoRefreshCountdown() {
 }
 
 function resetAutoRefreshTimer() {
-  nextAutoRefreshAt = Date.now() + AUTO_REFRESH_INTERVAL_MS
-  autoRefreshRemainingMs.value = AUTO_REFRESH_INTERVAL_MS
+  nextAutoRefreshAt = Date.now() + appSettings.value.autoRefreshIntervalMs
+  autoRefreshRemainingMs.value = appSettings.value.autoRefreshIntervalMs
 
   if (autoRefreshTickTimer === undefined) {
     autoRefreshTickTimer = window.setInterval(updateAutoRefreshCountdown, 1000)
@@ -604,7 +725,7 @@ function stopAutoRefreshTimer() {
   }
 
   nextAutoRefreshAt = 0
-  autoRefreshRemainingMs.value = AUTO_REFRESH_INTERVAL_MS
+  autoRefreshRemainingMs.value = appSettings.value.autoRefreshIntervalMs
 }
 
 function updateCommitDraft(hasDraft: boolean) {
@@ -765,6 +886,7 @@ function handlePageExit() {
 }
 
 onMounted(() => {
+  loadAppSettings()
   loadPinnedRepositories()
   removeScriptOutputListener = window.repositories.onScriptOutput(handleScriptOutput)
   removeWindowFocusListener = window.repositories.onWindowFocus(() => {
@@ -786,7 +908,7 @@ onBeforeUnmount(() => {
 
 <template>
   <main class="app-shell">
-    <AppHeader :repository-count="repositories.length" />
+    <AppHeader :repository-count="repositories.length" @settings="isSettingsOpen = true" />
 
     <div class="app-layout" :class="{ 'terminals-collapsed': areTerminalsCollapsed }">
       <div class="main-pane">
@@ -795,12 +917,18 @@ onBeforeUnmount(() => {
           v-model:repo-path-input="repoPathInput"
           :repositories="repositories"
           :pinned-repository-paths="pinnedRepositoryPaths"
+          :running-scripts-by-repository-path="runningScriptsByRepositoryPath"
+          :last-refreshed-label="lastRepositoryRefreshLabel"
           :is-loading="isLoading"
           @add="addRepositoryByPath"
           @browse="chooseAndAddRepository"
           @open="openRepository"
           @remove="removeRepository"
           @toggle-pin="togglePinnedRepository"
+          @copy-path="copyRepositoryPath"
+          @open-in-editor="openRepositoryInEditor"
+          @open-in-file-manager="openRepositoryInFileManager"
+          @open-in-terminal="openRepositoryInTerminal"
         />
 
         <RepositoryDetail
@@ -831,6 +959,10 @@ onBeforeUnmount(() => {
           @stop-script="stopScript"
           @restart-script="restartScript"
           @open-terminal="openScriptTerminal"
+          @copy-path="copyRepositoryPath"
+          @open-in-editor="openRepositoryInEditor"
+          @open-in-file-manager="openRepositoryInFileManager"
+          @open-in-terminal="openRepositoryInTerminal"
         />
       </div>
 
@@ -851,6 +983,13 @@ onBeforeUnmount(() => {
       @close="closeTerminalModal"
       @stop="stopTerminal"
       @restart="restartTerminal"
+    />
+
+    <SettingsPanel
+      v-if="isSettingsOpen"
+      :settings="appSettings"
+      @close="isSettingsOpen = false"
+      @save="saveAppSettings"
     />
 
     <div

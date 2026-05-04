@@ -38,6 +38,10 @@ const emit = defineEmits<{
   stopScript: [scriptName: string];
   restartScript: [scriptName: string];
   openTerminal: [scriptName: string];
+  copyPath: [repoPath: string];
+  openInEditor: [repoPath: string];
+  openInFileManager: [repoPath: string];
+  openInTerminal: [repoPath: string];
 }>();
 
 const commitMessage = ref("");
@@ -278,6 +282,24 @@ function branchSyncTitle(
 
   return branchSyncDisabledReason(branch, gitStatus) ?? "Run git pull --ff-only";
 }
+
+function branchSafetyNotes(
+  branch: RepositoryDetails["gitBranches"][number],
+  gitStatus: RepositoryDetails["gitStatus"],
+) {
+  const notes = [];
+  const syncReason = branchSyncDisabledReason(branch, gitStatus);
+
+  if (syncReason && !branch.inSyncWithRemote) {
+    notes.push(syncReason);
+  }
+
+  if (!branch.canDelete && branch.deleteReason) {
+    notes.push(branch.deleteReason);
+  }
+
+  return [...new Set(notes)];
+}
 </script>
 
 <template>
@@ -308,6 +330,20 @@ function branchSyncTitle(
         <div>
           <p class="repo-path">{{ selectedDetails.path }}</p>
           <h2>{{ selectedDetails.name }}</h2>
+          <div class="detail-quick-actions" aria-label="Repository quick actions">
+            <button type="button" class="secondary" @click="$emit('openInFileManager', selectedDetails.path)">
+              Finder
+            </button>
+            <button type="button" class="secondary" @click="$emit('openInEditor', selectedDetails.path)">
+              Editor
+            </button>
+            <button type="button" class="secondary" @click="$emit('openInTerminal', selectedDetails.path)">
+              Terminal
+            </button>
+            <button type="button" class="secondary" @click="$emit('copyPath', selectedDetails.path)">
+              Copy path
+            </button>
+          </div>
         </div>
         <div class="detail-header-pills">
           <span class="branch-pill">{{ selectedDetails.branch }}</span>
@@ -318,8 +354,12 @@ function branchSyncTitle(
       </header>
     </div>
 
-    <div v-if="isDetailLoading && !selectedDetails" class="empty-state">
-      Loading repository...
+    <div v-if="isDetailLoading && !selectedDetails" class="detail-skeleton" aria-label="Loading repository">
+      <section v-for="index in 3" :key="index" class="detail-panel skeleton-card">
+        <span></span>
+        <span></span>
+        <span></span>
+      </section>
     </div>
 
     <template v-else-if="selectedDetails">
@@ -573,9 +613,21 @@ function branchSyncTitle(
                     {{ branch.upstream ?? "No upstream" }}
                   </small>
                   <small v-if="branch.current">Current branch</small>
+                  <span class="branch-health">
+                    <span v-if="branch.ahead > 0">{{ branch.ahead }} ahead</span>
+                    <span v-if="branch.behind > 0">{{ branch.behind }} behind</span>
+                    <span v-if="branch.remoteGone">Remote gone</span>
+                    <span v-if="branch.inSyncWithRemote">In sync</span>
+                  </span>
                 </div>
                 <p v-if="branchFeedbackMessages[branch.name]" class="branch-feedback">
                   {{ branchFeedbackMessages[branch.name] }}
+                </p>
+                <p
+                  v-else-if="branchSafetyNotes(branch, selectedDetails.gitStatus).length > 0"
+                  class="branch-safety"
+                >
+                  {{ branchSafetyNotes(branch, selectedDetails.gitStatus).join(" ") }}
                 </p>
                 <div class="branch-controls">
                   <span class="branch-sync" :class="{ synced: branch.inSyncWithRemote }">
@@ -636,7 +688,11 @@ function branchSyncTitle(
     </template>
 
     <div v-else class="empty-state">
-      {{ selectedSummary?.name ?? "Repository" }} could not be loaded.
+      <strong>{{ selectedSummary?.name ?? "Repository" }} could not be loaded.</strong>
+      <span>Check whether the folder still exists and is available, then refresh.</span>
+      <button type="button" class="secondary" :disabled="isDetailLoading" @click="$emit('refresh')">
+        Retry
+      </button>
     </div>
   </section>
 </template>

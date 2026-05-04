@@ -2,6 +2,10 @@
 defineProps<{
   repositoryCount: number
 }>()
+
+defineEmits<{
+  settings: []
+}>()
 </script>
 
 <template>
@@ -14,9 +18,14 @@ defineProps<{
       </div>
     </div>
 
-    <div class="repo-count">
-      <span>{{ repositoryCount }}</span>
-      <small>saved</small>
+    <div class="top-actions">
+      <button type="button" class="secondary" @click="$emit('settings')">
+        Settings
+      </button>
+      <div class="repo-count">
+        <span>{{ repositoryCount }}</span>
+        <small>saved</small>
+      </div>
     </div>
   </header>
 </template>

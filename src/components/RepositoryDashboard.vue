@@ -6,6 +6,8 @@ import RepositoryCard from './RepositoryCard.vue'
 const props = defineProps<{
   repositories: RepositorySummary[]
   pinnedRepositoryPaths: string[]
+  runningScriptsByRepositoryPath: Record<string, number>
+  lastRefreshedLabel: string
   repoPathInput: string
   isLoading: boolean
 }>()
@@ -17,6 +19,10 @@ defineEmits<{
   open: [repository: RepositorySummary]
   remove: [repoPath: string]
   togglePin: [repoPath: string]
+  copyPath: [repoPath: string]
+  openInEditor: [repoPath: string]
+  openInFileManager: [repoPath: string]
+  openInTerminal: [repoPath: string]
 }>()
 
 const searchQuery = ref('')
@@ -79,12 +85,20 @@ const filteredRepositories = computed(() => {
       </div>
     </form>
 
-    <div v-if="isLoading && repositories.length === 0" class="empty-state">
-      Loading repositories...
+    <div v-if="isLoading && repositories.length === 0" class="repo-skeleton-grid" aria-label="Loading repositories">
+      <article v-for="index in 6" :key="index" class="repo-card skeleton-card">
+        <span></span>
+        <span></span>
+        <span></span>
+      </article>
     </div>
 
     <div v-else-if="repositories.length === 0" class="empty-state">
-      No repositories saved.
+      <strong>No repositories saved.</strong>
+      <span>Add a path manually or browse to a repository folder.</span>
+      <button type="button" class="secondary" :disabled="isLoading" @click="$emit('browse')">
+        Browse for repository
+      </button>
     </div>
 
     <template v-else>
@@ -118,9 +132,15 @@ const filteredRepositories = computed(() => {
           :key="repository.path"
           :repository="repository"
           :is-pinned="pinnedRepositorySet.has(repository.path)"
+          :running-script-count="runningScriptsByRepositoryPath[repository.path] ?? 0"
+          :last-refreshed-label="lastRefreshedLabel"
           @open="$emit('open', $event)"
           @remove="$emit('remove', $event)"
           @toggle-pin="$emit('togglePin', $event)"
+          @copy-path="$emit('copyPath', $event)"
+          @open-in-editor="$emit('openInEditor', $event)"
+          @open-in-file-manager="$emit('openInFileManager', $event)"
+          @open-in-terminal="$emit('openInTerminal', $event)"
         />
       </div>
     </template>

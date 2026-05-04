@@ -49,7 +49,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     color-scheme: dark;
     --app-bg: #101418;
     --text: #e7edf2;
@@ -89,6 +89,47 @@
     --terminal-title: #f2fbfc;
     --shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --app-bg: #101418;
+  --text: #e7edf2;
+  --muted: #95a3ad;
+  --muted-strong: #c4cdd4;
+  --surface: #171e24;
+  --surface-subtle: #222c34;
+  --surface-soft: #1b242b;
+  --surface-hover: #1f302f;
+  --border: #31404a;
+  --border-soft: #2a3740;
+  --border-control: #3a4954;
+  --border-muted: #52616c;
+  --brand: #66c6b8;
+  --brand-hover: #4fb5a5;
+  --brand-contrast: #07110f;
+  --brand-text-hover: #8ee0d4;
+  --brand-ring: #376b63;
+  --accent: #dd9b59;
+  --focus: #f0bd58;
+  --danger: #d97870;
+  --danger-hover: #c9635b;
+  --danger-contrast: #170706;
+  --danger-soft: #3a2322;
+  --danger-text: #f2aaa2;
+  --success-soft: #18362b;
+  --success-text: #8ad8aa;
+  --warning-soft: #3a2d18;
+  --warning-text: #f1c47d;
+  --info-soft: #172b3d;
+  --info-text: #8ebde8;
+  --terminal-panel: #0c1116;
+  --terminal-bg: #05080c;
+  --terminal-border: #2a3946;
+  --terminal-surface: #0e151c;
+  --terminal-text: #edf5f7;
+  --terminal-title: #f2fbfc;
+  --shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
 }
 
 * {
@@ -208,6 +249,12 @@ button.danger:hover:not(:disabled) {
   justify-content: space-between;
   gap: 24px;
   margin-bottom: 24px;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .brand-heading {
@@ -378,6 +425,53 @@ h3 {
   box-shadow: var(--shadow);
 }
 
+.settings-dialog {
+  display: grid;
+  width: min(520px, 100%);
+  gap: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.settings-dialog h2 {
+  margin: 0;
+  font-size: 1.22rem;
+}
+
+.settings-dialog label {
+  display: grid;
+  gap: 6px;
+}
+
+.settings-dialog label span {
+  color: var(--muted-strong);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.settings-dialog input,
+.settings-dialog select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--border-control);
+  border-radius: 7px;
+  padding: 0 12px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .confirm-dialog h2 {
   margin: 0;
   font-size: 1.18rem;
@@ -541,11 +635,22 @@ h3 {
 }
 
 .empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
   border: 1px dashed var(--border-muted);
   border-radius: 8px;
   padding: 40px 20px;
   color: var(--muted);
   text-align: center;
+}
+
+.empty-state strong {
+  color: var(--text);
+}
+
+.empty-state span {
+  max-width: 520px;
 }
 
 .active-terminals {
@@ -869,9 +974,55 @@ h3 {
   gap: 14px;
 }
 
+.repo-skeleton-grid,
+.detail-skeleton {
+  display: grid;
+  gap: 14px;
+}
+
+.repo-skeleton-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.detail-skeleton {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.skeleton-card {
+  display: grid;
+  gap: 12px;
+  min-height: 196px;
+  padding: 18px;
+}
+
+.skeleton-card span {
+  display: block;
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--surface-subtle),
+    var(--surface-soft),
+    var(--surface-subtle)
+  );
+}
+
+.skeleton-card span:first-child {
+  width: 55%;
+}
+
+.skeleton-card span:nth-child(2) {
+  width: 82%;
+}
+
+.skeleton-card span:nth-child(3) {
+  width: 66%;
+}
+
 .repo-card {
   position: relative;
   display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
@@ -885,10 +1036,10 @@ h3 {
 .repo-card-main {
   display: grid;
   gap: 10px;
-  min-height: 196px;
+  min-height: 220px;
   border: 0;
   border-radius: 8px;
-  padding: 42px 46px 18px 18px;
+  padding: 42px 46px 14px 18px;
   background: transparent;
   color: inherit;
   font-weight: 400;
@@ -939,9 +1090,61 @@ h3 {
   background: var(--surface-subtle);
 }
 
+.repo-meta .health-running {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
 .last-commit {
   color: var(--muted-strong);
   font-size: 0.9rem;
+}
+
+.repo-health-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.health-pill {
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.health-pill.success {
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.health-pill.warning {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.health-pill.error {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
+.health-pill.neutral {
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+}
+
+.repo-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  border-top: 1px solid var(--border-soft);
+  padding: 10px;
+}
+
+.repo-quick-actions button {
+  min-height: 32px;
+  padding: 0 8px;
+  font-size: 0.74rem;
 }
 
 .status-pill {
@@ -965,6 +1168,22 @@ h3 {
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.branch-health {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.branch-health span {
+  border-radius: 999px;
+  padding: 3px 7px;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+  font-size: 0.7rem;
+  font-weight: 900;
 }
 
 .status-pill.dirty {
@@ -1070,6 +1289,19 @@ h3 {
   gap: 24px;
   border-top: 1px solid var(--border-soft);
   padding-top: 12px;
+}
+
+.detail-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.detail-quick-actions button {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 0.76rem;
 }
 
 .detail-header-pills {
@@ -1395,6 +1627,13 @@ pre {
   color: var(--success-text);
   font-size: 0.8rem;
   font-weight: 800;
+}
+
+.branch-safety {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
 }
 
 .git-status-groups {

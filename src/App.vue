@@ -154,7 +154,11 @@ async function deleteBranch(branchName: string) {
     return
   }
 
-  if (!window.confirm(`Remove local branch "${branchName}"?`)) {
+  if (
+    !window.confirm(
+      `Remove local branch "${branchName}" from ${selectedDetails.value.name}?\n\nThis only deletes the local branch.`,
+    )
+  ) {
     return
   }
 
@@ -178,6 +182,14 @@ async function deleteBranch(branchName: string) {
 
 async function syncBranch(branchName: string) {
   if (!selectedDetails.value) {
+    return
+  }
+
+  if (
+    !window.confirm(
+      `Sync branch "${branchName}" in ${selectedDetails.value.name}?\n\nThis will fetch/pull and fast-forward the local branch when possible.`,
+    )
+  ) {
     return
   }
 
@@ -315,6 +327,17 @@ async function commitStatus(message: string) {
 }
 
 async function removeRepository(repoPath: string) {
+  const repository = repositories.value.find((savedRepository) => savedRepository.path === repoPath)
+  const repositoryName = repository?.name ?? repoPath
+
+  if (
+    !window.confirm(
+      `Remove "${repositoryName}" from Web Dev Companion?\n\nThe repository folder will stay on disk.`,
+    )
+  ) {
+    return
+  }
+
   isLoading.value = true
   errorMessage.value = ''
 

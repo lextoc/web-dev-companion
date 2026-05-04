@@ -5,7 +5,7 @@ import type { ScriptTerminal } from '../repositories'
 
 const props = defineProps<{
   npmScripts: [string, string][]
-  scriptTerminals: Record<string, ScriptTerminal>
+  scriptTerminalsByScript: Record<string, ScriptTerminal>
 }>()
 
 defineEmits<{
@@ -38,9 +38,9 @@ function scrollTerminalToBottom(scriptName: string) {
 }
 
 watch(
-  () => props.scriptTerminals,
+  () => props.scriptTerminalsByScript,
   () => {
-    for (const scriptName of Object.keys(props.scriptTerminals)) {
+    for (const scriptName of Object.keys(props.scriptTerminalsByScript)) {
       scrollTerminalToBottom(scriptName)
     }
   },
@@ -55,14 +55,14 @@ watch(
     </div>
     <div v-if="npmScripts.length" class="script-list">
       <div v-for="[scriptName, command] in npmScripts" :key="scriptName" class="script-item">
-        <div v-if="scriptTerminals[scriptName]" class="script-terminal">
+        <div v-if="scriptTerminalsByScript[scriptName]" class="script-terminal">
           <div class="terminal-toolbar">
-            <code>{{ scriptTerminals[scriptName].command }}</code>
+            <code>{{ scriptTerminalsByScript[scriptName].command }}</code>
             <button type="button" class="terminal-stop" @click="$emit('stop', scriptName)">
-              Stop
+              {{ scriptTerminalsByScript[scriptName].isRunning ? 'Stop' : 'Close' }}
             </button>
           </div>
-          <pre :ref="(element) => setTerminalOutputElement(scriptName, element)">{{ scriptTerminals[scriptName].output }}</pre>
+          <pre :ref="(element) => setTerminalOutputElement(scriptName, element)">{{ scriptTerminalsByScript[scriptName].output }}</pre>
         </div>
 
         <button v-else class="script-row" type="button" @click="$emit('run', scriptName)">

@@ -9,7 +9,7 @@ defineProps<{
   autoRefreshLabel: string
   autoRefreshProgress: number
   npmScripts: [string, string][]
-  scriptTerminals: Record<string, ScriptTerminal>
+  scriptTerminalsByScript: Record<string, ScriptTerminal>
 }>()
 
 defineEmits<{
@@ -85,7 +85,7 @@ defineEmits<{
 
         <NpmScriptsPanel
           :npm-scripts="npmScripts"
-          :script-terminals="scriptTerminals"
+          :script-terminals-by-script="scriptTerminalsByScript"
           @run="$emit('runScript', $event)"
           @stop="$emit('stopScript', $event)"
         />

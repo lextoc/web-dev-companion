@@ -39,6 +39,9 @@ export interface ScriptOutput {
 
 export interface ScriptTerminal {
   runId: string
+  repoPath: string
+  repoName: string
+  scriptName: string
   command: string
   output: string
   isRunning: boolean

@@ -1,6 +1,357 @@
-"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const k=require("node:child_process"),d=require("node:fs/promises"),a=require("node:path"),V=require("node:util"),{app:f,BrowserWindow:D,dialog:_,ipcMain:p}=require("electron"),O=__dirname,L=V.promisify(k.execFile),x="repositories.json",u=new Map,h=new Set;process.env.APP_ROOT=a.join(O,"..");const y=process.env.VITE_DEV_SERVER_URL,I=a.join(process.env.APP_ROOT,"dist-electron"),R=a.join(process.env.APP_ROOT,"dist");process.env.VITE_PUBLIC=y?a.join(process.env.APP_ROOT,"public"):R;let i;function g(){return a.join(f.getPath("userData"),x)}async function E(){try{const t=await d.readFile(g(),"utf8"),e=JSON.parse(t);return Array.isArray(e)?e.filter(r=>typeof r=="string"):[]}catch(t){if(t instanceof Error&&"code"in t&&t.code==="ENOENT")return[];throw t}}async function j(t){await d.mkdir(a.dirname(g()),{recursive:!0}),await d.writeFile(g(),JSON.stringify(t,null,2))}async function v(t){if(!t.trim())throw new Error("Enter a repository path.");const e=a.resolve(t.trim());if(!(await d.stat(e)).isDirectory())throw new Error("Repository path must be a folder.");const o=await T(e,["rev-parse","--show-toplevel"]);return a.resolve(o||e)}async function T(t,e){try{const{stdout:r}=await L("git",e,{cwd:t,encoding:"utf8",timeout:5e3});return r.trim()}catch(r){throw r instanceof Error?new Error(r.message):r}}async function l(t,e){try{return await T(t,e)}catch{return""}}async function P(t){try{const e=await d.readFile(a.join(t,"package.json"),"utf8"),r=JSON.parse(e),o=r==null?void 0:r.scripts;return!o||typeof o!="object"||Array.isArray(o)?{}:Object.fromEntries(Object.entries(o).filter(n=>{const[s,c]=n;return typeof s=="string"&&typeof c=="string"}))}catch{return{}}}async function N(t){const e=[["pnpm-lock.yaml","pnpm"],["yarn.lock","yarn"],["package-lock.json","npm"],["bun.lockb","bun"]];for(const[r,o]of e)try{return await d.access(a.join(t,r)),o}catch{continue}}function $(t){return t||"npm"}function m(t){if(!(!i||i.isDestroyed()||i.webContents.isDestroyed()))try{i.webContents.send("repositories:script-output",t)}catch{}}function M(t){if(process.platform==="win32"){t.kill("SIGTERM");return}if(t.pid)try{process.kill(-t.pid,"SIGTERM");return}catch{t.kill("SIGTERM")}}function U(t,e,r,o){if(!h.has(t))return;h.delete(t);const n=k.spawn(r,["run",o],{cwd:e,detached:process.platform!=="win32",env:process.env,shell:!0});u.set(t,n),n.stdout.on("data",s=>{m({runId:t,stream:"stdout",text:s.toString()})}),n.stderr.on("data",s=>{m({runId:t,stream:"stderr",text:s.toString()})}),n.on("error",s=>{m({runId:t,stream:"system",text:`${s.message}
-`,done:!0}),u.delete(t)}),n.on("close",(s,c)=>{m({runId:t,stream:"system",text:`
-Process ${c?`stopped with ${c}`:`exited with code ${s??0}`}.
-`,exitCode:s,signal:c,done:!0}),u.delete(t)})}async function G(t){const e=await v(t.repoPath);if(!(await P(e))[t.scriptName])throw new Error(`Script "${t.scriptName}" was not found.`);const o=$(t.packageManager||await N(e)),n=`${Date.now()}-${Math.random().toString(36).slice(2)}`,s=`${o} run ${t.scriptName}`;return h.add(n),setTimeout(()=>{U(n,e,o,t.scriptName)},0),{runId:n,command:s}}function S(t){if(h.delete(t))return m({runId:t,stream:"system",text:`
-Process stopped before it started.
-`,done:!0}),!0;const e=u.get(t);return e?(M(e),!0):!1}function W(){for(const t of h)S(t);for(const t of u.values())M(t);u.clear()}async function A(t){const e=a.basename(t);try{const[r,o,n,s,c]=await Promise.all([l(t,["branch","--show-current"]),l(t,["log","-1","--pretty=format:%h %s (%cr)"]),l(t,["status","--short"]),l(t,["remote","get-url","origin"]),P(t)]);return{path:t,name:e,branch:r||"detached",lastCommit:o||"No commits found",dirty:n.length>0,npmScriptCount:Object.keys(c).length,remote:s||void 0}}catch(r){return{path:t,name:e,branch:"unknown",lastCommit:"Unavailable",dirty:!1,npmScriptCount:0,error:r instanceof Error?r.message:"Could not read repository."}}}async function J(t){const e=await v(t),[r,o,n,s,c,F]=await Promise.all([A(e),l(e,["log","--oneline","--decorate","--graph","-n","30"]),l(e,["status","--short","--branch"]),l(e,["remote","-v"]),P(e),N(e)]);return{...r,gitLog:o||"No git log output available.",gitStatus:n||"Working tree clean.",remotes:s||"No git remotes configured.",npmScripts:c,packageManager:F}}async function w(){const t=await E();return Promise.all(t.map(A))}async function b(t){const e=await v(t),r=await E(),o=[e,...r.filter(n=>n!==e)];return await j(o),w()}function z(){p.handle("repositories:list",w),p.handle("repositories:add-by-path",(t,e)=>b(e)),p.handle("repositories:choose-and-add",async()=>{const t={properties:["openDirectory"],title:"Add repository"},e=i?await _.showOpenDialog(i,t):await _.showOpenDialog(t);return e.canceled||!e.filePaths[0]?w():b(e.filePaths[0])}),p.handle("repositories:remove",async(t,e)=>{const r=await E();return await j(r.filter(o=>o!==e)),w()}),p.handle("repositories:details",(t,e)=>J(e)),p.handle("repositories:start-script",(t,e)=>G(e)),p.handle("repositories:stop-script",(t,e)=>S(e)),p.on("repositories:stop-scripts",(t,e)=>{for(const r of e)S(r)})}function C(){i=new D({width:1280,height:900,minWidth:1080,minHeight:720,icon:a.join(process.env.VITE_PUBLIC,"electron-vite.svg"),webPreferences:{preload:a.join(O,"preload.js")}}),i.webContents.on("did-finish-load",()=>{i==null||i.webContents.send("main-process-message",new Date().toLocaleString())}),y?i.loadURL(y):i.loadFile(a.join(R,"index.html"))}f.on("window-all-closed",()=>{W(),process.platform!=="darwin"&&(f.quit(),i=null)});f.on("activate",()=>{D.getAllWindows().length===0&&C()});f.whenReady().then(()=>{z(),C()});exports.MAIN_DIST=I;exports.RENDERER_DIST=R;exports.VITE_DEV_SERVER_URL=y;
+"use strict";
+Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+const node_child_process = require("node:child_process");
+const fs = require("node:fs/promises");
+const path = require("node:path");
+const node_util = require("node:util");
+const { app, BrowserWindow, dialog, ipcMain } = require("electron");
+const currentDirectory = __dirname;
+const execFileAsync = node_util.promisify(node_child_process.execFile);
+const repositoriesFileName = "repositories.json";
+const runningScripts = /* @__PURE__ */ new Map();
+const pendingScriptRuns = /* @__PURE__ */ new Set();
+process.env.APP_ROOT = path.join(currentDirectory, "..");
+const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
+const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
+const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
+process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
+let win;
+function repositoriesFilePath() {
+  return path.join(app.getPath("userData"), repositoriesFileName);
+}
+async function readRepositoryPaths() {
+  try {
+    const content = await fs.readFile(repositoriesFilePath(), "utf8");
+    const parsed = JSON.parse(content);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed.filter((repoPath) => typeof repoPath === "string");
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return [];
+    }
+    throw error;
+  }
+}
+async function writeRepositoryPaths(repoPaths) {
+  await fs.mkdir(path.dirname(repositoriesFilePath()), { recursive: true });
+  await fs.writeFile(repositoriesFilePath(), JSON.stringify(repoPaths, null, 2));
+}
+async function normalizeRepositoryPath(repoPath) {
+  if (!repoPath.trim()) {
+    throw new Error("Enter a repository path.");
+  }
+  const resolvedPath = path.resolve(repoPath.trim());
+  const stats = await fs.stat(resolvedPath);
+  if (!stats.isDirectory()) {
+    throw new Error("Repository path must be a folder.");
+  }
+  const topLevelPath = await runGit(resolvedPath, ["rev-parse", "--show-toplevel"]);
+  return path.resolve(topLevelPath || resolvedPath);
+}
+async function runGit(repoPath, args) {
+  try {
+    const { stdout } = await execFileAsync("git", args, {
+      cwd: repoPath,
+      encoding: "utf8",
+      timeout: 5e3
+    });
+    return stdout.trim();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw error;
+  }
+}
+async function tryRunGit(repoPath, args) {
+  try {
+    return await runGit(repoPath, args);
+  } catch {
+    return "";
+  }
+}
+async function readPackageScripts(repoPath) {
+  try {
+    const packageJson = await fs.readFile(path.join(repoPath, "package.json"), "utf8");
+    const parsed = JSON.parse(packageJson);
+    const scripts = parsed == null ? void 0 : parsed.scripts;
+    if (!scripts || typeof scripts !== "object" || Array.isArray(scripts)) {
+      return {};
+    }
+    return Object.fromEntries(
+      Object.entries(scripts).filter((entry) => {
+        const [scriptName, command] = entry;
+        return typeof scriptName === "string" && typeof command === "string";
+      })
+    );
+  } catch {
+    return {};
+  }
+}
+async function detectPackageManager(repoPath) {
+  const lockFiles = [
+    ["pnpm-lock.yaml", "pnpm"],
+    ["yarn.lock", "yarn"],
+    ["package-lock.json", "npm"],
+    ["bun.lockb", "bun"]
+  ];
+  for (const [lockFile, packageManager] of lockFiles) {
+    try {
+      await fs.access(path.join(repoPath, lockFile));
+      return packageManager;
+    } catch {
+      continue;
+    }
+  }
+  return void 0;
+}
+function commandForPackageManager(packageManager) {
+  return packageManager || "npm";
+}
+function sendScriptOutput(output) {
+  if (!win || win.isDestroyed() || win.webContents.isDestroyed()) {
+    return;
+  }
+  try {
+    win.webContents.send("repositories:script-output", output);
+  } catch {
+  }
+}
+function terminateScriptProcess(child) {
+  if (process.platform === "win32") {
+    child.kill("SIGTERM");
+    return;
+  }
+  if (child.pid) {
+    try {
+      process.kill(-child.pid, "SIGTERM");
+      return;
+    } catch {
+      child.kill("SIGTERM");
+    }
+  }
+}
+function launchScript(runId, repoPath, packageManager, scriptName) {
+  if (!pendingScriptRuns.has(runId)) {
+    return;
+  }
+  pendingScriptRuns.delete(runId);
+  const child = node_child_process.spawn(packageManager, ["run", scriptName], {
+    cwd: repoPath,
+    detached: process.platform !== "win32",
+    env: process.env,
+    shell: true
+  });
+  runningScripts.set(runId, child);
+  child.stdout.on("data", (chunk) => {
+    sendScriptOutput({
+      runId,
+      stream: "stdout",
+      text: chunk.toString()
+    });
+  });
+  child.stderr.on("data", (chunk) => {
+    sendScriptOutput({
+      runId,
+      stream: "stderr",
+      text: chunk.toString()
+    });
+  });
+  child.on("error", (error) => {
+    sendScriptOutput({
+      runId,
+      stream: "system",
+      text: `${error.message}
+`,
+      done: true
+    });
+    runningScripts.delete(runId);
+  });
+  child.on("close", (exitCode, signal) => {
+    sendScriptOutput({
+      runId,
+      stream: "system",
+      text: `
+Process ${signal ? `stopped with ${signal}` : `exited with code ${exitCode ?? 0}`}.
+`,
+      exitCode,
+      signal,
+      done: true
+    });
+    runningScripts.delete(runId);
+  });
+}
+async function startScript(request) {
+  const repoPath = await normalizeRepositoryPath(request.repoPath);
+  const npmScripts = await readPackageScripts(repoPath);
+  if (!npmScripts[request.scriptName]) {
+    throw new Error(`Script "${request.scriptName}" was not found.`);
+  }
+  const packageManager = commandForPackageManager(request.packageManager || await detectPackageManager(repoPath));
+  const runId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const command = `${packageManager} run ${request.scriptName}`;
+  pendingScriptRuns.add(runId);
+  setTimeout(() => {
+    launchScript(runId, repoPath, packageManager, request.scriptName);
+  }, 0);
+  return {
+    runId,
+    command
+  };
+}
+function stopScript(runId) {
+  if (pendingScriptRuns.delete(runId)) {
+    sendScriptOutput({
+      runId,
+      stream: "system",
+      text: "\nProcess stopped before it started.\n",
+      done: true
+    });
+    return true;
+  }
+  const child = runningScripts.get(runId);
+  if (!child) {
+    return false;
+  }
+  terminateScriptProcess(child);
+  return true;
+}
+function stopAllScripts() {
+  for (const runId of pendingScriptRuns) {
+    stopScript(runId);
+  }
+  for (const child of runningScripts.values()) {
+    terminateScriptProcess(child);
+  }
+  runningScripts.clear();
+}
+async function readRepositorySummary(repoPath) {
+  const name = path.basename(repoPath);
+  try {
+    const [branch, lastCommit, status, remote, npmScripts] = await Promise.all([
+      tryRunGit(repoPath, ["branch", "--show-current"]),
+      tryRunGit(repoPath, ["log", "-1", "--pretty=format:%h %s (%cr)"]),
+      tryRunGit(repoPath, ["status", "--short"]),
+      tryRunGit(repoPath, ["remote", "get-url", "origin"]),
+      readPackageScripts(repoPath)
+    ]);
+    return {
+      path: repoPath,
+      name,
+      branch: branch || "detached",
+      lastCommit: lastCommit || "No commits found",
+      dirty: status.length > 0,
+      npmScriptCount: Object.keys(npmScripts).length,
+      remote: remote || void 0
+    };
+  } catch (error) {
+    return {
+      path: repoPath,
+      name,
+      branch: "unknown",
+      lastCommit: "Unavailable",
+      dirty: false,
+      npmScriptCount: 0,
+      error: error instanceof Error ? error.message : "Could not read repository."
+    };
+  }
+}
+async function readRepositoryDetails(repoPath) {
+  const normalizedPath = await normalizeRepositoryPath(repoPath);
+  const [summary, gitLog, gitStatus, remotes, npmScripts, packageManager] = await Promise.all([
+    readRepositorySummary(normalizedPath),
+    tryRunGit(normalizedPath, ["log", "--oneline", "--decorate", "--graph", "-n", "30"]),
+    tryRunGit(normalizedPath, ["status", "--short", "--branch"]),
+    tryRunGit(normalizedPath, ["remote", "-v"]),
+    readPackageScripts(normalizedPath),
+    detectPackageManager(normalizedPath)
+  ]);
+  return {
+    ...summary,
+    gitLog: gitLog || "No git log output available.",
+    gitStatus: gitStatus || "Working tree clean.",
+    remotes: remotes || "No git remotes configured.",
+    npmScripts,
+    packageManager
+  };
+}
+async function listRepositories() {
+  const repoPaths = await readRepositoryPaths();
+  return Promise.all(repoPaths.map(readRepositorySummary));
+}
+async function addRepository(repoPath) {
+  const normalizedPath = await normalizeRepositoryPath(repoPath);
+  const repoPaths = await readRepositoryPaths();
+  const nextPaths = [normalizedPath, ...repoPaths.filter((savedPath) => savedPath !== normalizedPath)];
+  await writeRepositoryPaths(nextPaths);
+  return listRepositories();
+}
+function registerRepositoryHandlers() {
+  ipcMain.handle("repositories:list", listRepositories);
+  ipcMain.handle("repositories:add-by-path", (_event, repoPath) => addRepository(repoPath));
+  ipcMain.handle("repositories:choose-and-add", async () => {
+    const dialogOptions = {
+      properties: ["openDirectory"],
+      title: "Add repository"
+    };
+    const result = win ? await dialog.showOpenDialog(win, dialogOptions) : await dialog.showOpenDialog(dialogOptions);
+    if (result.canceled || !result.filePaths[0]) {
+      return listRepositories();
+    }
+    return addRepository(result.filePaths[0]);
+  });
+  ipcMain.handle("repositories:remove", async (_event, repoPath) => {
+    const repoPaths = await readRepositoryPaths();
+    await writeRepositoryPaths(repoPaths.filter((savedPath) => savedPath !== repoPath));
+    return listRepositories();
+  });
+  ipcMain.handle("repositories:details", (_event, repoPath) => readRepositoryDetails(repoPath));
+  ipcMain.handle("repositories:start-script", (_event, request) => startScript(request));
+  ipcMain.handle("repositories:stop-script", (_event, runId) => stopScript(runId));
+  ipcMain.on("repositories:stop-scripts", (_event, runIds) => {
+    for (const runId of runIds) {
+      stopScript(runId);
+    }
+  });
+}
+function createWindow() {
+  win = new BrowserWindow({
+    width: 1280,
+    height: 900,
+    minWidth: 1080,
+    minHeight: 720,
+    icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+    webPreferences: {
+      preload: path.join(currentDirectory, "preload.js")
+    }
+  });
+  win.webContents.on("did-finish-load", () => {
+    win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
+  });
+  if (VITE_DEV_SERVER_URL) {
+    win.loadURL(VITE_DEV_SERVER_URL);
+  } else {
+    win.loadFile(path.join(RENDERER_DIST, "index.html"));
+  }
+}
+app.on("window-all-closed", () => {
+  stopAllScripts();
+  if (process.platform !== "darwin") {
+    app.quit();
+    win = null;
+  }
+});
+app.on("activate", () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});
+app.whenReady().then(() => {
+  registerRepositoryHandlers();
+  createWindow();
+});
+exports.MAIN_DIST = MAIN_DIST;
+exports.RENDERER_DIST = RENDERER_DIST;
+exports.VITE_DEV_SERVER_URL = VITE_DEV_SERVER_URL;

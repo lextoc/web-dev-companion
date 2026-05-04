@@ -1,1 +1,60 @@
-"use strict";const c=require("electron");function p(e){const t=Object.create(null,{[Symbol.toStringTag]:{value:"Module"}});if(e){for(const r in e)if(r!=="default"){const n=Object.getOwnPropertyDescriptor(e,r);Object.defineProperty(t,r,n.get?n:{enumerable:!0,get:()=>e[r]})}}return t.default=e,Object.freeze(t)}const a=p(c),{contextBridge:s,ipcRenderer:o}=a,d={list:()=>o.invoke("repositories:list"),chooseAndAdd:()=>o.invoke("repositories:choose-and-add"),addByPath:e=>o.invoke("repositories:add-by-path",e),remove:e=>o.invoke("repositories:remove",e),details:e=>o.invoke("repositories:details",e),startScript:e=>o.invoke("repositories:start-script",e),stopScript:e=>o.invoke("repositories:stop-script",e),stopScripts:e=>o.send("repositories:stop-scripts",e),onScriptOutput:e=>{const t=(r,n)=>{e(n)};return o.on("repositories:script-output",t),()=>{o.off("repositories:script-output",t)}}};s.exposeInMainWorld("ipcRenderer",{on(...e){const[t,r]=e;return o.on(t,(n,...i)=>r(n,...i))},off(...e){const[t,...r]=e;return o.off(t,...r)},send(...e){const[t,...r]=e;return o.send(t,...r)},invoke(...e){const[t,...r]=e;return o.invoke(t,...r)}});s.exposeInMainWorld("repositories",d);
+"use strict";
+const electron = require("electron");
+function _interopNamespaceDefault(e) {
+  const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
+  if (e) {
+    for (const k in e) {
+      if (k !== "default") {
+        const d = Object.getOwnPropertyDescriptor(e, k);
+        Object.defineProperty(n, k, d.get ? d : {
+          enumerable: true,
+          get: () => e[k]
+        });
+      }
+    }
+  }
+  n.default = e;
+  return Object.freeze(n);
+}
+const electron__namespace = /* @__PURE__ */ _interopNamespaceDefault(electron);
+const { contextBridge, ipcRenderer } = electron__namespace;
+const repositories = {
+  list: () => ipcRenderer.invoke("repositories:list"),
+  chooseAndAdd: () => ipcRenderer.invoke("repositories:choose-and-add"),
+  addByPath: (repoPath) => ipcRenderer.invoke("repositories:add-by-path", repoPath),
+  remove: (repoPath) => ipcRenderer.invoke("repositories:remove", repoPath),
+  details: (repoPath) => ipcRenderer.invoke("repositories:details", repoPath),
+  startScript: (request) => ipcRenderer.invoke("repositories:start-script", request),
+  stopScript: (runId) => ipcRenderer.invoke("repositories:stop-script", runId),
+  stopScripts: (runIds) => ipcRenderer.send("repositories:stop-scripts", runIds),
+  onScriptOutput: (listener) => {
+    const wrappedListener = (_event, output) => {
+      listener(output);
+    };
+    ipcRenderer.on("repositories:script-output", wrappedListener);
+    return () => {
+      ipcRenderer.off("repositories:script-output", wrappedListener);
+    };
+  }
+};
+contextBridge.exposeInMainWorld("ipcRenderer", {
+  on(...args) {
+    const [channel, listener] = args;
+    return ipcRenderer.on(channel, (event, ...args2) => listener(event, ...args2));
+  },
+  off(...args) {
+    const [channel, ...omit] = args;
+    return ipcRenderer.off(channel, ...omit);
+  },
+  send(...args) {
+    const [channel, ...omit] = args;
+    return ipcRenderer.send(channel, ...omit);
+  },
+  invoke(...args) {
+    const [channel, ...omit] = args;
+    return ipcRenderer.invoke(channel, ...omit);
+  }
+  // You can expose other APTs you need here.
+  // ...
+});
+contextBridge.exposeInMainWorld("repositories", repositories);

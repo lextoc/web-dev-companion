@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import ActiveTerminalsSidebar from './components/ActiveTerminalsSidebar.vue'
 import AppHeader from './components/AppHeader.vue'
 import RepositoryDashboard from './components/RepositoryDashboard.vue'
 import RepositoryDetail from './components/RepositoryDetail.vue'
@@ -19,7 +20,7 @@ const scriptTerminals = ref<Record<string, ScriptTerminal>>({})
 let removeScriptOutputListener: (() => void) | undefined
 let autoRefreshTickTimer: number | undefined
 let nextAutoRefreshAt = 0
-const pageOwnedRunIds = new Set<string>()
+const appOwnedRunIds = new Set<string>()
 
 const selectedSummary = computed(() =>
   repositories.value.find((repository) => repository.path === selectedPath.value),
@@ -29,6 +30,28 @@ const npmScripts = computed(() => Object.entries(selectedDetails.value?.npmScrip
 const hasRunningScripts = computed(() =>
   Object.values(scriptTerminals.value).some((terminal) => terminal.isRunning),
 )
+const activeTerminals = computed(() =>
+  Object.values(scriptTerminals.value).sort((terminalA, terminalB) => {
+    const repoComparison = terminalA.repoName.localeCompare(terminalB.repoName)
+
+    if (repoComparison !== 0) {
+      return repoComparison
+    }
+
+    return terminalA.scriptName.localeCompare(terminalB.scriptName)
+  }),
+)
+const currentRepoScriptTerminals = computed(() => {
+  if (!selectedDetails.value) {
+    return {}
+  }
+
+  return Object.fromEntries(
+    Object.values(scriptTerminals.value)
+      .filter((terminal) => terminal.repoPath === selectedDetails.value?.path)
+      .map((terminal) => [terminal.scriptName, terminal]),
+  )
+})
 const autoRefreshProgress = computed(() =>
   Math.max(0, Math.min(100, (autoRefreshRemainingMs.value / AUTO_REFRESH_INTERVAL_MS) * 100)),
 )
@@ -92,7 +115,6 @@ async function openRepository(repository: RepositorySummary) {
 async function loadRepositoryDetails(repoPath: string) {
   isDetailLoading.value = true
   errorMessage.value = ''
-  stopVisibleScripts()
 
   try {
     selectedDetails.value = await window.repositories.details(repoPath)
@@ -139,37 +161,32 @@ function closeDetails() {
   stopAutoRefreshTimer()
   selectedPath.value = null
   selectedDetails.value = null
-  stopVisibleScripts()
 }
 
-function stopVisibleScripts() {
-  if (pageOwnedRunIds.size > 0) {
-    window.repositories.stopScripts([...pageOwnedRunIds])
+function stopOwnedScripts() {
+  if (appOwnedRunIds.size > 0) {
+    window.repositories.stopScripts([...appOwnedRunIds])
   }
 
-  pageOwnedRunIds.clear()
+  appOwnedRunIds.clear()
   scriptTerminals.value = {}
 }
 
 function handleScriptOutput(output: ScriptOutput) {
-  const scriptName = Object.keys(scriptTerminals.value).find(
-    (name) => scriptTerminals.value[name].runId === output.runId,
-  )
+  const terminal = scriptTerminals.value[output.runId]
 
-  if (!scriptName) {
+  if (!terminal) {
     return
   }
 
-  const terminal = scriptTerminals.value[scriptName]
-
-  scriptTerminals.value[scriptName] = {
+  scriptTerminals.value[output.runId] = {
     ...terminal,
     output: `${terminal.output}${output.text}`,
     isRunning: output.done ? false : terminal.isRunning,
   }
 
   if (output.done) {
-    pageOwnedRunIds.delete(output.runId)
+    appOwnedRunIds.delete(output.runId)
   }
 }
 
@@ -214,7 +231,7 @@ function stopAutoRefreshTimer() {
 }
 
 async function runScript(scriptName: string) {
-  if (!selectedDetails.value || scriptTerminals.value[scriptName]?.isRunning) {
+  if (!selectedDetails.value || currentRepoScriptTerminals.value[scriptName]) {
     return
   }
 
@@ -227,11 +244,14 @@ async function runScript(scriptName: string) {
       packageManager: selectedDetails.value.packageManager,
     })
 
-    pageOwnedRunIds.add(scriptRun.runId)
+    appOwnedRunIds.add(scriptRun.runId)
     scriptTerminals.value = {
       ...scriptTerminals.value,
-      [scriptName]: {
+      [scriptRun.runId]: {
         runId: scriptRun.runId,
+        repoPath: selectedDetails.value.path,
+        repoName: selectedDetails.value.name,
+        scriptName,
         command: scriptRun.command,
         output: `$ ${scriptRun.command}\n`,
         isRunning: true,
@@ -243,7 +263,17 @@ async function runScript(scriptName: string) {
 }
 
 async function stopScript(scriptName: string) {
-  const terminal = scriptTerminals.value[scriptName]
+  const terminal = currentRepoScriptTerminals.value[scriptName]
+
+  if (!terminal) {
+    return
+  }
+
+  await stopTerminal(terminal.runId)
+}
+
+async function stopTerminal(runId: string) {
+  const terminal = scriptTerminals.value[runId]
 
   if (!terminal) {
     return
@@ -253,15 +283,15 @@ async function stopScript(scriptName: string) {
     await window.repositories.stopScript(terminal.runId)
   }
 
-  pageOwnedRunIds.delete(terminal.runId)
+  appOwnedRunIds.delete(terminal.runId)
   const nextTerminals = { ...scriptTerminals.value }
-  delete nextTerminals[scriptName]
+  delete nextTerminals[terminal.runId]
   scriptTerminals.value = nextTerminals
 }
 
 function handlePageExit() {
   stopAutoRefreshTimer()
-  stopVisibleScripts()
+  stopOwnedScripts()
 }
 
 onMounted(() => {
@@ -285,30 +315,36 @@ onBeforeUnmount(() => {
 
     <p v-if="errorMessage" class="alert" role="alert">{{ errorMessage }}</p>
 
-    <RepositoryDashboard
-      v-if="!selectedPath"
-      v-model:repo-path-input="repoPathInput"
-      :repositories="repositories"
-      :is-loading="isLoading"
-      @add="addRepositoryByPath"
-      @browse="chooseAndAddRepository"
-      @open="openRepository"
-      @remove="removeRepository"
-    />
+    <div class="app-layout">
+      <div class="main-pane">
+        <RepositoryDashboard
+          v-if="!selectedPath"
+          v-model:repo-path-input="repoPathInput"
+          :repositories="repositories"
+          :is-loading="isLoading"
+          @add="addRepositoryByPath"
+          @browse="chooseAndAddRepository"
+          @open="openRepository"
+          @remove="removeRepository"
+        />
 
-    <RepositoryDetail
-      v-else
-      :selected-details="selectedDetails"
-      :selected-summary="selectedSummary"
-      :is-detail-loading="isDetailLoading"
-      :auto-refresh-label="autoRefreshLabel"
-      :auto-refresh-progress="autoRefreshProgress"
-      :npm-scripts="npmScripts"
-      :script-terminals="scriptTerminals"
-      @back="closeDetails"
-      @refresh="refreshSelectedRepository"
-      @run-script="runScript"
-      @stop-script="stopScript"
-    />
+        <RepositoryDetail
+          v-else
+          :selected-details="selectedDetails"
+          :selected-summary="selectedSummary"
+          :is-detail-loading="isDetailLoading"
+          :auto-refresh-label="autoRefreshLabel"
+          :auto-refresh-progress="autoRefreshProgress"
+          :npm-scripts="npmScripts"
+          :script-terminals-by-script="currentRepoScriptTerminals"
+          @back="closeDetails"
+          @refresh="refreshSelectedRepository"
+          @run-script="runScript"
+          @stop-script="stopScript"
+        />
+      </div>
+
+      <ActiveTerminalsSidebar :terminals="activeTerminals" @stop="stopTerminal" />
+    </div>
   </main>
 </template>

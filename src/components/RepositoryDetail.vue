@@ -36,6 +36,8 @@ const emit = defineEmits<{
   commitDraftChange: [hasDraft: boolean];
   runScript: [scriptName: string];
   stopScript: [scriptName: string];
+  restartScript: [scriptName: string];
+  openTerminal: [scriptName: string];
 }>();
 
 const commitMessage = ref("");
@@ -620,6 +622,8 @@ function branchSyncTitle(
           :script-terminals-by-script="scriptTerminalsByScript"
           @run="$emit('runScript', $event)"
           @stop="$emit('stopScript', $event)"
+          @restart="$emit('restartScript', $event)"
+          @open="$emit('openTerminal', $event)"
         />
 
         <section class="detail-panel remotes-panel">

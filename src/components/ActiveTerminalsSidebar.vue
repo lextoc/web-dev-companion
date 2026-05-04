@@ -25,6 +25,8 @@ const props = defineProps<{
 defineEmits<{
   toggle: []
   stop: [runId: string]
+  restart: [runId: string]
+  open: [runId: string]
 }>()
 
 const terminalGroups = computed<TerminalGroup[]>(() => {
@@ -111,7 +113,17 @@ function getTerminalPreview(terminal: ScriptTerminal) {
           </span>
         </div>
         <div class="active-terminal-list">
-          <article v-for="terminal in group.terminals" :key="terminal.runId" class="active-terminal-item">
+          <article
+            v-for="terminal in group.terminals"
+            :key="terminal.runId"
+            class="active-terminal-item"
+            role="button"
+            tabindex="0"
+            title="Open full terminal"
+            @click="$emit('open', terminal.runId)"
+            @keydown.enter="$emit('open', terminal.runId)"
+            @keydown.space.prevent="$emit('open', terminal.runId)"
+          >
             <div class="active-terminal-main">
               <div class="active-terminal-item-heading">
                 <strong>{{ terminal.scriptName }}</strong>
@@ -124,14 +136,27 @@ function getTerminalPreview(terminal: ScriptTerminal) {
                 {{ getTerminalPreview(terminal) }}
               </p>
             </div>
-            <button
-              type="button"
-              class="terminal-stop"
-              :class="{ secondary: !terminal.isRunning }"
-              @click="$emit('stop', terminal.runId)"
-            >
-              {{ terminal.isRunning ? 'Stop' : 'Close' }}
-            </button>
+            <div class="active-terminal-actions">
+              <button
+                type="button"
+                class="secondary terminal-restart"
+                @click.stop="$emit('restart', terminal.runId)"
+                @keydown.enter.stop
+                @keydown.space.stop
+              >
+                Restart
+              </button>
+              <button
+                type="button"
+                class="terminal-stop"
+                :class="{ secondary: !terminal.isRunning }"
+                @click.stop="$emit('stop', terminal.runId)"
+                @keydown.enter.stop
+                @keydown.space.stop
+              >
+                {{ terminal.isRunning ? 'Stop' : 'Close' }}
+              </button>
+            </div>
           </article>
         </div>
       </section>

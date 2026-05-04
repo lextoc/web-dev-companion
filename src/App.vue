@@ -4,6 +4,7 @@ import ActiveTerminalsSidebar from './components/ActiveTerminalsSidebar.vue'
 import AppHeader from './components/AppHeader.vue'
 import RepositoryDashboard from './components/RepositoryDashboard.vue'
 import RepositoryDetail from './components/RepositoryDetail.vue'
+import TerminalModal from './components/TerminalModal.vue'
 import type { RepositoryDetails, RepositorySummary, ScriptOutput, ScriptTerminal } from './repositories'
 
 const AUTO_REFRESH_INTERVAL_MS = 60 * 1000
@@ -47,6 +48,7 @@ const branchFeedbackMessages = ref<Record<string, string>>({})
 const commitClearToken = ref(0)
 const hasCommitDraft = ref(false)
 const areTerminalsCollapsed = ref(false)
+const selectedTerminalRunId = ref<string | null>(null)
 const confirmationDialog = ref<ConfirmationDialog | null>(null)
 const appFeedback = ref<AppFeedback | null>(null)
 const pinnedRepositoryPaths = ref<string[]>([])
@@ -92,6 +94,9 @@ const currentRepoScriptTerminals = computed(() => {
       .map((terminal) => [terminal.scriptName, terminal]),
   )
 })
+const selectedTerminal = computed(() =>
+  selectedTerminalRunId.value ? scriptTerminals.value[selectedTerminalRunId.value] : undefined,
+)
 const autoRefreshProgress = computed(() =>
   Math.max(0, Math.min(100, (autoRefreshRemainingMs.value / AUTO_REFRESH_INTERVAL_MS) * 100)),
 )
@@ -606,18 +611,17 @@ function updateCommitDraft(hasDraft: boolean) {
   hasCommitDraft.value = hasDraft
 }
 
-async function runScript(scriptName: string) {
-  if (!selectedDetails.value || currentRepoScriptTerminals.value[scriptName]) {
-    return
-  }
-
-  errorMessage.value = ''
-
+async function startTerminal(
+  repoPath: string,
+  repoName: string,
+  scriptName: string,
+  packageManager?: string,
+) {
   try {
     const scriptRun = await window.repositories.startScript({
-      repoPath: selectedDetails.value.path,
+      repoPath,
       scriptName,
-      packageManager: selectedDetails.value.packageManager,
+      packageManager,
     })
 
     appOwnedRunIds.add(scriptRun.runId)
@@ -625,17 +629,35 @@ async function runScript(scriptName: string) {
       ...scriptTerminals.value,
       [scriptRun.runId]: {
         runId: scriptRun.runId,
-        repoPath: selectedDetails.value.path,
-        repoName: selectedDetails.value.name,
+        repoPath,
+        repoName,
         scriptName,
         command: scriptRun.command,
         output: `$ ${scriptRun.command}\n`,
         isRunning: true,
       },
     }
+
+    return scriptRun.runId
   } catch (error) {
     errorMessage.value = normalizeError(error)
+    return undefined
   }
+}
+
+async function runScript(scriptName: string) {
+  if (!selectedDetails.value || currentRepoScriptTerminals.value[scriptName]) {
+    return
+  }
+
+  errorMessage.value = ''
+
+  await startTerminal(
+    selectedDetails.value.path,
+    selectedDetails.value.name,
+    scriptName,
+    selectedDetails.value.packageManager,
+  )
 }
 
 async function stopScript(scriptName: string) {
@@ -646,6 +668,62 @@ async function stopScript(scriptName: string) {
   }
 
   await stopTerminal(terminal.runId)
+}
+
+async function restartScript(scriptName: string) {
+  const terminal = currentRepoScriptTerminals.value[scriptName]
+
+  if (!terminal) {
+    await runScript(scriptName)
+    return
+  }
+
+  await restartTerminal(terminal.runId)
+}
+
+async function restartTerminal(runId: string) {
+  const terminal = scriptTerminals.value[runId]
+
+  if (!terminal) {
+    return
+  }
+
+  errorMessage.value = ''
+
+  if (terminal.isRunning) {
+    await window.repositories.stopScript(terminal.runId)
+  }
+
+  appOwnedRunIds.delete(terminal.runId)
+  const nextTerminals = { ...scriptTerminals.value }
+  delete nextTerminals[terminal.runId]
+  scriptTerminals.value = nextTerminals
+
+  const newRunId = await startTerminal(terminal.repoPath, terminal.repoName, terminal.scriptName)
+
+  if (newRunId && selectedTerminalRunId.value === runId) {
+    selectedTerminalRunId.value = newRunId
+  } else if (!newRunId && selectedTerminalRunId.value === runId) {
+    selectedTerminalRunId.value = null
+  }
+}
+
+function openScriptTerminal(scriptName: string) {
+  const terminal = currentRepoScriptTerminals.value[scriptName]
+
+  if (terminal) {
+    selectedTerminalRunId.value = terminal.runId
+  }
+}
+
+function openTerminal(runId: string) {
+  if (scriptTerminals.value[runId]) {
+    selectedTerminalRunId.value = runId
+  }
+}
+
+function closeTerminalModal() {
+  selectedTerminalRunId.value = null
 }
 
 async function stopTerminal(runId: string) {
@@ -663,6 +741,10 @@ async function stopTerminal(runId: string) {
   const nextTerminals = { ...scriptTerminals.value }
   delete nextTerminals[terminal.runId]
   scriptTerminals.value = nextTerminals
+
+  if (selectedTerminalRunId.value === terminal.runId) {
+    selectedTerminalRunId.value = null
+  }
 }
 
 function handlePageExit() {
@@ -677,6 +759,7 @@ function handlePageExit() {
   }
 
   closeConfirmation(false)
+  closeTerminalModal()
   stopAutoRefreshTimer()
   stopOwnedScripts()
 }
@@ -746,6 +829,8 @@ onBeforeUnmount(() => {
           @commit-draft-change="updateCommitDraft"
           @run-script="runScript"
           @stop-script="stopScript"
+          @restart-script="restartScript"
+          @open-terminal="openScriptTerminal"
         />
       </div>
 
@@ -755,8 +840,18 @@ onBeforeUnmount(() => {
         :collapsed="areTerminalsCollapsed"
         @toggle="areTerminalsCollapsed = !areTerminalsCollapsed"
         @stop="stopTerminal"
+        @restart="restartTerminal"
+        @open="openTerminal"
       />
     </div>
+
+    <TerminalModal
+      v-if="selectedTerminal"
+      :terminal="selectedTerminal"
+      @close="closeTerminalModal"
+      @stop="stopTerminal"
+      @restart="restartTerminal"
+    />
 
     <div
       v-if="confirmationDialog"

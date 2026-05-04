@@ -161,6 +161,28 @@ async function deleteBranch(branchName: string) {
   }
 }
 
+async function syncBranch(branchName: string) {
+  if (!selectedDetails.value) {
+    return
+  }
+
+  isDetailLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    selectedDetails.value = await window.repositories.syncBranch({
+      repoPath: selectedDetails.value.path,
+      branchName,
+    })
+    await loadRepositories()
+  } catch (error) {
+    errorMessage.value = normalizeError(error)
+  } finally {
+    isDetailLoading.value = false
+    resetAutoRefreshTimer()
+  }
+}
+
 async function removeRepository(repoPath: string) {
   isLoading.value = true
   errorMessage.value = ''
@@ -362,6 +384,7 @@ onBeforeUnmount(() => {
           @back="closeDetails"
           @refresh="refreshSelectedRepository"
           @delete-branch="deleteBranch"
+          @sync-branch="syncBranch"
           @run-script="runScript"
           @stop-script="stopScript"
         />

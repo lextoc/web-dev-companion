@@ -1,5 +1,6 @@
 import { execFile, spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
+import os from 'node:os'
 import path from 'node:path'
 import { promisify } from 'node:util'
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
@@ -12,6 +13,7 @@ import type {
   GitStatusSummary,
   RepositoryDetails,
   RepositorySummary,
+  SyncBranchRequest,
   ScriptOutput,
   ScriptRunRequest,
 } from '../src/repositories'
@@ -88,12 +90,12 @@ async function normalizeRepositoryPath(repoPath: string) {
   return path.resolve(topLevelPath || resolvedPath)
 }
 
-async function runGit(repoPath: string, args: string[]) {
+async function runGit(repoPath: string, args: string[], timeout = 5000) {
   try {
     const { stdout } = await execFileAsync('git', args, {
       cwd: repoPath,
       encoding: 'utf8',
-      timeout: 5000,
+      timeout,
     })
 
     return stdout.trim()
@@ -414,6 +416,10 @@ function isConflictStatus(index: string, workingTree: string) {
   )
 }
 
+function hasStagedOrUnstagedChanges(gitStatus: GitStatusSummary) {
+  return gitStatus.staged.length > 0 || gitStatus.unstaged.length > 0 || gitStatus.conflicted.length > 0
+}
+
 async function readGitStatus(repoPath: string): Promise<GitStatusSummary> {
   const rawStatus = await tryRunGit(repoPath, ['status', '--porcelain=v1', '--branch'])
   const [branchLine = '', ...statusLines] = rawStatus.split('\n').filter(Boolean)
@@ -571,6 +577,53 @@ async function deleteBranch(request: DeleteBranchRequest): Promise<RepositoryDet
   return readRepositoryDetails(normalizedPath)
 }
 
+async function syncBranch(request: SyncBranchRequest): Promise<RepositoryDetails> {
+  const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+  const branchName = request.branchName.trim()
+
+  if (!branchName) {
+    throw new Error('Branch name is required.')
+  }
+
+  const [gitStatus, branches] = await Promise.all([readGitStatus(normalizedPath), readGitBranches(normalizedPath)])
+
+  if (hasStagedOrUnstagedChanges(gitStatus)) {
+    throw new Error('Commit, stash, or discard staged and unstaged changes before syncing branches.')
+  }
+
+  const branch = branches.find((entry) => entry.name === branchName)
+
+  if (!branch) {
+    throw new Error(`Branch "${branchName}" was not found.`)
+  }
+
+  if (!branch.upstream) {
+    throw new Error(`Branch "${branchName}" has no upstream remote branch.`)
+  }
+
+  if (branch.remoteGone) {
+    throw new Error(`Branch "${branchName}" tracks a remote branch that is gone.`)
+  }
+
+  if (branch.current) {
+    await runGit(normalizedPath, ['pull', '--ff-only'], 120000)
+    return readRepositoryDetails(normalizedPath)
+  }
+
+  const tempWorktreeRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'web-dev-companion-sync-'))
+  const tempWorktreePath = path.join(tempWorktreeRoot, 'worktree')
+
+  try {
+    await runGit(normalizedPath, ['worktree', 'add', tempWorktreePath, branchName], 120000)
+    await runGit(tempWorktreePath, ['pull', '--ff-only'], 120000)
+  } finally {
+    await runGit(normalizedPath, ['worktree', 'remove', '--force', tempWorktreePath], 120000).catch(() => undefined)
+    await fs.rm(tempWorktreeRoot, { recursive: true, force: true })
+  }
+
+  return readRepositoryDetails(normalizedPath)
+}
+
 async function listRepositories() {
   const repoPaths = await readRepositoryPaths()
   return Promise.all(repoPaths.map(readRepositorySummary))
@@ -617,6 +670,8 @@ function registerRepositoryHandlers() {
   ipcMain.handle('repositories:details', (_event, repoPath: string) => readRepositoryDetails(repoPath))
 
   ipcMain.handle('repositories:delete-branch', (_event, request: DeleteBranchRequest) => deleteBranch(request))
+
+  ipcMain.handle('repositories:sync-branch', (_event, request: SyncBranchRequest) => syncBranch(request))
 
   ipcMain.handle('repositories:start-script', (_event, request: ScriptRunRequest) => startScript(request))
 

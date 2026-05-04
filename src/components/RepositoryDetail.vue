@@ -21,6 +21,7 @@ defineEmits<{
   back: [];
   refresh: [];
   deleteBranch: [branchName: string];
+  syncBranch: [branchName: string];
   runScript: [scriptName: string];
   stopScript: [scriptName: string];
 }>();
@@ -60,6 +61,33 @@ function branchSyncLabel(branch: RepositoryDetails["gitBranches"][number]) {
   }
 
   return `${branch.behind} behind`;
+}
+
+function hasStagedOrUnstagedChanges(gitStatus: RepositoryDetails["gitStatus"]) {
+  return (
+    gitStatus.staged.length > 0 ||
+    gitStatus.unstaged.length > 0 ||
+    gitStatus.conflicted.length > 0
+  );
+}
+
+function branchSyncDisabledReason(
+  branch: RepositoryDetails["gitBranches"][number],
+  gitStatus: RepositoryDetails["gitStatus"],
+) {
+  if (hasStagedOrUnstagedChanges(gitStatus)) {
+    return "Commit, stash, or discard staged and unstaged changes before syncing.";
+  }
+
+  if (!branch.upstream) {
+    return "No upstream remote branch is configured.";
+  }
+
+  if (branch.remoteGone) {
+    return "Upstream remote branch is gone.";
+  }
+
+  return undefined;
 }
 </script>
 
@@ -192,7 +220,22 @@ function branchSyncLabel(branch: RepositoryDetails["gitBranches"][number]) {
                   </span>
                   <button
                     type="button"
-                    class="secondary branch-delete"
+                    class="secondary branch-action"
+                    :disabled="
+                      Boolean(branchSyncDisabledReason(branch, selectedDetails.gitStatus)) ||
+                      isDetailLoading
+                    "
+                    :title="
+                      branchSyncDisabledReason(branch, selectedDetails.gitStatus) ??
+                      'Run git pull --ff-only'
+                    "
+                    @click="$emit('syncBranch', branch.name)"
+                  >
+                    Sync
+                  </button>
+                  <button
+                    type="button"
+                    class="secondary branch-action"
                     :disabled="!branch.canDelete || isDetailLoading"
                     :title="branch.deleteReason ?? 'Delete local branch'"
                     @click="$emit('deleteBranch', branch.name)"

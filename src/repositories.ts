@@ -62,6 +62,11 @@ export interface DeleteBranchRequest {
   branchName: string
 }
 
+export interface SyncBranchRequest {
+  repoPath: string
+  branchName: string
+}
+
 export interface ScriptRunRequest {
   repoPath: string
   scriptName: string
@@ -99,6 +104,7 @@ export interface RepositoryApi {
   remove: (repoPath: string) => Promise<RepositorySummary[]>
   details: (repoPath: string) => Promise<RepositoryDetails>
   deleteBranch: (request: DeleteBranchRequest) => Promise<RepositoryDetails>
+  syncBranch: (request: SyncBranchRequest) => Promise<RepositoryDetails>
   startScript: (request: ScriptRunRequest) => Promise<ScriptRun>
   stopScript: (runId: string) => Promise<boolean>
   stopScripts: (runIds: string[]) => void

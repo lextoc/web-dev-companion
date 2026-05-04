@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import type { RepositorySummary } from '../repositories'
 import RepositoryCard from './RepositoryCard.vue'
 
-defineProps<{
+const props = defineProps<{
   repositories: RepositorySummary[]
   repoPathInput: string
   isLoading: boolean
@@ -15,6 +16,36 @@ defineEmits<{
   open: [repository: RepositorySummary]
   remove: [repoPath: string]
 }>()
+
+const searchQuery = ref('')
+const sortMode = ref<'dirty' | 'name' | 'scripts'>('dirty')
+
+const filteredRepositories = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+
+  return [...props.repositories]
+    .filter((repository) => {
+      if (!query) {
+        return true
+      }
+
+      return [repository.name, repository.path, repository.branch, repository.remote ?? '']
+        .some((value) => value.toLowerCase().includes(query))
+    })
+    .sort((repositoryA, repositoryB) => {
+      if (sortMode.value === 'name') {
+        return repositoryA.name.localeCompare(repositoryB.name)
+      }
+
+      if (sortMode.value === 'scripts') {
+        return repositoryB.npmScriptCount - repositoryA.npmScriptCount ||
+          repositoryA.name.localeCompare(repositoryB.name)
+      }
+
+      return Number(repositoryB.dirty) - Number(repositoryA.dirty) ||
+        repositoryA.name.localeCompare(repositoryB.name)
+    })
+})
 </script>
 
 <template>
@@ -45,14 +76,40 @@ defineEmits<{
       No repositories saved.
     </div>
 
-    <div v-else class="repo-grid">
-      <RepositoryCard
-        v-for="repository in repositories"
-        :key="repository.path"
-        :repository="repository"
-        @open="$emit('open', $event)"
-        @remove="$emit('remove', $event)"
-      />
-    </div>
+    <template v-else>
+      <div class="dashboard-toolbar">
+        <label>
+          <span>Search</span>
+          <input
+            v-model="searchQuery"
+            type="search"
+            placeholder="Repository, branch, or path"
+            autocomplete="off"
+          />
+        </label>
+        <label>
+          <span>Sort</span>
+          <select v-model="sortMode">
+            <option value="dirty">Changes first</option>
+            <option value="name">Name</option>
+            <option value="scripts">Script count</option>
+          </select>
+        </label>
+      </div>
+
+      <div v-if="filteredRepositories.length === 0" class="empty-state">
+        No repositories match this filter.
+      </div>
+
+      <div v-else class="repo-grid">
+        <RepositoryCard
+          v-for="repository in filteredRepositories"
+          :key="repository.path"
+          :repository="repository"
+          @open="$emit('open', $event)"
+          @remove="$emit('remove', $event)"
+        />
+      </div>
+    </template>
   </section>
 </template>

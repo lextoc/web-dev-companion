@@ -99,7 +99,9 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -166,6 +168,10 @@ button.secondary.active {
   grid-template-columns: minmax(0, 1fr) 320px;
   gap: 18px;
   align-items: start;
+}
+
+.app-layout.terminals-collapsed {
+  grid-template-columns: minmax(0, 1fr) 88px;
 }
 
 .main-pane {
@@ -301,6 +307,36 @@ h3 {
   color: var(--text);
 }
 
+.dashboard-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+  gap: 12px;
+  align-items: end;
+}
+
+.dashboard-toolbar label {
+  display: grid;
+  gap: 6px;
+}
+
+.dashboard-toolbar span {
+  color: var(--muted-strong);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.dashboard-toolbar input,
+.dashboard-toolbar select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--border-control);
+  border-radius: 7px;
+  padding: 0 12px;
+  background: var(--surface);
+  color: var(--text);
+}
+
 .empty-state {
   border: 1px dashed var(--border-muted);
   border-radius: 8px;
@@ -323,11 +359,17 @@ h3 {
   box-shadow: var(--shadow);
 }
 
+.active-terminals.collapsed {
+  justify-items: center;
+  padding: 10px;
+}
+
 .active-terminals-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  width: 100%;
 }
 
 .active-terminals-heading h2 {
@@ -345,6 +387,23 @@ h3 {
   color: var(--muted-strong);
   font-size: 0.82rem;
   font-weight: 900;
+}
+
+.terminal-collapse {
+  min-height: 30px;
+  padding: 0 9px;
+  font-size: 0.76rem;
+}
+
+.active-terminals.collapsed .active-terminals-heading {
+  display: grid;
+  justify-items: center;
+}
+
+.active-terminals.collapsed .terminal-collapse {
+  width: 100%;
+  min-width: 0;
+  padding: 0 4px;
 }
 
 .active-terminal-groups {
@@ -1260,6 +1319,10 @@ code {
     grid-template-columns: 1fr;
   }
 
+  .app-layout.terminals-collapsed {
+    grid-template-columns: 1fr;
+  }
+
   .active-terminals {
     position: static;
     max-height: none;
@@ -1283,6 +1346,7 @@ code {
 
   .summary-strip,
   .detail-layout,
+  .dashboard-toolbar,
   .script-row {
     grid-template-columns: 1fr;
   }
@@ -1316,6 +1380,10 @@ code {
 
 @media (min-width: 761px) and (max-width: 1180px) {
   .app-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .app-layout.terminals-collapsed {
     grid-template-columns: 1fr;
   }
 

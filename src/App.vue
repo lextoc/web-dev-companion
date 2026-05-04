@@ -23,6 +23,7 @@ const statusFeedbackMessage = ref<string | null>(null)
 const branchFeedbackMessages = ref<Record<string, string>>({})
 const commitClearToken = ref(0)
 const hasCommitDraft = ref(false)
+const areTerminalsCollapsed = ref(false)
 const autoRefreshRemainingMs = ref(AUTO_REFRESH_INTERVAL_MS)
 const scriptTerminals = ref<Record<string, ScriptTerminal>>({})
 let removeScriptOutputListener: (() => void) | undefined
@@ -499,7 +500,7 @@ onBeforeUnmount(() => {
 
     <p v-if="errorMessage" class="alert" role="alert">{{ errorMessage }}</p>
 
-    <div class="app-layout">
+    <div class="app-layout" :class="{ 'terminals-collapsed': areTerminalsCollapsed }">
       <div class="main-pane">
         <RepositoryDashboard
           v-if="!selectedPath"
@@ -541,7 +542,12 @@ onBeforeUnmount(() => {
         />
       </div>
 
-      <ActiveTerminalsSidebar :terminals="activeTerminals" @stop="stopTerminal" />
+      <ActiveTerminalsSidebar
+        :terminals="activeTerminals"
+        :collapsed="areTerminalsCollapsed"
+        @toggle="areTerminalsCollapsed = !areTerminalsCollapsed"
+        @stop="stopTerminal"
+      />
     </div>
   </main>
 </template>

@@ -6,6 +6,8 @@ import type { ChildProcessWithoutNullStreams } from 'node:child_process'
 import type { BrowserWindow as BrowserWindowType, OpenDialogOptions } from 'electron'
 import type {
   GitLogEntry,
+  GitStatusEntry,
+  GitStatusSummary,
   RepositoryDetails,
   RepositorySummary,
   ScriptOutput,
@@ -363,12 +365,100 @@ async function readGitLogEntries(repoPath: string): Promise<GitLogEntry[]> {
     })
 }
 
+const statusLabels: Record<string, string> = {
+  M: 'Modified',
+  A: 'Added',
+  D: 'Deleted',
+  R: 'Renamed',
+  C: 'Copied',
+  U: 'Unmerged',
+  '?': 'Untracked',
+}
+
+function statusLabel(statusCode: string) {
+  return statusLabels[statusCode] || 'Changed'
+}
+
+function parseStatusPath(rawPath: string) {
+  const renameSeparator = ' -> '
+
+  if (!rawPath.includes(renameSeparator)) {
+    return { path: rawPath }
+  }
+
+  const [originalPath, ...nextPathParts] = rawPath.split(renameSeparator)
+
+  return {
+    originalPath,
+    path: nextPathParts.join(renameSeparator),
+  }
+}
+
+function makeStatusEntry(index: string, workingTree: string, rawPath: string, labelCode: string): GitStatusEntry {
+  return {
+    ...parseStatusPath(rawPath),
+    index,
+    workingTree,
+    label: statusLabel(labelCode),
+  }
+}
+
+function isConflictStatus(index: string, workingTree: string) {
+  return (
+    index === 'U' ||
+    workingTree === 'U' ||
+    (index === 'A' && workingTree === 'A') ||
+    (index === 'D' && workingTree === 'D')
+  )
+}
+
+async function readGitStatus(repoPath: string): Promise<GitStatusSummary> {
+  const rawStatus = await tryRunGit(repoPath, ['status', '--porcelain=v1', '--branch'])
+  const [branchLine = '', ...statusLines] = rawStatus.split('\n').filter(Boolean)
+  const branch = branchLine.startsWith('## ') ? branchLine.slice(3) : branchLine || 'unknown'
+  const summary: GitStatusSummary = {
+    branch,
+    clean: statusLines.length === 0,
+    staged: [],
+    unstaged: [],
+    untracked: [],
+    conflicted: [],
+    raw: rawStatus || 'Working tree clean.',
+  }
+
+  for (const statusLine of statusLines) {
+    const index = statusLine[0] || ' '
+    const workingTree = statusLine[1] || ' '
+    const rawPath = statusLine.slice(3)
+
+    if (index === '?' && workingTree === '?') {
+      summary.untracked.push(makeStatusEntry(index, workingTree, rawPath, '?'))
+      continue
+    }
+
+    if (isConflictStatus(index, workingTree)) {
+      summary.conflicted.push(makeStatusEntry(index, workingTree, rawPath, 'U'))
+      continue
+    }
+
+    if (index !== ' ') {
+      summary.staged.push(makeStatusEntry(index, workingTree, rawPath, index))
+    }
+
+    if (workingTree !== ' ') {
+      summary.unstaged.push(makeStatusEntry(index, workingTree, rawPath, workingTree))
+    }
+  }
+
+  return summary
+}
+
 async function readRepositoryDetails(repoPath: string): Promise<RepositoryDetails> {
   const normalizedPath = await normalizeRepositoryPath(repoPath)
   const [summary, gitLog, gitStatus, remotes, npmScripts, packageManager] = await Promise.all([
     readRepositorySummary(normalizedPath),
     readGitLogEntries(normalizedPath),
-    tryRunGit(normalizedPath, ['status', '--short', '--branch']),
+    readGitStatus(normalizedPath),
     tryRunGit(normalizedPath, ['remote', '-v']),
     readPackageScripts(normalizedPath),
     detectPackageManager(normalizedPath),
@@ -377,7 +467,7 @@ async function readRepositoryDetails(repoPath: string): Promise<RepositoryDetail
   return {
     ...summary,
     gitLog,
-    gitStatus: gitStatus || 'Working tree clean.',
+    gitStatus,
     remotes: remotes || 'No git remotes configured.',
     npmScripts,
     packageManager,

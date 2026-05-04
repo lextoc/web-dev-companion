@@ -18,9 +18,27 @@ export interface GitLogEntry {
   message: string
 }
 
+export interface GitStatusEntry {
+  path: string
+  originalPath?: string
+  index: string
+  workingTree: string
+  label: string
+}
+
+export interface GitStatusSummary {
+  branch: string
+  clean: boolean
+  staged: GitStatusEntry[]
+  unstaged: GitStatusEntry[]
+  untracked: GitStatusEntry[]
+  conflicted: GitStatusEntry[]
+  raw: string
+}
+
 export interface RepositoryDetails extends RepositorySummary {
   gitLog: GitLogEntry[]
-  gitStatus: string
+  gitStatus: GitStatusSummary
   remotes: string
   npmScripts: Record<string, string>
   packageManager?: string

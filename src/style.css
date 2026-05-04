@@ -208,6 +208,7 @@ button.secondary:hover:not(:disabled) {
 h1,
 h2,
 h3,
+h4,
 p {
   margin-top: 0;
 }
@@ -715,6 +716,122 @@ pre {
 
 .compact-empty {
   padding: 24px 14px;
+}
+
+.git-status-card {
+  display: grid;
+  gap: 12px;
+}
+
+.git-status-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--surface);
+}
+
+.git-status-summary span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.git-status-summary strong {
+  flex: 0 0 auto;
+  color: var(--muted-strong);
+  font-size: 0.82rem;
+}
+
+.git-status-groups {
+  display: grid;
+  gap: 10px;
+}
+
+.git-status-group {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--surface);
+}
+
+.git-status-group.empty {
+  background: var(--surface-soft);
+}
+
+.git-status-group-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.git-status-group-heading h4 {
+  margin-bottom: 0;
+  font-size: 0.86rem;
+}
+
+.git-status-group-heading span {
+  display: grid;
+  min-width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.git-status-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.git-status-list li {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  border-radius: 7px;
+  padding: 8px;
+  background: var(--surface-soft);
+}
+
+.git-status-list code {
+  color: var(--muted-strong);
+  font-size: 0.76rem;
+  white-space: pre;
+}
+
+.git-status-list strong,
+.git-status-list small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.git-status-list strong {
+  font-size: 0.86rem;
+}
+
+.git-status-list small,
+.git-status-group p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
 }
 
 .script-list {

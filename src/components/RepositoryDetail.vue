@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type {
+  GitStatusEntry,
   RepositoryDetails,
   RepositorySummary,
   ScriptTerminal,
@@ -22,6 +23,19 @@ defineEmits<{
   runScript: [scriptName: string];
   stopScript: [scriptName: string];
 }>();
+
+function statusGroups(gitStatus: RepositoryDetails["gitStatus"]) {
+  return [
+    { key: "conflicted", label: "Conflicts", entries: gitStatus.conflicted },
+    { key: "staged", label: "Staged", entries: gitStatus.staged },
+    { key: "unstaged", label: "Unstaged", entries: gitStatus.unstaged },
+    { key: "untracked", label: "Untracked", entries: gitStatus.untracked },
+  ];
+}
+
+function statusCode(entry: GitStatusEntry) {
+  return `${entry.index}${entry.workingTree}`;
+}
 </script>
 
 <template>
@@ -117,7 +131,51 @@ defineEmits<{
           <div class="panel-heading">
             <h3>Status</h3>
           </div>
-          <pre>{{ selectedDetails.gitStatus }}</pre>
+          <div class="git-status-card">
+            <div class="git-status-summary">
+              <span>{{ selectedDetails.gitStatus.branch }}</span>
+              <strong>
+                {{
+                  selectedDetails.gitStatus.clean
+                    ? "Working tree clean"
+                    : "Working tree has changes"
+                }}
+              </strong>
+            </div>
+
+            <div v-if="selectedDetails.gitStatus.clean" class="empty-state compact-empty">
+              No staged, unstaged, or untracked changes.
+            </div>
+
+            <div v-else class="git-status-groups">
+              <section
+                v-for="group in statusGroups(selectedDetails.gitStatus)"
+                :key="group.key"
+                class="git-status-group"
+                :class="{ empty: group.entries.length === 0 }"
+              >
+                <div class="git-status-group-heading">
+                  <h4>{{ group.label }}</h4>
+                  <span>{{ group.entries.length }}</span>
+                </div>
+
+                <ul v-if="group.entries.length > 0" class="git-status-list">
+                  <li v-for="entry in group.entries" :key="`${group.key}-${entry.path}`">
+                    <code>{{ statusCode(entry) }}</code>
+                    <div>
+                      <strong>{{ entry.path }}</strong>
+                      <small v-if="entry.originalPath">
+                        from {{ entry.originalPath }}
+                      </small>
+                      <small>{{ entry.label }}</small>
+                    </div>
+                  </li>
+                </ul>
+
+                <p v-else>No {{ group.label.toLowerCase() }} changes.</p>
+              </section>
+            </div>
+          </div>
         </section>
 
         <NpmScriptsPanel

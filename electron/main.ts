@@ -3,6 +3,7 @@ import type { BrowserWindow as BrowserWindowType, OpenDialogOptions } from 'elec
 import type {
   CommitRequest,
   DeleteBranchRequest,
+  RepositoryActionRequest,
   ScriptOutput,
   ScriptRunRequest,
   StatusFileRequest,
@@ -11,7 +12,7 @@ import type {
 import { createRepositoryService } from './repository-service'
 import { createScriptRunner } from './script-runner'
 
-const { app, BrowserWindow, dialog, ipcMain } = require('electron') as typeof import('electron')
+const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron') as typeof import('electron')
 const currentDirectory = __dirname
 const repositoriesFileName = 'repositories.json'
 
@@ -51,7 +52,7 @@ function sendScriptOutput(output: ScriptOutput) {
   }
 }
 
-const repositoryService = createRepositoryService(repositoriesFilePath)
+const repositoryService = createRepositoryService(repositoriesFilePath, shell)
 const scriptRunner = createScriptRunner({ sendOutput: sendScriptOutput })
 
 function registerRepositoryHandlers() {
@@ -72,6 +73,15 @@ function registerRepositoryHandlers() {
     repositoryService.unstageFiles(request),
   )
   ipcMain.handle('repositories:commit', (_event, request: CommitRequest) => repositoryService.commit(request))
+  ipcMain.handle('repositories:open-in-file-manager', (_event, request: RepositoryActionRequest) =>
+    repositoryService.openInFileManager(request),
+  )
+  ipcMain.handle('repositories:open-in-editor', (_event, request: RepositoryActionRequest) =>
+    repositoryService.openInEditor(request),
+  )
+  ipcMain.handle('repositories:open-in-terminal', (_event, request: RepositoryActionRequest) =>
+    repositoryService.openInTerminal(request),
+  )
   ipcMain.handle('repositories:start-script', (_event, request: ScriptRunRequest) => scriptRunner.startScript(request))
   ipcMain.handle('repositories:stop-script', (_event, runId: string) => scriptRunner.stopScript(runId))
   ipcMain.handle('repositories:choose-and-add', chooseAndAddRepository)

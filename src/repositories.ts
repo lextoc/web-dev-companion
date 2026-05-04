@@ -77,6 +77,11 @@ export interface CommitRequest {
   message: string
 }
 
+export interface RepositoryActionRequest {
+  repoPath: string
+  editorCommand?: string
+}
+
 export interface ScriptRunRequest {
   repoPath: string
   scriptName: string
@@ -118,6 +123,9 @@ export interface RepositoryApi {
   stageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
   unstageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
   commit: (request: CommitRequest) => Promise<RepositoryDetails>
+  openInFileManager: (request: RepositoryActionRequest) => Promise<boolean>
+  openInEditor: (request: RepositoryActionRequest) => Promise<boolean>
+  openInTerminal: (request: RepositoryActionRequest) => Promise<boolean>
   startScript: (request: ScriptRunRequest) => Promise<ScriptRun>
   stopScript: (runId: string) => Promise<boolean>
   stopScripts: (runIds: string[]) => void

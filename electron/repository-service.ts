@@ -1,9 +1,11 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { spawn } from 'node:child_process'
 import type {
   CommitRequest,
   DeleteBranchRequest,
   RepositoryDetails,
+  RepositoryActionRequest,
   RepositorySummary,
   StatusFileRequest,
   SyncBranchRequest,
@@ -21,7 +23,35 @@ import {
   tryRunGit,
 } from './git'
 
-export function createRepositoryService(repositoriesFilePath: () => string) {
+type ElectronShell = typeof import('electron').shell
+
+function launchDetached(command: string, args: string[], cwd?: string) {
+  return new Promise<void>((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd,
+      detached: true,
+      stdio: 'ignore',
+    })
+
+    child.once('error', reject)
+    child.once('spawn', () => {
+      child.unref()
+      resolve()
+    })
+  })
+}
+
+function editorCommand(requestedCommand: string | undefined) {
+  const command = requestedCommand?.trim() || process.env.VISUAL || process.env.EDITOR || 'code'
+
+  if (!command || command.includes('/') || command.includes('\\')) {
+    return command
+  }
+
+  return command
+}
+
+export function createRepositoryService(repositoriesFilePath: () => string, shell: ElectronShell) {
   async function readRepositoryPaths() {
     try {
       const content = await fs.readFile(repositoriesFilePath(), 'utf8')
@@ -123,6 +153,40 @@ export function createRepositoryService(repositoriesFilePath: () => string) {
     await writeRepositoryPaths(repoPaths.filter((savedPath) => savedPath !== repoPath))
 
     return listRepositories()
+  }
+
+  async function openInFileManager(request: RepositoryActionRequest) {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+    const errorMessage = await shell.openPath(normalizedPath)
+
+    if (errorMessage) {
+      throw new Error(errorMessage)
+    }
+
+    return true
+  }
+
+  async function openInEditor(request: RepositoryActionRequest) {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+    await launchDetached(editorCommand(request.editorCommand), [normalizedPath], normalizedPath)
+    return true
+  }
+
+  async function openInTerminal(request: RepositoryActionRequest) {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+
+    if (process.platform === 'darwin') {
+      await launchDetached('open', ['-a', 'Terminal', normalizedPath], normalizedPath)
+      return true
+    }
+
+    if (process.platform === 'win32') {
+      await launchDetached('wt', ['-d', normalizedPath], normalizedPath)
+      return true
+    }
+
+    await launchDetached(process.env.TERMINAL || 'x-terminal-emulator', [], normalizedPath)
+    return true
   }
 
   async function deleteBranch(request: DeleteBranchRequest): Promise<RepositoryDetails> {
@@ -262,6 +326,9 @@ export function createRepositoryService(repositoriesFilePath: () => string) {
     commit,
     deleteBranch,
     listRepositories,
+    openInEditor,
+    openInFileManager,
+    openInTerminal,
     readRepositoryDetails,
     removeRepository,
     stageFiles,

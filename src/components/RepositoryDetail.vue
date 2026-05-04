@@ -313,21 +313,6 @@ function branchSyncTitle(
     </div>
 
     <template v-else-if="selectedDetails">
-      <div class="summary-strip">
-        <div>
-          <span>Branch</span>
-          <strong>{{ selectedDetails.branch }}</strong>
-        </div>
-        <div>
-          <span>Latest</span>
-          <strong>{{ selectedDetails.lastCommit }}</strong>
-        </div>
-        <div>
-          <span>Package</span>
-          <strong>{{ selectedDetails.packageManager ?? "none" }}</strong>
-        </div>
-      </div>
-
       <div class="detail-layout">
         <section class="detail-panel git-overview-panel git-log-panel">
           <div class="panel-heading">

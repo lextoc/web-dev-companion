@@ -181,7 +181,7 @@ button.danger:hover:not(:disabled) {
 
 .app-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) 360px;
   gap: 18px;
   align-items: start;
 }
@@ -470,7 +470,7 @@ h3 {
   position: sticky;
   top: 24px;
   display: grid;
-  gap: 14px;
+  gap: 12px;
   max-height: calc(100vh - 48px);
   overflow: auto;
   border: 1px solid var(--border);
@@ -490,16 +490,25 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
+}
+
+.active-terminals-title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
 }
 
 .active-terminals-heading h2 {
   margin: 0;
   font-size: 1rem;
+  white-space: nowrap;
 }
 
-.active-terminals-heading span {
+.active-terminals-title span,
+.active-terminal-count {
   display: grid;
   min-width: 28px;
   height: 28px;
@@ -513,6 +522,7 @@ h3 {
 
 .terminal-collapse {
   min-height: 30px;
+  flex: 0 0 auto;
   padding: 0 9px;
   font-size: 0.76rem;
 }
@@ -620,9 +630,29 @@ h3 {
   gap: 8px;
 }
 
+.active-terminal-group-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .active-terminal-group h3 {
+  min-width: 0;
+  overflow: hidden;
   color: var(--brand);
   font-size: 0.82rem;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.active-terminal-group-heading span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
   text-transform: uppercase;
 }
 
@@ -634,21 +664,30 @@ h3 {
 .active-terminal-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: center;
+  gap: 10px;
+  align-items: start;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px;
   background: var(--surface-soft);
 }
 
-.active-terminal-item div {
+.active-terminal-main {
+  display: grid;
+  gap: 4px;
   min-width: 0;
 }
 
+.active-terminal-item-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
 .active-terminal-item strong,
-.active-terminal-item code {
-  display: block;
+.active-terminal-item code,
+.active-terminal-item p {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -656,17 +695,31 @@ h3 {
 }
 
 .active-terminal-item strong {
+  display: block;
   color: var(--text);
   font-size: 0.92rem;
 }
 
 .active-terminal-item code {
-  margin-top: 2px;
+  display: block;
   color: var(--muted);
   font-size: 0.76rem;
 }
 
+.active-terminal-item p {
+  margin: 0;
+  border-left: 2px solid var(--terminal-border);
+  padding-left: 7px;
+  color: var(--muted-strong);
+  font-size: 0.76rem;
+}
+
+.active-terminal-item p.empty {
+  color: var(--muted);
+}
+
 .active-terminal-status {
+  flex: 0 0 auto;
   border-radius: 999px;
   padding: 3px 7px;
   background: var(--warning-soft);
@@ -681,8 +734,20 @@ h3 {
 }
 
 .active-terminal-item .terminal-stop {
-  grid-column: 1 / -1;
-  width: 100%;
+  min-height: 34px;
+  padding: 0 11px;
+}
+
+.terminal-stop.secondary {
+  border-color: var(--border-control);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.terminal-stop.secondary:hover:not(:disabled) {
+  border-color: var(--border-control);
+  background: var(--surface-subtle);
+  color: var(--text);
 }
 
 .active-terminals-empty {

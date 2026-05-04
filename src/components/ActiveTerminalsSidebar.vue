@@ -9,6 +9,13 @@ interface ActivityItem {
   tone: 'success' | 'info'
 }
 
+interface TerminalGroup {
+  repoName: string
+  runningCount: number
+  doneCount: number
+  terminals: ScriptTerminal[]
+}
+
 const props = defineProps<{
   terminals: ScriptTerminal[]
   activityItems: ActivityItem[]
@@ -20,7 +27,7 @@ defineEmits<{
   stop: [runId: string]
 }>()
 
-const terminalGroups = computed(() => {
+const terminalGroups = computed<TerminalGroup[]>(() => {
   const groups = new Map<string, ScriptTerminal[]>()
 
   for (const terminal of props.terminals) {
@@ -33,8 +40,11 @@ const terminalGroups = computed(() => {
     .sort(([repoNameA], [repoNameB]) => repoNameA.localeCompare(repoNameB))
     .map(([repoName, terminals]) => ({
       repoName,
+      runningCount: terminals.filter((terminal) => terminal.isRunning).length,
+      doneCount: terminals.filter((terminal) => !terminal.isRunning).length,
       terminals: [...terminals].sort((terminalA, terminalB) =>
-        terminalA.scriptName.localeCompare(terminalB.scriptName),
+        Number(terminalB.isRunning) - Number(terminalA.isRunning)
+        || terminalA.scriptName.localeCompare(terminalB.scriptName),
       ),
     }))
 })
@@ -42,16 +52,35 @@ const terminalGroups = computed(() => {
 const runningTerminalCount = computed(() =>
   props.terminals.filter((terminal) => terminal.isRunning).length,
 )
+const doneTerminalCount = computed(() => props.terminals.length - runningTerminalCount.value)
+
+function getTerminalPreview(terminal: ScriptTerminal) {
+  const outputLines = terminal.output
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+  const lastLine = outputLines[outputLines.length - 1]
+
+  if (lastLine) {
+    return lastLine
+  }
+
+  return terminal.isRunning ? 'Waiting for output...' : 'No output captured.'
+}
 </script>
 
 <template>
   <aside class="active-terminals" :class="{ collapsed }" aria-label="Active terminal scripts">
     <div class="active-terminals-heading">
-      <h2 v-if="!collapsed">Active terminals</h2>
-      <span>{{ terminals.length }}</span>
+      <div v-if="!collapsed" class="active-terminals-title">
+        <h2>Active terminals</h2>
+        <span>{{ terminals.length }}</span>
+      </div>
+      <span v-else class="active-terminal-count">{{ terminals.length }}</span>
       <button
         type="button"
         class="secondary terminal-collapse"
+        :aria-label="collapsed ? 'Show active terminals' : 'Hide active terminals'"
         :title="collapsed ? 'Show active terminals' : 'Hide active terminals'"
         @click="$emit('toggle')"
       >
@@ -63,31 +92,38 @@ const runningTerminalCount = computed(() =>
       <span class="terminal-mini-dot" :class="{ running: runningTerminalCount > 0 }"></span>
       <strong>{{ runningTerminalCount }}</strong>
       <small>running</small>
+      <small v-if="doneTerminalCount">{{ doneTerminalCount }} done</small>
     </div>
-
-    <section v-if="activityItems.length && !collapsed" class="activity-log">
-      <h3>Activity</h3>
-      <ol>
-        <li v-for="activity in activityItems" :key="activity.id" :class="activity.tone">
-          <span>{{ activity.message }}</span>
-          <time>{{ activity.time }}</time>
-        </li>
-      </ol>
-    </section>
 
     <div v-if="terminalGroups.length && !collapsed" class="active-terminal-groups">
       <section v-for="group in terminalGroups" :key="group.repoName" class="active-terminal-group">
-        <h3>{{ group.repoName }}</h3>
+        <div class="active-terminal-group-heading">
+          <h3>{{ group.repoName }}</h3>
+          <span>
+            {{ group.runningCount }} running
+            <template v-if="group.doneCount"> &middot; {{ group.doneCount }} done</template>
+          </span>
+        </div>
         <div class="active-terminal-list">
           <article v-for="terminal in group.terminals" :key="terminal.runId" class="active-terminal-item">
-            <div>
-              <strong>{{ terminal.scriptName }}</strong>
+            <div class="active-terminal-main">
+              <div class="active-terminal-item-heading">
+                <strong>{{ terminal.scriptName }}</strong>
+                <span class="active-terminal-status" :class="{ done: !terminal.isRunning }">
+                  {{ terminal.isRunning ? 'Running' : 'Done' }}
+                </span>
+              </div>
               <code>{{ terminal.command }}</code>
+              <p :class="{ empty: !terminal.output.trim() }">
+                {{ getTerminalPreview(terminal) }}
+              </p>
             </div>
-            <span class="active-terminal-status" :class="{ done: !terminal.isRunning }">
-              {{ terminal.isRunning ? 'Running' : 'Done' }}
-            </span>
-            <button type="button" class="terminal-stop" @click="$emit('stop', terminal.runId)">
+            <button
+              type="button"
+              class="terminal-stop"
+              :class="{ secondary: !terminal.isRunning }"
+              @click="$emit('stop', terminal.runId)"
+            >
               {{ terminal.isRunning ? 'Stop' : 'Close' }}
             </button>
           </article>
@@ -95,6 +131,16 @@ const runningTerminalCount = computed(() =>
       </section>
     </div>
 
-    <p v-else-if="!collapsed" class="active-terminals-empty">No active terminals.</p>
+    <p v-else-if="!collapsed" class="active-terminals-empty">No terminal sessions.</p>
+
+    <section v-if="activityItems.length && !collapsed" class="activity-log">
+      <h3>Recent activity</h3>
+      <ol>
+        <li v-for="activity in activityItems" :key="activity.id" :class="activity.tone">
+          <span>{{ activity.message }}</span>
+          <time>{{ activity.time }}</time>
+        </li>
+      </ol>
+    </section>
   </aside>
 </template>

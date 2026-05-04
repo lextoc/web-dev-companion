@@ -611,6 +611,19 @@ h3 {
   font-weight: 900;
 }
 
+.branch-pill {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .status-pill.dirty {
   background: var(--warning-soft);
   color: var(--warning-text);
@@ -691,6 +704,15 @@ h3 {
   gap: 24px;
   border-top: 1px solid var(--border-soft);
   padding-top: 12px;
+}
+
+.detail-header-pills {
+  display: flex;
+  min-width: 0;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .detail-layout {

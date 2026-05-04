@@ -302,9 +302,12 @@ function branchSyncTitle(
           <p class="repo-path">{{ selectedDetails.path }}</p>
           <h2>{{ selectedDetails.name }}</h2>
         </div>
-        <span class="status-pill" :class="{ dirty: selectedDetails.dirty }">
-          {{ selectedDetails.dirty ? "Changes" : "Clean" }}
-        </span>
+        <div class="detail-header-pills">
+          <span class="branch-pill">{{ selectedDetails.branch }}</span>
+          <span class="status-pill" :class="{ dirty: selectedDetails.dirty }">
+            {{ selectedDetails.dirty ? "Changes" : "Clean" }}
+          </span>
+        </div>
       </header>
     </div>
 

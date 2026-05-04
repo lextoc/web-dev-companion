@@ -13,6 +13,7 @@ defineProps<{
   isDetailLoading: boolean;
   autoRefreshLabel: string;
   autoRefreshProgress: number;
+  syncingBranchName: string | null;
   npmScripts: [string, string][];
   scriptTerminalsByScript: Record<string, ScriptTerminal>;
 }>();
@@ -88,6 +89,22 @@ function branchSyncDisabledReason(
   }
 
   return undefined;
+}
+
+function isSyncingBranch(branchName: string, syncingBranchName: string | null) {
+  return syncingBranchName === branchName;
+}
+
+function branchSyncTitle(
+  branch: RepositoryDetails["gitBranches"][number],
+  gitStatus: RepositoryDetails["gitStatus"],
+  syncingBranchName: string | null,
+) {
+  if (isSyncingBranch(branch.name, syncingBranchName)) {
+    return `Syncing ${branch.name}`;
+  }
+
+  return branchSyncDisabledReason(branch, gitStatus) ?? "Run git pull --ff-only";
 }
 </script>
 
@@ -201,6 +218,9 @@ function branchSyncDisabledReason(
                 <h4>Local branches</h4>
                 <span>{{ selectedDetails.gitBranches.length }}</span>
               </div>
+              <p v-if="syncingBranchName" class="branch-pending">
+                Syncing {{ syncingBranchName }}...
+              </p>
 
               <ul v-if="selectedDetails.gitBranches.length > 0" class="git-branch-list">
                 <li
@@ -221,17 +241,16 @@ function branchSyncDisabledReason(
                   <button
                     type="button"
                     class="secondary branch-action"
+                    :class="{ pending: isSyncingBranch(branch.name, syncingBranchName) }"
                     :disabled="
                       Boolean(branchSyncDisabledReason(branch, selectedDetails.gitStatus)) ||
                       isDetailLoading
                     "
-                    :title="
-                      branchSyncDisabledReason(branch, selectedDetails.gitStatus) ??
-                      'Run git pull --ff-only'
-                    "
+                    :title="branchSyncTitle(branch, selectedDetails.gitStatus, syncingBranchName)"
+                    :aria-busy="isSyncingBranch(branch.name, syncingBranchName)"
                     @click="$emit('syncBranch', branch.name)"
                   >
-                    Sync
+                    {{ isSyncingBranch(branch.name, syncingBranchName) ? "Syncing..." : "Sync" }}
                   </button>
                   <button
                     type="button"

@@ -15,6 +15,7 @@ const repoPathInput = ref('')
 const errorMessage = ref('')
 const isLoading = ref(false)
 const isDetailLoading = ref(false)
+const syncingBranchName = ref<string | null>(null)
 const autoRefreshRemainingMs = ref(AUTO_REFRESH_INTERVAL_MS)
 const scriptTerminals = ref<Record<string, ScriptTerminal>>({})
 let removeScriptOutputListener: (() => void) | undefined
@@ -167,6 +168,7 @@ async function syncBranch(branchName: string) {
   }
 
   isDetailLoading.value = true
+  syncingBranchName.value = branchName
   errorMessage.value = ''
 
   try {
@@ -179,6 +181,7 @@ async function syncBranch(branchName: string) {
     errorMessage.value = normalizeError(error)
   } finally {
     isDetailLoading.value = false
+    syncingBranchName.value = null
     resetAutoRefreshTimer()
   }
 }
@@ -379,6 +382,7 @@ onBeforeUnmount(() => {
           :is-detail-loading="isDetailLoading"
           :auto-refresh-label="autoRefreshLabel"
           :auto-refresh-progress="autoRefreshProgress"
+          :syncing-branch-name="syncingBranchName"
           :npm-scripts="npmScripts"
           :script-terminals-by-script="currentRepoScriptTerminals"
           @back="closeDetails"

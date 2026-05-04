@@ -1,6 +1,5 @@
 import { execFile, spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
-import os from 'node:os'
 import path from 'node:path'
 import { promisify } from 'node:util'
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
@@ -420,6 +419,15 @@ function hasStagedOrUnstagedChanges(gitStatus: GitStatusSummary) {
   return gitStatus.staged.length > 0 || gitStatus.unstaged.length > 0 || gitStatus.conflicted.length > 0
 }
 
+async function isGitAncestor(repoPath: string, ancestor: string, descendant: string) {
+  try {
+    await runGit(repoPath, ['merge-base', '--is-ancestor', ancestor, descendant])
+    return true
+  } catch {
+    return false
+  }
+}
+
 async function readGitStatus(repoPath: string): Promise<GitStatusSummary> {
   const rawStatus = await tryRunGit(repoPath, ['status', '--porcelain=v1', '--branch'])
   const [branchLine = '', ...statusLines] = rawStatus.split('\n').filter(Boolean)
@@ -610,16 +618,27 @@ async function syncBranch(request: SyncBranchRequest): Promise<RepositoryDetails
     return readRepositoryDetails(normalizedPath)
   }
 
-  const tempWorktreeRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'web-dev-companion-sync-'))
-  const tempWorktreePath = path.join(tempWorktreeRoot, 'worktree')
+  const remoteName = await runGit(normalizedPath, ['config', '--get', `branch.${branchName}.remote`])
 
-  try {
-    await runGit(normalizedPath, ['worktree', 'add', tempWorktreePath, branchName], 120000)
-    await runGit(tempWorktreePath, ['pull', '--ff-only'], 120000)
-  } finally {
-    await runGit(normalizedPath, ['worktree', 'remove', '--force', tempWorktreePath], 120000).catch(() => undefined)
-    await fs.rm(tempWorktreeRoot, { recursive: true, force: true })
+  if (!remoteName || remoteName === '.') {
+    throw new Error(`Branch "${branchName}" does not track a remote branch.`)
   }
+
+  await runGit(normalizedPath, ['fetch', remoteName], 120000)
+
+  const branchRef = `refs/heads/${branchName}`
+  const localCommit = await runGit(normalizedPath, ['rev-parse', '--verify', branchRef])
+  const upstreamCommit = await runGit(normalizedPath, ['rev-parse', '--verify', `${branchName}@{upstream}`])
+
+  if (localCommit === upstreamCommit || (await isGitAncestor(normalizedPath, upstreamCommit, localCommit))) {
+    return readRepositoryDetails(normalizedPath)
+  }
+
+  if (!(await isGitAncestor(normalizedPath, localCommit, upstreamCommit))) {
+    throw new Error(`Branch "${branchName}" cannot be fast-forwarded from ${branch.upstream}.`)
+  }
+
+  await runGit(normalizedPath, ['update-ref', branchRef, upstreamCommit, localCommit], 120000)
 
   return readRepositoryDetails(normalizedPath)
 }

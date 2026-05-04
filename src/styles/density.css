@@ -1,0 +1,106 @@
+:root[data-density="compact"] button {
+  min-height: 36px;
+}
+
+:root[data-density="compact"] .app-shell {
+  padding: 22px;
+}
+
+:root[data-density="compact"] .top-bar {
+  margin-bottom: 18px;
+}
+
+:root[data-density="compact"] .dashboard,
+:root[data-density="compact"] .detail-view {
+  gap: 14px;
+}
+
+:root[data-density="compact"] .repo-grid,
+:root[data-density="compact"] .repo-skeleton-grid,
+:root[data-density="compact"] .detail-layout,
+:root[data-density="compact"] .script-list {
+  gap: 10px;
+}
+
+:root[data-density="compact"] .repo-grid,
+:root[data-density="compact"] .repo-skeleton-grid {
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+:root[data-density="compact"] .add-repo {
+  padding: 12px 0;
+}
+
+:root[data-density="compact"] .repo-card-main {
+  min-height: 180px;
+  gap: 7px;
+  padding: 38px 42px 12px 14px;
+}
+
+:root[data-density="compact"] .repo-quick-actions {
+  gap: 6px;
+  padding: 8px;
+}
+
+:root[data-density="compact"] .repo-quick-actions button,
+:root[data-density="compact"] .detail-quick-actions button,
+:root[data-density="compact"] .branch-action,
+:root[data-density="compact"] .status-action {
+  min-height: 28px;
+}
+
+:root[data-density="compact"] .detail-sticky-bar,
+:root[data-density="compact"] .detail-panel,
+:root[data-density="compact"] .git-branches,
+:root[data-density="compact"] .git-status-group,
+:root[data-density="compact"] .commit-form {
+  padding: 9px;
+}
+
+:root[data-density="compact"] .detail-sticky-bar,
+:root[data-density="compact"] .detail-panel,
+:root[data-density="compact"] .git-status-card,
+:root[data-density="compact"] .git-status-groups,
+:root[data-density="compact"] .git-branches {
+  gap: 8px;
+}
+
+:root[data-density="compact"] .git-overview-panel {
+  height: 540px;
+}
+
+:root[data-density="compact"] .git-log-table th,
+:root[data-density="compact"] .git-log-table td,
+:root[data-density="compact"] .git-status-list li,
+:root[data-density="compact"] .git-branch-list li {
+  padding: 6px;
+}
+
+:root[data-density="compact"] .script-item,
+:root[data-density="compact"] .script-terminal {
+  max-height: 190px;
+}
+
+:root[data-density="compact"] .script-item {
+  height: 190px;
+}
+
+:root[data-density="compact"] .script-row,
+:root[data-density="compact"] .script-terminal {
+  gap: 6px;
+  padding: 8px;
+}
+
+:root[data-density="compact"] .active-terminals {
+  gap: 10px;
+  padding: 10px;
+}
+
+:root[data-density="compact"] .active-terminal-item {
+  gap: 8px;
+  padding: 8px;
+}
+
+:root[data-density="compact"] .terminal-modal {
+  height: min(680px, calc(100vh - 48px));
+}

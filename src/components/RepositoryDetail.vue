@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import type {
   GitStatusEntry,
   RepositoryDetails,
@@ -8,7 +8,7 @@ import type {
 } from "../repositories";
 import NpmScriptsPanel from "./NpmScriptsPanel.vue";
 
-defineProps<{
+const props = defineProps<{
   selectedDetails: RepositoryDetails | null;
   selectedSummary?: RepositorySummary;
   isDetailLoading: boolean;
@@ -16,6 +16,7 @@ defineProps<{
   autoRefreshProgress: number;
   syncingBranchName: string | null;
   statusActionLabel: string | null;
+  commitClearToken: number;
   npmScripts: [string, string][];
   scriptTerminalsByScript: Record<string, ScriptTerminal>;
 }>();
@@ -33,6 +34,13 @@ const emit = defineEmits<{
 }>();
 
 const commitMessage = ref("");
+
+watch(
+  () => props.commitClearToken,
+  () => {
+    commitMessage.value = "";
+  },
+);
 
 function statusGroups(gitStatus: RepositoryDetails["gitStatus"]) {
   return [

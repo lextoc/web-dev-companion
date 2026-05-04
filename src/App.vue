@@ -16,6 +16,7 @@ const errorMessage = ref('')
 const isLoading = ref(false)
 const isDetailLoading = ref(false)
 const syncingBranchName = ref<string | null>(null)
+const statusActionLabel = ref<string | null>(null)
 const autoRefreshRemainingMs = ref(AUTO_REFRESH_INTERVAL_MS)
 const scriptTerminals = ref<Record<string, ScriptTerminal>>({})
 let removeScriptOutputListener: (() => void) | undefined
@@ -184,6 +185,69 @@ async function syncBranch(branchName: string) {
     syncingBranchName.value = null
     resetAutoRefreshTimer()
   }
+}
+
+async function runStatusAction(actionLabel: string, action: () => Promise<RepositoryDetails>) {
+  if (!selectedDetails.value) {
+    return
+  }
+
+  isDetailLoading.value = true
+  statusActionLabel.value = actionLabel
+  errorMessage.value = ''
+
+  try {
+    selectedDetails.value = await action()
+    await loadRepositories()
+  } catch (error) {
+    errorMessage.value = normalizeError(error)
+  } finally {
+    isDetailLoading.value = false
+    statusActionLabel.value = null
+    resetAutoRefreshTimer()
+  }
+}
+
+async function stageFiles(paths: string[]) {
+  if (!selectedDetails.value) {
+    return
+  }
+
+  const repoPath = selectedDetails.value.path
+  await runStatusAction('Staging files...', () =>
+    window.repositories.stageFiles({
+      repoPath,
+      paths,
+    }),
+  )
+}
+
+async function unstageFiles(paths: string[]) {
+  if (!selectedDetails.value) {
+    return
+  }
+
+  const repoPath = selectedDetails.value.path
+  await runStatusAction('Unstaging files...', () =>
+    window.repositories.unstageFiles({
+      repoPath,
+      paths,
+    }),
+  )
+}
+
+async function commitStatus(message: string) {
+  if (!selectedDetails.value) {
+    return
+  }
+
+  const repoPath = selectedDetails.value.path
+  await runStatusAction('Committing...', () =>
+    window.repositories.commit({
+      repoPath,
+      message,
+    }),
+  )
 }
 
 async function removeRepository(repoPath: string) {
@@ -383,12 +447,16 @@ onBeforeUnmount(() => {
           :auto-refresh-label="autoRefreshLabel"
           :auto-refresh-progress="autoRefreshProgress"
           :syncing-branch-name="syncingBranchName"
+          :status-action-label="statusActionLabel"
           :npm-scripts="npmScripts"
           :script-terminals-by-script="currentRepoScriptTerminals"
           @back="closeDetails"
           @refresh="refreshSelectedRepository"
           @delete-branch="deleteBranch"
           @sync-branch="syncBranch"
+          @stage-files="stageFiles"
+          @unstage-files="unstageFiles"
+          @commit="commitStatus"
           @run-script="runScript"
           @stop-script="stopScript"
         />

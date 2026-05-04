@@ -1,9 +1,11 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import type {
+  CommitRequest,
   DeleteBranchRequest,
   RepositoryDetails,
   RepositorySummary,
+  StatusFileRequest,
   SyncBranchRequest,
 } from '../src/repositories'
 import {
@@ -204,12 +206,66 @@ export function createRepositoryService(repositoriesFilePath: () => string) {
     return readRepositoryDetails(normalizedPath)
   }
 
+  function normalizeStatusPaths(paths: string[]) {
+    const normalizedPaths = [...new Set(paths.map((statusPath) => statusPath.trim()).filter(Boolean))]
+
+    if (normalizedPaths.length === 0) {
+      throw new Error('Choose at least one file.')
+    }
+
+    return normalizedPaths
+  }
+
+  async function stageFiles(request: StatusFileRequest): Promise<RepositoryDetails> {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+    const statusPaths = normalizeStatusPaths(request.paths)
+
+    await runGit(normalizedPath, ['add', '--', ...statusPaths])
+
+    return readRepositoryDetails(normalizedPath)
+  }
+
+  async function unstageFiles(request: StatusFileRequest): Promise<RepositoryDetails> {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+    const statusPaths = normalizeStatusPaths(request.paths)
+
+    await runGit(normalizedPath, ['restore', '--staged', '--', ...statusPaths])
+
+    return readRepositoryDetails(normalizedPath)
+  }
+
+  async function commit(request: CommitRequest): Promise<RepositoryDetails> {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+    const message = request.message.trim()
+
+    if (!message) {
+      throw new Error('Commit message is required.')
+    }
+
+    const gitStatus = await readGitStatus(normalizedPath)
+
+    if (gitStatus.conflicted.length > 0) {
+      throw new Error('Resolve conflicts before committing.')
+    }
+
+    if (gitStatus.staged.length === 0) {
+      throw new Error('Stage at least one file before committing.')
+    }
+
+    await runGit(normalizedPath, ['commit', '-m', message], 120000)
+
+    return readRepositoryDetails(normalizedPath)
+  }
+
   return {
     addRepository,
+    commit,
     deleteBranch,
     listRepositories,
     readRepositoryDetails,
     removeRepository,
+    stageFiles,
     syncBranch,
+    unstageFiles,
   }
 }

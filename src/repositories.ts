@@ -67,6 +67,16 @@ export interface SyncBranchRequest {
   branchName: string
 }
 
+export interface StatusFileRequest {
+  repoPath: string
+  paths: string[]
+}
+
+export interface CommitRequest {
+  repoPath: string
+  message: string
+}
+
 export interface ScriptRunRequest {
   repoPath: string
   scriptName: string
@@ -105,6 +115,9 @@ export interface RepositoryApi {
   details: (repoPath: string) => Promise<RepositoryDetails>
   deleteBranch: (request: DeleteBranchRequest) => Promise<RepositoryDetails>
   syncBranch: (request: SyncBranchRequest) => Promise<RepositoryDetails>
+  stageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
+  unstageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
+  commit: (request: CommitRequest) => Promise<RepositoryDetails>
   startScript: (request: ScriptRunRequest) => Promise<ScriptRun>
   stopScript: (runId: string) => Promise<boolean>
   stopScripts: (runIds: string[]) => void

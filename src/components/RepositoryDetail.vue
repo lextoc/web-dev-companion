@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import type {
   GitStatusEntry,
   RepositoryDetails,
@@ -14,18 +15,24 @@ defineProps<{
   autoRefreshLabel: string;
   autoRefreshProgress: number;
   syncingBranchName: string | null;
+  statusActionLabel: string | null;
   npmScripts: [string, string][];
   scriptTerminalsByScript: Record<string, ScriptTerminal>;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   back: [];
   refresh: [];
   deleteBranch: [branchName: string];
   syncBranch: [branchName: string];
+  stageFiles: [paths: string[]];
+  unstageFiles: [paths: string[]];
+  commit: [message: string];
   runScript: [scriptName: string];
   stopScript: [scriptName: string];
 }>();
+
+const commitMessage = ref("");
 
 function statusGroups(gitStatus: RepositoryDetails["gitStatus"]) {
   return [
@@ -38,6 +45,63 @@ function statusGroups(gitStatus: RepositoryDetails["gitStatus"]) {
 
 function statusCode(entry: GitStatusEntry) {
   return `${entry.index}${entry.workingTree}`;
+}
+
+function statusEntryPaths(entries: GitStatusEntry[]) {
+  return [...new Set(entries.map((entry) => entry.path))];
+}
+
+function isStagedGroup(groupKey: string) {
+  return groupKey === "staged";
+}
+
+function statusActionLabelForGroup(groupKey: string) {
+  return isStagedGroup(groupKey) ? "Unstage all" : "Stage all";
+}
+
+function statusActionLabelForEntry(groupKey: string) {
+  return isStagedGroup(groupKey) ? "Unstage" : "Stage";
+}
+
+function emitStatusAction(groupKey: string, entries: GitStatusEntry[]) {
+  const paths = statusEntryPaths(entries);
+
+  if (isStagedGroup(groupKey)) {
+    emit("unstageFiles", paths);
+    return;
+  }
+
+  emit("stageFiles", paths);
+}
+
+function commitDisabledReason(gitStatus: RepositoryDetails["gitStatus"], isDetailLoading: boolean) {
+  if (isDetailLoading) {
+    return "Repository action is already running.";
+  }
+
+  if (gitStatus.conflicted.length > 0) {
+    return "Resolve conflicts before committing.";
+  }
+
+  if (gitStatus.staged.length === 0) {
+    return "Stage at least one file before committing.";
+  }
+
+  if (!commitMessage.value.trim()) {
+    return "Enter a commit message.";
+  }
+
+  return undefined;
+}
+
+function submitCommit(gitStatus: RepositoryDetails["gitStatus"], isDetailLoading: boolean) {
+  const message = commitMessage.value.trim();
+
+  if (commitDisabledReason(gitStatus, isDetailLoading) || !message) {
+    return;
+  }
+
+  emit("commit", message);
 }
 
 function branchSyncLabel(branch: RepositoryDetails["gitBranches"][number]) {
@@ -210,6 +274,31 @@ function branchSyncTitle(
               </strong>
             </div>
 
+            <form
+              class="commit-form"
+              @submit.prevent="submitCommit(selectedDetails.gitStatus, isDetailLoading)"
+            >
+              <label for="commit-message">Commit message</label>
+              <textarea
+                id="commit-message"
+                v-model="commitMessage"
+                rows="3"
+                placeholder="Describe this change"
+                :disabled="isDetailLoading"
+              ></textarea>
+              <button
+                type="submit"
+                :disabled="Boolean(commitDisabledReason(selectedDetails.gitStatus, isDetailLoading))"
+                :title="commitDisabledReason(selectedDetails.gitStatus, isDetailLoading)"
+              >
+                {{ statusActionLabel === "Committing..." ? "Committing..." : "Commit" }}
+              </button>
+            </form>
+
+            <p v-if="statusActionLabel" class="status-pending">
+              {{ statusActionLabel }}
+            </p>
+
             <div v-if="selectedDetails.gitStatus.clean" class="empty-state compact-empty">
               No staged, unstaged, or untracked changes.
             </div>
@@ -222,8 +311,19 @@ function branchSyncTitle(
                 :class="{ empty: group.entries.length === 0 }"
               >
                 <div class="git-status-group-heading">
-                  <h4>{{ group.label }}</h4>
-                  <span>{{ group.entries.length }}</span>
+                  <div class="git-status-group-title">
+                    <h4>{{ group.label }}</h4>
+                    <span>{{ group.entries.length }}</span>
+                  </div>
+                  <button
+                    v-if="group.entries.length > 0"
+                    type="button"
+                    class="secondary status-action"
+                    :disabled="isDetailLoading"
+                    @click="emitStatusAction(group.key, group.entries)"
+                  >
+                    {{ statusActionLabelForGroup(group.key) }}
+                  </button>
                 </div>
 
                 <ul v-if="group.entries.length > 0" class="git-status-list">
@@ -236,6 +336,14 @@ function branchSyncTitle(
                       </small>
                       <small>{{ entry.label }}</small>
                     </div>
+                    <button
+                      type="button"
+                      class="secondary status-action"
+                      :disabled="isDetailLoading"
+                      @click="emitStatusAction(group.key, [entry])"
+                    >
+                      {{ statusActionLabelForEntry(group.key) }}
+                    </button>
                   </li>
                 </ul>
 

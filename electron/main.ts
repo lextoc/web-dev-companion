@@ -1,9 +1,11 @@
 import path from 'node:path'
 import type { BrowserWindow as BrowserWindowType, OpenDialogOptions } from 'electron'
 import type {
+  CommitRequest,
   DeleteBranchRequest,
   ScriptOutput,
   ScriptRunRequest,
+  StatusFileRequest,
   SyncBranchRequest,
 } from '../src/repositories'
 import { createRepositoryService } from './repository-service'
@@ -63,6 +65,13 @@ function registerRepositoryHandlers() {
   ipcMain.handle('repositories:sync-branch', (_event, request: SyncBranchRequest) =>
     repositoryService.syncBranch(request),
   )
+  ipcMain.handle('repositories:stage-files', (_event, request: StatusFileRequest) =>
+    repositoryService.stageFiles(request),
+  )
+  ipcMain.handle('repositories:unstage-files', (_event, request: StatusFileRequest) =>
+    repositoryService.unstageFiles(request),
+  )
+  ipcMain.handle('repositories:commit', (_event, request: CommitRequest) => repositoryService.commit(request))
   ipcMain.handle('repositories:start-script', (_event, request: ScriptRunRequest) => scriptRunner.startScript(request))
   ipcMain.handle('repositories:stop-script', (_event, runId: string) => scriptRunner.stopScript(runId))
   ipcMain.handle('repositories:choose-and-add', chooseAndAddRepository)

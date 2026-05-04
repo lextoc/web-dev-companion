@@ -750,6 +750,52 @@ pre {
   overflow: auto;
 }
 
+.commit-form {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--surface);
+}
+
+.commit-form label {
+  color: var(--muted-strong);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.commit-form textarea {
+  width: 100%;
+  min-height: 78px;
+  resize: vertical;
+  border: 1px solid var(--border-control);
+  border-radius: 7px;
+  padding: 9px 10px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.84rem;
+}
+
+.commit-form button {
+  justify-self: start;
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 0.8rem;
+}
+
+.status-pending {
+  border-radius: 7px;
+  margin-bottom: 0;
+  padding: 8px 10px;
+  background: var(--warning-soft);
+  color: var(--warning-text);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
 .git-status-summary {
   display: flex;
   align-items: center;
@@ -889,6 +935,13 @@ pre {
   gap: 10px;
 }
 
+.git-status-group-title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
 .git-status-group-heading h4 {
   margin-bottom: 0;
   font-size: 0.86rem;
@@ -916,7 +969,7 @@ pre {
 
 .git-status-list li {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-columns: 38px minmax(0, 1fr) auto;
   gap: 9px;
   align-items: start;
   border-radius: 7px;
@@ -946,6 +999,13 @@ pre {
   margin-bottom: 0;
   color: var(--muted);
   font-size: 0.78rem;
+}
+
+.status-action {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 0.76rem;
+  white-space: nowrap;
 }
 
 .script-list {
@@ -1121,8 +1181,16 @@ code {
     align-items: stretch;
   }
 
+  .git-status-list li {
+    grid-template-columns: 1fr;
+  }
+
   .branch-sync {
     width: fit-content;
+  }
+
+  .status-action {
+    justify-self: start;
   }
 }
 

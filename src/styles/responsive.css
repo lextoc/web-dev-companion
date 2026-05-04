@@ -3,7 +3,17 @@
     grid-template-columns: 1fr;
   }
 
+  .status-panel,
+  .branches-panel,
+  .git-log-panel {
+    grid-column: 1 / -1;
+  }
+
   .git-overview-panel {
+    height: auto;
+  }
+
+  .git-overview-panel.git-log-panel {
     height: auto;
   }
 
@@ -128,6 +138,11 @@
 
   .git-status-list li {
     grid-template-columns: 1fr;
+  }
+
+  .git-log-table th:first-child,
+  .git-log-table td:first-child {
+    width: 150px;
   }
 
   .branch-sync {

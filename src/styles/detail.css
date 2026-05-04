@@ -170,10 +170,26 @@
   grid-column: 1 / -1;
 }
 
+.status-panel {
+  grid-column: span 2;
+}
+
+.branches-panel {
+  grid-column: span 1;
+}
+
+.git-log-panel {
+  grid-column: 1 / -1;
+}
+
 .git-overview-panel {
   grid-template-rows: auto minmax(0, 1fr);
   height: 620px;
   min-width: 0;
+}
+
+.git-overview-panel.git-log-panel {
+  height: 520px;
 }
 
 .remotes-panel {
@@ -227,7 +243,7 @@ pre {
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
 }
 
 .git-log-table th,
@@ -255,7 +271,7 @@ pre {
 
 .git-log-table th:first-child,
 .git-log-table td:first-child {
-  width: 132px;
+  width: 220px;
 }
 
 .git-log-table strong,

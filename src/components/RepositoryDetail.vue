@@ -522,63 +522,7 @@ function branchSafetyNotes(
           </form>
         </section>
 
-        <section class="detail-panel git-overview-panel git-log-panel">
-          <div class="panel-heading">
-            <h3>Git log</h3>
-            <div class="segmented-control" aria-label="Git log length">
-              <button
-                v-for="limit in [10, 30]"
-                :key="limit"
-                type="button"
-                class="secondary"
-                :class="{ active: gitLogLimit === limit }"
-                @click="gitLogLimit = limit"
-              >
-                {{ limit }}
-              </button>
-            </div>
-          </div>
-          <div
-            v-if="selectedDetails.gitLog.length > 0"
-            class="git-log-table-wrap"
-          >
-            <table class="git-log-table">
-              <thead>
-                <tr>
-                  <th scope="col">Author</th>
-                  <th scope="col">Commit message</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="entry in visibleGitLog" :key="entry.hash">
-                  <td>
-                    <strong>{{ entry.authorName }}</strong>
-                    <small>{{ entry.authorEmail }}</small>
-                    <time :datetime="entry.dateTime" :title="entry.dateTime">{{ entry.time }}</time>
-                  </td>
-                  <td>
-                    <div class="git-message-cell">
-                      <button
-                        type="button"
-                        class="secondary git-hash-chip"
-                        title="Copy commit hash"
-                        @click="copyCommitHash(entry.hash)"
-                      >
-                        {{ entry.hash }}
-                      </button>
-                      <span :title="entry.message">{{ entry.message }}</span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div v-else class="empty-state compact-empty">
-            No git log output available.
-          </div>
-        </section>
-
-        <section class="detail-panel git-overview-panel">
+        <section class="detail-panel git-overview-panel status-panel">
           <div class="panel-heading">
             <h3>Status</h3>
           </div>
@@ -665,7 +609,7 @@ function branchSafetyNotes(
           </div>
         </section>
 
-        <section class="detail-panel git-overview-panel">
+        <section class="detail-panel git-overview-panel branches-panel">
           <div class="panel-heading">
             <h3>Local branches</h3>
             <span class="panel-count">{{ selectedDetails.gitBranches.length }}</span>
@@ -753,6 +697,62 @@ function branchSafetyNotes(
             </ul>
 
             <p v-else>No branches match this filter.</p>
+          </div>
+        </section>
+
+        <section class="detail-panel git-overview-panel git-log-panel">
+          <div class="panel-heading">
+            <h3>Git log</h3>
+            <div class="segmented-control" aria-label="Git log length">
+              <button
+                v-for="limit in [10, 30]"
+                :key="limit"
+                type="button"
+                class="secondary"
+                :class="{ active: gitLogLimit === limit }"
+                @click="gitLogLimit = limit"
+              >
+                {{ limit }}
+              </button>
+            </div>
+          </div>
+          <div
+            v-if="selectedDetails.gitLog.length > 0"
+            class="git-log-table-wrap"
+          >
+            <table class="git-log-table">
+              <thead>
+                <tr>
+                  <th scope="col">Author</th>
+                  <th scope="col">Commit message</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="entry in visibleGitLog" :key="entry.hash">
+                  <td>
+                    <strong>{{ entry.authorName }}</strong>
+                    <small>{{ entry.authorEmail }}</small>
+                    <time :datetime="entry.dateTime" :title="entry.dateTime">{{ entry.time }}</time>
+                  </td>
+                  <td>
+                    <div class="git-message-cell">
+                      <button
+                        type="button"
+                        class="secondary git-hash-chip"
+                        title="Copy commit hash"
+                        @click="copyCommitHash(entry.hash)"
+                      >
+                        {{ entry.hash }}
+                      </button>
+                      <span :title="entry.message">{{ entry.message }}</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else class="empty-state compact-empty">
+            No git log output available.
           </div>
         </section>
 

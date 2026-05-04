@@ -37,6 +37,13 @@ export interface ScriptOutput {
   done?: boolean
 }
 
+export interface ScriptTerminal {
+  runId: string
+  command: string
+  output: string
+  isRunning: boolean
+}
+
 export interface RepositoryApi {
   list: () => Promise<RepositorySummary[]>
   chooseAndAdd: () => Promise<RepositorySummary[]>

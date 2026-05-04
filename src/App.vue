@@ -705,18 +705,6 @@ onBeforeUnmount(() => {
   <main class="app-shell">
     <AppHeader :repository-count="repositories.length" />
 
-    <div
-      v-if="appActivityLabel || appFeedback"
-      class="app-feedback"
-      :class="appActivityLabel ? 'info' : (appFeedback?.tone ?? 'info')"
-      role="status"
-    >
-      <span v-if="appActivityLabel" class="activity-dot" aria-hidden="true"></span>
-      <span>{{ appActivityLabel ?? appFeedback?.message }}</span>
-    </div>
-
-    <p v-if="errorMessage" class="alert" role="alert">{{ errorMessage }}</p>
-
     <div class="app-layout" :class="{ 'terminals-collapsed': areTerminalsCollapsed }">
       <div class="main-pane">
         <RepositoryDashboard
@@ -797,6 +785,30 @@ onBeforeUnmount(() => {
           </button>
         </div>
       </section>
+    </div>
+
+    <div
+      v-if="appActivityLabel || appFeedback || errorMessage"
+      class="toast-stack"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <div
+        v-if="appActivityLabel || appFeedback"
+        class="toast-message"
+        :class="appActivityLabel ? 'info' : (appFeedback?.tone ?? 'info')"
+        role="status"
+      >
+        <span v-if="appActivityLabel" class="activity-dot" aria-hidden="true"></span>
+        <span>{{ appActivityLabel ?? appFeedback?.message }}</span>
+      </div>
+
+      <div v-if="errorMessage" class="toast-message error" role="alert">
+        <span>{{ errorMessage }}</span>
+        <button type="button" class="toast-close" @click="errorMessage = ''">
+          Dismiss
+        </button>
+      </div>
     </div>
   </main>
 </template>

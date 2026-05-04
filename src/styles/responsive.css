@@ -72,8 +72,13 @@
 
   .detail-layout,
   .dashboard-toolbar,
+  .commit-form-wide,
   .script-row {
     grid-template-columns: 1fr;
+  }
+
+  .commit-form-wide > button {
+    justify-self: start;
   }
 
   .script-list {

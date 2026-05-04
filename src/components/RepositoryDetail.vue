@@ -364,6 +364,84 @@ function branchSafetyNotes(
 
     <template v-else-if="selectedDetails">
       <div class="detail-layout">
+        <section class="detail-panel commit-panel">
+          <form
+            class="commit-form commit-form-wide"
+            @submit.prevent="
+              submitCommit(selectedDetails.gitStatus, isDetailLoading, pendingStatusActionKey)
+            "
+          >
+            <div class="commit-form-heading">
+              <div>
+                <span>Commit</span>
+                <strong>
+                  {{
+                    selectedDetails.gitStatus.staged.length === 1
+                      ? "1 staged file"
+                      : `${selectedDetails.gitStatus.staged.length} staged files`
+                  }}
+                </strong>
+              </div>
+              <button
+                v-if="selectedDetails.gitStatus.staged.length > 0"
+                type="button"
+                class="secondary status-action"
+                :disabled="Boolean(pendingStatusActionKey)"
+                @click="emitStatusAction('staged', selectedDetails.gitStatus.staged)"
+              >
+                {{
+                  isStatusActionPending('staged', selectedDetails.gitStatus.staged)
+                    ? 'Unstaging...'
+                    : 'Unstage all'
+                }}
+              </button>
+            </div>
+
+            <div class="commit-message-row">
+              <label for="commit-message">Message</label>
+              <textarea
+                id="commit-message"
+                v-model="commitMessage"
+                rows="3"
+                placeholder="Describe this change"
+                :disabled="pendingStatusActionKey === 'commit'"
+              ></textarea>
+            </div>
+
+            <button
+              type="submit"
+              :disabled="
+                Boolean(
+                  commitDisabledReason(
+                    selectedDetails.gitStatus,
+                    isDetailLoading,
+                    pendingStatusActionKey,
+                  ),
+                )
+              "
+              :title="
+                commitDisabledReason(
+                  selectedDetails.gitStatus,
+                  isDetailLoading,
+                  pendingStatusActionKey,
+                )
+              "
+            >
+              {{ pendingStatusActionKey === "commit" ? "Committing..." : "Commit" }}
+            </button>
+
+            <ul v-if="stagedPreview.length > 0" class="staged-preview">
+              <li v-for="entry in stagedPreview" :key="`staged-preview-${entry.path}`">
+                <code>{{ statusCode(entry) }}</code>
+                <span :title="entry.path">{{ entry.path }}</span>
+              </li>
+              <li v-if="hiddenStagedFileCount > 0" class="staged-preview-more">
+                {{ hiddenStagedFileCount }} more staged
+              </li>
+            </ul>
+          </form>
+        </section>
+
         <section class="detail-panel git-overview-panel git-log-panel">
           <div class="panel-heading">
             <h3>Git log</h3>
@@ -435,77 +513,6 @@ function branchSafetyNotes(
                 <span>{{ item.label }}</span>
               </div>
             </div>
-
-            <form
-              class="commit-form"
-              @submit.prevent="
-                submitCommit(selectedDetails.gitStatus, isDetailLoading, pendingStatusActionKey)
-              "
-            >
-              <div class="commit-form-heading">
-                <div>
-                  <span>Commit</span>
-                  <strong>
-                    {{
-                      selectedDetails.gitStatus.staged.length === 1
-                        ? "1 staged file"
-                        : `${selectedDetails.gitStatus.staged.length} staged files`
-                    }}
-                  </strong>
-                </div>
-                <button
-                  v-if="selectedDetails.gitStatus.staged.length > 0"
-                  type="button"
-                  class="secondary status-action"
-                  :disabled="Boolean(pendingStatusActionKey)"
-                  @click="emitStatusAction('staged', selectedDetails.gitStatus.staged)"
-                >
-                  {{
-                    isStatusActionPending('staged', selectedDetails.gitStatus.staged)
-                      ? 'Unstaging...'
-                      : 'Unstage all'
-                  }}
-                </button>
-              </div>
-              <ul v-if="stagedPreview.length > 0" class="staged-preview">
-                <li v-for="entry in stagedPreview" :key="`staged-preview-${entry.path}`">
-                  <code>{{ statusCode(entry) }}</code>
-                  <span :title="entry.path">{{ entry.path }}</span>
-                </li>
-                <li v-if="hiddenStagedFileCount > 0" class="staged-preview-more">
-                  {{ hiddenStagedFileCount }} more staged
-                </li>
-              </ul>
-              <label for="commit-message">Message</label>
-              <textarea
-                id="commit-message"
-                v-model="commitMessage"
-                rows="3"
-                placeholder="Describe this change"
-                :disabled="pendingStatusActionKey === 'commit'"
-              ></textarea>
-              <button
-                type="submit"
-                :disabled="
-                  Boolean(
-                    commitDisabledReason(
-                      selectedDetails.gitStatus,
-                      isDetailLoading,
-                      pendingStatusActionKey,
-                    ),
-                  )
-                "
-                :title="
-                  commitDisabledReason(
-                    selectedDetails.gitStatus,
-                    isDetailLoading,
-                    pendingStatusActionKey,
-                  )
-                "
-              >
-                {{ pendingStatusActionKey === "commit" ? "Committing..." : "Commit" }}
-              </button>
-            </form>
 
             <p v-if="statusActionLabel" class="status-pending">
               {{ statusActionLabel }}

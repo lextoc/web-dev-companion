@@ -57,6 +57,10 @@
   padding: 9px;
 }
 
+:root[data-density="compact"] .commit-form-wide {
+  padding: 0;
+}
+
 :root[data-density="compact"] .detail-sticky-bar,
 :root[data-density="compact"] .detail-panel,
 :root[data-density="compact"] .git-status-card,

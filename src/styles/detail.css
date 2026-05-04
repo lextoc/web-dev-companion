@@ -93,6 +93,10 @@
   background: var(--surface-soft);
 }
 
+.commit-panel {
+  grid-column: 1 / -1;
+}
+
 .scripts-panel {
   grid-column: 1 / -1;
 }
@@ -283,6 +287,14 @@ pre {
   background: var(--surface);
 }
 
+.commit-form-wide {
+  grid-template-columns: minmax(180px, 260px) minmax(0, 1fr) auto;
+  align-items: end;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
 .commit-form-heading {
   display: flex;
   align-items: center;
@@ -311,6 +323,12 @@ pre {
   text-transform: uppercase;
 }
 
+.commit-message-row {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
 .commit-form textarea {
   width: 100%;
   min-height: 64px;
@@ -330,6 +348,11 @@ pre {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.commit-form-wide .staged-preview {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
 
 .staged-preview li {
@@ -700,4 +723,3 @@ pre {
 .branch-action.pending {
   border-color: var(--focus);
 }
-

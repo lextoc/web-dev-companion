@@ -3,16 +3,29 @@ import type { RepositorySummary } from '../repositories'
 
 defineProps<{
   repository: RepositorySummary
+  isPinned: boolean
 }>()
 
 defineEmits<{
   open: [repository: RepositorySummary]
   remove: [repoPath: string]
+  togglePin: [repoPath: string]
 }>()
 </script>
 
 <template>
   <article class="repo-card" :class="{ 'has-error': repository.error }">
+    <button
+      class="pin-button"
+      type="button"
+      :class="{ active: isPinned }"
+      :aria-label="`${isPinned ? 'Unpin' : 'Pin'} ${repository.name}`"
+      :title="isPinned ? 'Unpin repository' : 'Pin repository'"
+      @click="$emit('togglePin', repository.path)"
+    >
+      {{ isPinned ? 'Pinned' : 'Pin' }}
+    </button>
+
     <button class="repo-card-main" type="button" @click="$emit('open', repository)">
       <span class="repo-title-row">
         <strong>{{ repository.name }}</strong>

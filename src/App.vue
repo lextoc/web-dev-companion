@@ -8,6 +8,8 @@ import type { RepositoryDetails, RepositorySummary, ScriptOutput, ScriptTerminal
 
 const AUTO_REFRESH_INTERVAL_MS = 60 * 1000
 const FOCUS_REFRESH_THROTTLE_MS = 2000
+const PINNED_REPOSITORIES_KEY = 'web-dev-companion:pinned-repositories'
+const MAX_ACTIVITY_ITEMS = 8
 
 interface ConfirmationDialog {
   title: string
@@ -20,6 +22,13 @@ interface ConfirmationDialog {
 interface AppFeedback {
   message: string
   tone: 'success' | 'info'
+}
+
+interface ActivityItem {
+  id: string
+  message: string
+  time: string
+  tone: AppFeedback['tone']
 }
 
 const repositories = ref<RepositorySummary[]>([])
@@ -40,6 +49,8 @@ const hasCommitDraft = ref(false)
 const areTerminalsCollapsed = ref(false)
 const confirmationDialog = ref<ConfirmationDialog | null>(null)
 const appFeedback = ref<AppFeedback | null>(null)
+const pinnedRepositoryPaths = ref<string[]>([])
+const activityItems = ref<ActivityItem[]>([])
 const autoRefreshRemainingMs = ref(AUTO_REFRESH_INTERVAL_MS)
 const scriptTerminals = ref<Record<string, ScriptTerminal>>({})
 let removeScriptOutputListener: (() => void) | undefined
@@ -121,6 +132,7 @@ function normalizeError(error: unknown) {
 
 function showAppFeedback(message: string, tone: AppFeedback['tone'] = 'success') {
   appFeedback.value = { message, tone }
+  recordActivity(message, tone)
 
   if (appFeedbackTimer !== undefined) {
     window.clearTimeout(appFeedbackTimer)
@@ -130,6 +142,50 @@ function showAppFeedback(message: string, tone: AppFeedback['tone'] = 'success')
     appFeedback.value = null
     appFeedbackTimer = undefined
   }, 4000)
+}
+
+function recordActivity(message: string, tone: AppFeedback['tone'] = 'success') {
+  activityItems.value = [
+    {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      message,
+      tone,
+      time: new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    },
+    ...activityItems.value,
+  ].slice(0, MAX_ACTIVITY_ITEMS)
+}
+
+function loadPinnedRepositories() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(PINNED_REPOSITORIES_KEY) ?? '[]')
+    pinnedRepositoryPaths.value = Array.isArray(parsed)
+      ? parsed.filter((repoPath): repoPath is string => typeof repoPath === 'string')
+      : []
+  } catch {
+    pinnedRepositoryPaths.value = []
+  }
+}
+
+function savePinnedRepositories(repoPaths: string[]) {
+  pinnedRepositoryPaths.value = repoPaths
+  localStorage.setItem(PINNED_REPOSITORIES_KEY, JSON.stringify(repoPaths))
+}
+
+function togglePinnedRepository(repoPath: string) {
+  const repository = repositories.value.find((savedRepository) => savedRepository.path === repoPath)
+  const repositoryName = repository?.name ?? repoPath
+  const isPinned = pinnedRepositoryPaths.value.includes(repoPath)
+
+  savePinnedRepositories(
+    isPinned
+      ? pinnedRepositoryPaths.value.filter((pinnedPath) => pinnedPath !== repoPath)
+      : [repoPath, ...pinnedRepositoryPaths.value],
+  )
+  showAppFeedback(`${isPinned ? 'Unpinned' : 'Pinned'} ${repositoryName}.`, 'info')
 }
 
 function confirmAction(options: Omit<ConfirmationDialog, 'resolve'>) {
@@ -626,6 +682,7 @@ function handlePageExit() {
 }
 
 onMounted(() => {
+  loadPinnedRepositories()
   removeScriptOutputListener = window.repositories.onScriptOutput(handleScriptOutput)
   removeWindowFocusListener = window.repositories.onWindowFocus(() => {
     void refreshOnWindowFocus()
@@ -666,11 +723,13 @@ onBeforeUnmount(() => {
           v-if="!selectedPath"
           v-model:repo-path-input="repoPathInput"
           :repositories="repositories"
+          :pinned-repository-paths="pinnedRepositoryPaths"
           :is-loading="isLoading"
           @add="addRepositoryByPath"
           @browse="chooseAndAddRepository"
           @open="openRepository"
           @remove="removeRepository"
+          @toggle-pin="togglePinnedRepository"
         />
 
         <RepositoryDetail
@@ -704,6 +763,7 @@ onBeforeUnmount(() => {
 
       <ActiveTerminalsSidebar
         :terminals="activeTerminals"
+        :activity-items="activityItems"
         :collapsed="areTerminalsCollapsed"
         @toggle="areTerminalsCollapsed = !areTerminalsCollapsed"
         @stop="stopTerminal"

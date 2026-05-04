@@ -86,6 +86,11 @@ const filteredBranches = computed(() =>
   }),
 );
 
+const stagedPreview = computed(() => props.selectedDetails?.gitStatus.staged.slice(0, 4) ?? []);
+const hiddenStagedFileCount = computed(() =>
+  Math.max(0, (props.selectedDetails?.gitStatus.staged.length ?? 0) - stagedPreview.value.length),
+);
+
 watch(
   () => props.commitClearToken,
   () => {
@@ -420,6 +425,15 @@ function branchSyncTitle(
                   }}
                 </button>
               </div>
+              <ul v-if="stagedPreview.length > 0" class="staged-preview">
+                <li v-for="entry in stagedPreview" :key="`staged-preview-${entry.path}`">
+                  <code>{{ statusCode(entry) }}</code>
+                  <span :title="entry.path">{{ entry.path }}</span>
+                </li>
+                <li v-if="hiddenStagedFileCount > 0" class="staged-preview-more">
+                  {{ hiddenStagedFileCount }} more staged
+                </li>
+              </ul>
               <label for="commit-message">Message</label>
               <textarea
                 id="commit-message"

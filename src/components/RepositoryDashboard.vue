@@ -5,6 +5,7 @@ import RepositoryCard from './RepositoryCard.vue'
 
 const props = defineProps<{
   repositories: RepositorySummary[]
+  pinnedRepositoryPaths: string[]
   repoPathInput: string
   isLoading: boolean
 }>()
@@ -15,10 +16,12 @@ defineEmits<{
   browse: []
   open: [repository: RepositorySummary]
   remove: [repoPath: string]
+  togglePin: [repoPath: string]
 }>()
 
 const searchQuery = ref('')
 const sortMode = ref<'dirty' | 'name' | 'scripts'>('dirty')
+const pinnedRepositorySet = computed(() => new Set(props.pinnedRepositoryPaths))
 
 const filteredRepositories = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
@@ -33,6 +36,14 @@ const filteredRepositories = computed(() => {
         .some((value) => value.toLowerCase().includes(query))
     })
     .sort((repositoryA, repositoryB) => {
+      const pinnedComparison =
+        Number(pinnedRepositorySet.value.has(repositoryB.path)) -
+        Number(pinnedRepositorySet.value.has(repositoryA.path))
+
+      if (pinnedComparison !== 0) {
+        return pinnedComparison
+      }
+
       if (sortMode.value === 'name') {
         return repositoryA.name.localeCompare(repositoryB.name)
       }
@@ -106,8 +117,10 @@ const filteredRepositories = computed(() => {
           v-for="repository in filteredRepositories"
           :key="repository.path"
           :repository="repository"
+          :is-pinned="pinnedRepositorySet.has(repository.path)"
           @open="$emit('open', $event)"
           @remove="$emit('remove', $event)"
+          @toggle-pin="$emit('togglePin', $event)"
         />
       </div>
     </template>

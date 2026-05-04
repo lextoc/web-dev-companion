@@ -2,8 +2,16 @@
 import { computed } from 'vue'
 import type { ScriptTerminal } from '../repositories'
 
+interface ActivityItem {
+  id: string
+  message: string
+  time: string
+  tone: 'success' | 'info'
+}
+
 const props = defineProps<{
   terminals: ScriptTerminal[]
+  activityItems: ActivityItem[]
   collapsed: boolean
 }>()
 
@@ -56,6 +64,16 @@ const runningTerminalCount = computed(() =>
       <strong>{{ runningTerminalCount }}</strong>
       <small>running</small>
     </div>
+
+    <section v-if="activityItems.length && !collapsed" class="activity-log">
+      <h3>Activity</h3>
+      <ol>
+        <li v-for="activity in activityItems" :key="activity.id" :class="activity.tone">
+          <span>{{ activity.message }}</span>
+          <time>{{ activity.time }}</time>
+        </li>
+      </ol>
+    </section>
 
     <div v-if="terminalGroups.length && !collapsed" class="active-terminal-groups">
       <section v-for="group in terminalGroups" :key="group.repoName" class="active-terminal-group">

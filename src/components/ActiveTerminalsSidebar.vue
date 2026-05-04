@@ -71,28 +71,34 @@ function getTerminalPreview(terminal: ScriptTerminal) {
 
 <template>
   <aside class="active-terminals" :class="{ collapsed }" aria-label="Active terminal scripts">
-    <div class="active-terminals-heading">
-      <div v-if="!collapsed" class="active-terminals-title">
+    <button
+      v-if="collapsed"
+      type="button"
+      class="secondary active-terminals-rail"
+      aria-label="Show active terminals"
+      title="Show active terminals"
+      @click="$emit('toggle')"
+    >
+      <span class="terminal-mini-dot" :class="{ running: runningTerminalCount > 0 }"></span>
+      <strong>{{ terminals.length }}</strong>
+      <small>{{ runningTerminalCount }} running</small>
+      <small v-if="doneTerminalCount">{{ doneTerminalCount }} done</small>
+    </button>
+
+    <div v-else class="active-terminals-heading">
+      <div class="active-terminals-title">
         <h2>Active terminals</h2>
         <span>{{ terminals.length }}</span>
       </div>
-      <span v-else class="active-terminal-count">{{ terminals.length }}</span>
       <button
         type="button"
         class="secondary terminal-collapse"
-        :aria-label="collapsed ? 'Show active terminals' : 'Hide active terminals'"
-        :title="collapsed ? 'Show active terminals' : 'Hide active terminals'"
+        aria-label="Hide active terminals"
+        title="Hide active terminals"
         @click="$emit('toggle')"
       >
-        {{ collapsed ? 'Show' : 'Hide' }}
+        Hide
       </button>
-    </div>
-
-    <div v-if="collapsed" class="active-terminals-mini" aria-label="Terminal activity">
-      <span class="terminal-mini-dot" :class="{ running: runningTerminalCount > 0 }"></span>
-      <strong>{{ runningTerminalCount }}</strong>
-      <small>running</small>
-      <small v-if="doneTerminalCount">{{ doneTerminalCount }} done</small>
     </div>
 
     <div v-if="terminalGroups.length && !collapsed" class="active-terminal-groups">

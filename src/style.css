@@ -481,9 +481,9 @@ h3 {
 }
 
 .active-terminals.collapsed {
-  justify-items: center;
-  gap: 10px;
-  padding: 10px 8px;
+  gap: 0;
+  overflow: hidden;
+  padding: 8px;
 }
 
 .active-terminals-heading {
@@ -507,8 +507,7 @@ h3 {
   white-space: nowrap;
 }
 
-.active-terminals-title span,
-.active-terminal-count {
+.active-terminals-title span {
   display: grid;
   min-width: 28px;
   height: 28px;
@@ -527,31 +526,40 @@ h3 {
   font-size: 0.76rem;
 }
 
-.active-terminals.collapsed .active-terminals-heading {
+.active-terminals-rail {
   display: grid;
-  justify-items: center;
-}
-
-.active-terminals.collapsed .terminal-collapse {
   width: 100%;
-  min-width: 0;
-  padding: 0 4px;
-}
-
-.active-terminals-mini {
-  display: grid;
+  min-height: 132px;
   justify-items: center;
-  gap: 3px;
+  align-content: center;
+  gap: 5px;
+  border-color: var(--border-control);
+  padding: 8px 4px;
+  background: var(--surface-soft);
   color: var(--muted);
   font-size: 0.68rem;
   font-weight: 900;
   text-transform: uppercase;
 }
 
-.active-terminals-mini strong {
+.active-terminals-rail:hover:not(:disabled) {
+  border-color: var(--brand);
+  background: var(--surface-hover);
+  color: var(--brand-text-hover);
+}
+
+.active-terminals-rail strong {
   color: var(--text);
-  font-size: 1.2rem;
+  font-size: 1.35rem;
   line-height: 1;
+}
+
+.active-terminals-rail small {
+  max-width: 100%;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .terminal-mini-dot {

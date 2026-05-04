@@ -58,7 +58,14 @@
 }
 
 :root[data-density="compact"] .commit-form-wide {
+  gap: 8px;
   padding: 0;
+}
+
+:root[data-density="compact"] .commit-form-heading,
+:root[data-density="compact"] .commit-form textarea,
+:root[data-density="compact"] .commit-submit {
+  min-height: 62px;
 }
 
 :root[data-density="compact"] .detail-sticky-bar,

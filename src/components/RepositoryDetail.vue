@@ -364,7 +364,10 @@ function branchSafetyNotes(
 
     <template v-else-if="selectedDetails">
       <div class="detail-layout">
-        <section class="detail-panel commit-panel">
+        <section
+          class="detail-panel commit-panel"
+          :class="{ ready: selectedDetails.gitStatus.staged.length > 0 }"
+        >
           <form
             class="commit-form commit-form-wide"
             @submit.prevent="
@@ -376,25 +379,37 @@ function branchSafetyNotes(
                 <span>Commit</span>
                 <strong>
                   {{
-                    selectedDetails.gitStatus.staged.length === 1
-                      ? "1 staged file"
-                      : `${selectedDetails.gitStatus.staged.length} staged files`
+                    selectedDetails.gitStatus.staged.length > 0
+                      ? "Ready to commit"
+                      : "No staged files"
                   }}
                 </strong>
               </div>
-              <button
-                v-if="selectedDetails.gitStatus.staged.length > 0"
-                type="button"
-                class="secondary status-action"
-                :disabled="Boolean(pendingStatusActionKey)"
-                @click="emitStatusAction('staged', selectedDetails.gitStatus.staged)"
-              >
-                {{
-                  isStatusActionPending('staged', selectedDetails.gitStatus.staged)
-                    ? 'Unstaging...'
-                    : 'Unstage all'
-                }}
-              </button>
+              <div class="commit-heading-actions">
+                <span
+                  class="commit-count-chip"
+                  :class="{ empty: selectedDetails.gitStatus.staged.length === 0 }"
+                >
+                  {{
+                    selectedDetails.gitStatus.staged.length === 1
+                      ? "1 staged"
+                      : `${selectedDetails.gitStatus.staged.length} staged`
+                  }}
+                </span>
+                <button
+                  v-if="selectedDetails.gitStatus.staged.length > 0"
+                  type="button"
+                  class="secondary status-action"
+                  :disabled="Boolean(pendingStatusActionKey)"
+                  @click="emitStatusAction('staged', selectedDetails.gitStatus.staged)"
+                >
+                  {{
+                    isStatusActionPending('staged', selectedDetails.gitStatus.staged)
+                      ? 'Unstaging...'
+                      : 'Unstage all'
+                  }}
+                </button>
+              </div>
             </div>
 
             <div class="commit-message-row">
@@ -410,6 +425,7 @@ function branchSafetyNotes(
 
             <button
               type="submit"
+              class="commit-submit"
               :disabled="
                 Boolean(
                   commitDisabledReason(

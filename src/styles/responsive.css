@@ -81,6 +81,20 @@
     justify-self: start;
   }
 
+  .commit-form-heading,
+  .commit-heading-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .commit-heading-actions {
+    justify-content: flex-start;
+  }
+
+  .commit-submit {
+    width: 100%;
+  }
+
   .script-list {
     grid-template-columns: 1fr;
   }

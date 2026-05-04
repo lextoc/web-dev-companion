@@ -1,0 +1,114 @@
+.app-shell {
+  width: min(1800px, 100%);
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.app-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+  align-items: start;
+}
+
+.app-layout.terminals-collapsed {
+  grid-template-columns: minmax(0, 1fr) 78px;
+}
+
+.main-pane {
+  min-width: 0;
+}
+
+.top-bar,
+.detail-header,
+.repo-title-row,
+.repo-meta,
+.detail-nav,
+.add-row {
+  display: flex;
+  align-items: center;
+}
+
+.top-bar {
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-heading img {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--brand);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1.05;
+}
+
+h2 {
+  margin-bottom: 0;
+  font-size: 2rem;
+  line-height: 1.15;
+}
+
+h3 {
+  margin-bottom: 0;
+  font-size: 1rem;
+}
+
+.repo-count {
+  min-width: 82px;
+  border-left: 4px solid var(--accent);
+  padding-left: 16px;
+  text-align: right;
+}
+
+.repo-count span,
+.repo-count small {
+  display: block;
+}
+
+.repo-count span {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.repo-count small,
+.muted {
+  color: var(--muted);
+}
+

@@ -1,0 +1,243 @@
+.toast-stack {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 40;
+  display: grid;
+  gap: 10px;
+  width: min(420px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.toast-message {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--surface);
+  color: var(--muted-strong);
+  font-size: 0.88rem;
+  font-weight: 800;
+  box-shadow: var(--shadow);
+  pointer-events: auto;
+}
+
+.toast-message > span:not(.activity-dot) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.toast-message.success {
+  border-color: var(--success-text);
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.toast-message.info {
+  border-color: var(--info-text);
+  background: var(--info-soft);
+  color: var(--info-text);
+}
+
+.toast-message.error {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
+.toast-close {
+  min-height: 30px;
+  flex: 0 0 auto;
+  margin-left: auto;
+  border-color: color-mix(in srgb, currentColor 45%, transparent);
+  padding: 0 9px;
+  background: transparent;
+  color: inherit;
+  font-size: 0.76rem;
+}
+
+.toast-close:hover:not(:disabled) {
+  border-color: currentColor;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  color: inherit;
+}
+
+.activity-dot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.72;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 8, 12, 0.62);
+}
+
+.confirm-dialog {
+  display: grid;
+  width: min(440px, 100%);
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.settings-dialog {
+  display: grid;
+  width: min(520px, 100%);
+  gap: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.settings-dialog h2 {
+  margin: 0;
+  font-size: 1.22rem;
+}
+
+.settings-dialog label {
+  display: grid;
+  gap: 6px;
+}
+
+.settings-dialog label span {
+  color: var(--muted-strong);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.settings-dialog input,
+.settings-dialog select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--border-control);
+  border-radius: 7px;
+  padding: 0 12px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.confirm-dialog h2 {
+  margin: 0;
+  font-size: 1.18rem;
+}
+
+.confirm-dialog p {
+  margin-bottom: 0;
+  color: var(--muted-strong);
+}
+
+.confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.terminal-modal-backdrop {
+  z-index: 30;
+}
+
+.terminal-modal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(1040px, 100%);
+  height: min(760px, calc(100vh - 48px));
+  gap: 12px;
+  border: 1px solid var(--terminal-border);
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--terminal-panel);
+  color: var(--terminal-text);
+  box-shadow: var(--shadow);
+}
+
+.terminal-modal-header {
+  display: flex;
+  min-width: 0;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.terminal-modal-header div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.terminal-modal-header p,
+.terminal-modal-header h2 {
+  margin: 0;
+}
+
+.terminal-modal-header p {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-modal-header h2 {
+  overflow: hidden;
+  color: var(--terminal-title);
+  font-size: 1.18rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-modal-header code {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-modal pre {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--terminal-border);
+  border-radius: 8px;
+  margin: 0;
+  padding: 12px;
+  background: var(--terminal-bg);
+  color: var(--terminal-text);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.terminal-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+

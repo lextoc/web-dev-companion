@@ -1,0 +1,131 @@
+@media (max-width: 1280px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .git-overview-panel {
+    height: auto;
+  }
+
+  .git-log-table-wrap,
+  .git-status-card,
+  .git-branches {
+    max-height: 520px;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    padding: 20px;
+  }
+
+  .toast-stack {
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    width: auto;
+  }
+
+  .app-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .app-layout.terminals-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .active-terminals {
+    position: static;
+    max-height: none;
+    order: -1;
+  }
+
+  .terminal-modal {
+    height: calc(100vh - 32px);
+    padding: 12px;
+  }
+
+  .terminal-modal-header,
+  .terminal-modal-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .detail-sticky-bar {
+    position: static;
+  }
+
+  .top-bar,
+  .detail-header,
+  .add-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .repo-count {
+    border-left: 0;
+    border-top: 4px solid var(--accent);
+    padding-top: 12px;
+    padding-left: 0;
+    text-align: left;
+  }
+
+  .detail-layout,
+  .dashboard-toolbar,
+  .script-row {
+    grid-template-columns: 1fr;
+  }
+
+  .script-list {
+    grid-template-columns: 1fr;
+  }
+
+  .terminal-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .terminal-actions {
+    width: 100%;
+  }
+
+  .terminal-actions button {
+    flex: 1 1 0;
+  }
+
+  .git-branch-list li {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .git-status-list li {
+    grid-template-columns: 1fr;
+  }
+
+  .branch-sync {
+    width: fit-content;
+  }
+
+  .status-action {
+    justify-self: start;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1180px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .app-layout.terminals-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .active-terminals {
+    position: static;
+    max-height: none;
+  }
+
+  .script-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -73,7 +73,32 @@ defineEmits<{
           <div class="panel-heading">
             <h3>Git log</h3>
           </div>
-          <pre>{{ selectedDetails.gitLog }}</pre>
+          <div v-if="selectedDetails.gitLog.length > 0" class="git-log-table-wrap">
+            <table class="git-log-table">
+              <thead>
+                <tr>
+                  <th scope="col">Time</th>
+                  <th scope="col">Author</th>
+                  <th scope="col">Commit message</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="entry in selectedDetails.gitLog" :key="entry.hash">
+                  <td>
+                    <time :datetime="entry.dateTime">{{ entry.time }}</time>
+                  </td>
+                  <td>
+                    <strong>{{ entry.authorName }}</strong>
+                    <small>{{ entry.authorEmail }}</small>
+                  </td>
+                  <td>{{ entry.message }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else class="empty-state compact-empty">
+            No git log output available.
+          </div>
         </section>
 
         <section class="detail-panel">

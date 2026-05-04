@@ -9,8 +9,17 @@ export interface RepositorySummary {
   error?: string
 }
 
+export interface GitLogEntry {
+  hash: string
+  time: string
+  dateTime: string
+  authorName: string
+  authorEmail: string
+  message: string
+}
+
 export interface RepositoryDetails extends RepositorySummary {
-  gitLog: string
+  gitLog: GitLogEntry[]
   gitStatus: string
   remotes: string
   npmScripts: Record<string, string>

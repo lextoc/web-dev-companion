@@ -633,6 +633,75 @@ pre {
   white-space: pre-wrap;
 }
 
+.git-log-table-wrap {
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.git-log-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.git-log-table th,
+.git-log-table td {
+  border-bottom: 1px solid var(--border-soft);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.git-log-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.git-log-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.git-log-table td:first-child {
+  width: 120px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.git-log-table td:nth-child(2) {
+  width: 190px;
+}
+
+.git-log-table strong,
+.git-log-table small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.git-log-table small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.git-log-table td:last-child {
+  overflow-wrap: anywhere;
+}
+
+.compact-empty {
+  padding: 24px 14px;
+}
+
 .script-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -5,6 +5,7 @@ import { promisify } from 'node:util'
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
 import type { BrowserWindow as BrowserWindowType, OpenDialogOptions } from 'electron'
 import type {
+  GitLogEntry,
   RepositoryDetails,
   RepositorySummary,
   ScriptOutput,
@@ -329,11 +330,44 @@ async function readRepositorySummary(repoPath: string): Promise<RepositorySummar
   }
 }
 
+async function readGitLogEntries(repoPath: string): Promise<GitLogEntry[]> {
+  const fieldSeparator = '\x1f'
+  const recordSeparator = '\x1e'
+  const output = await tryRunGit(repoPath, [
+    'log',
+    '-n',
+    '30',
+    `--pretty=format:%h%x1f%cr%x1f%cI%x1f%an%x1f%ae%x1f%s%x1e`,
+  ])
+
+  if (!output) {
+    return []
+  }
+
+  return output
+    .split(recordSeparator)
+    .map((record) => record.trim())
+    .filter(Boolean)
+    .map((record) => {
+      const [hash = '', time = '', dateTime = '', authorName = '', authorEmail = '', message = ''] =
+        record.split(fieldSeparator)
+
+      return {
+        hash,
+        time,
+        dateTime,
+        authorName,
+        authorEmail,
+        message,
+      }
+    })
+}
+
 async function readRepositoryDetails(repoPath: string): Promise<RepositoryDetails> {
   const normalizedPath = await normalizeRepositoryPath(repoPath)
   const [summary, gitLog, gitStatus, remotes, npmScripts, packageManager] = await Promise.all([
     readRepositorySummary(normalizedPath),
-    tryRunGit(normalizedPath, ['log', '--oneline', '--decorate', '--graph', '-n', '30']),
+    readGitLogEntries(normalizedPath),
     tryRunGit(normalizedPath, ['status', '--short', '--branch']),
     tryRunGit(normalizedPath, ['remote', '-v']),
     readPackageScripts(normalizedPath),
@@ -342,7 +376,7 @@ async function readRepositoryDetails(repoPath: string): Promise<RepositoryDetail
 
   return {
     ...summary,
-    gitLog: gitLog || 'No git log output available.',
+    gitLog,
     gitStatus: gitStatus || 'Working tree clean.',
     remotes: remotes || 'No git remotes configured.',
     npmScripts,

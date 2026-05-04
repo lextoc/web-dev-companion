@@ -182,6 +182,21 @@ button.secondary:hover:not(:disabled) {
   margin-bottom: 24px;
 }
 
+.brand-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-heading img {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
 .eyebrow {
   margin: 0 0 4px;
   color: var(--brand);

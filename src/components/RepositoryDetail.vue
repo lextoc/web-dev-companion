@@ -1,29 +1,35 @@
 <script setup lang="ts">
-import type { RepositoryDetails, RepositorySummary, ScriptTerminal } from '../repositories'
-import NpmScriptsPanel from './NpmScriptsPanel.vue'
+import type {
+  RepositoryDetails,
+  RepositorySummary,
+  ScriptTerminal,
+} from "../repositories";
+import NpmScriptsPanel from "./NpmScriptsPanel.vue";
 
 defineProps<{
-  selectedDetails: RepositoryDetails | null
-  selectedSummary?: RepositorySummary
-  isDetailLoading: boolean
-  autoRefreshLabel: string
-  autoRefreshProgress: number
-  npmScripts: [string, string][]
-  scriptTerminalsByScript: Record<string, ScriptTerminal>
-}>()
+  selectedDetails: RepositoryDetails | null;
+  selectedSummary?: RepositorySummary;
+  isDetailLoading: boolean;
+  autoRefreshLabel: string;
+  autoRefreshProgress: number;
+  npmScripts: [string, string][];
+  scriptTerminalsByScript: Record<string, ScriptTerminal>;
+}>();
 
 defineEmits<{
-  back: []
-  refresh: []
-  runScript: [scriptName: string]
-  stopScript: [scriptName: string]
-}>()
+  back: [];
+  refresh: [];
+  runScript: [scriptName: string];
+  stopScript: [scriptName: string];
+}>();
 </script>
 
 <template>
   <section class="detail-view">
     <nav class="detail-nav" aria-label="Repository detail navigation">
-      <button type="button" class="secondary" @click="$emit('back')">Back</button>
+      <button type="button" class="secondary" @click="$emit('back')">
+        Back
+      </button>
       <button
         type="button"
         class="secondary refresh-button"
@@ -33,7 +39,10 @@ defineEmits<{
       >
         <span class="refresh-button-label">Refresh</span>
         <span class="refresh-progress" aria-hidden="true">
-          <span class="refresh-progress-fill" :style="{ width: `${autoRefreshProgress}%` }"></span>
+          <span
+            class="refresh-progress-fill"
+            :style="{ width: `${autoRefreshProgress}%` }"
+          ></span>
         </span>
       </button>
     </nav>
@@ -49,7 +58,7 @@ defineEmits<{
           <h2>{{ selectedDetails.name }}</h2>
         </div>
         <span class="status-pill" :class="{ dirty: selectedDetails.dirty }">
-          {{ selectedDetails.dirty ? 'Changes' : 'Clean' }}
+          {{ selectedDetails.dirty ? "Changes" : "Clean" }}
         </span>
       </header>
 
@@ -64,7 +73,7 @@ defineEmits<{
         </div>
         <div>
           <span>Package</span>
-          <strong>{{ selectedDetails.packageManager ?? 'none' }}</strong>
+          <strong>{{ selectedDetails.packageManager ?? "none" }}</strong>
         </div>
       </div>
 
@@ -73,7 +82,10 @@ defineEmits<{
           <div class="panel-heading">
             <h3>Git log</h3>
           </div>
-          <div v-if="selectedDetails.gitLog.length > 0" class="git-log-table-wrap">
+          <div
+            v-if="selectedDetails.gitLog.length > 0"
+            class="git-log-table-wrap"
+          >
             <table class="git-log-table">
               <thead>
                 <tr>
@@ -125,7 +137,7 @@ defineEmits<{
     </template>
 
     <div v-else class="empty-state">
-      {{ selectedSummary?.name ?? 'Repository' }} could not be loaded.
+      {{ selectedSummary?.name ?? "Repository" }} could not be loaded.
     </div>
   </section>
 </template>

@@ -6,9 +6,12 @@ defineProps<{
 
 <template>
   <header class="top-bar">
-    <div>
-      <p class="eyebrow">Web Dev Companion</p>
-      <h1>Repositories</h1>
+    <div class="brand-heading">
+      <img src="/web-dev-companion.svg" alt="" aria-hidden="true" />
+      <div>
+        <p class="eyebrow">Web Dev Companion</p>
+        <h1>Repositories</h1>
+      </div>
     </div>
 
     <div class="repo-count">

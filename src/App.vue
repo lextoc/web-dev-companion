@@ -9,6 +9,19 @@ import type { RepositoryDetails, RepositorySummary, ScriptOutput, ScriptTerminal
 const AUTO_REFRESH_INTERVAL_MS = 60 * 1000
 const FOCUS_REFRESH_THROTTLE_MS = 2000
 
+interface ConfirmationDialog {
+  title: string
+  message: string
+  confirmLabel: string
+  danger?: boolean
+  resolve: (confirmed: boolean) => void
+}
+
+interface AppFeedback {
+  message: string
+  tone: 'success' | 'info'
+}
+
 const repositories = ref<RepositorySummary[]>([])
 const selectedPath = ref<string | null>(null)
 const selectedDetails = ref<RepositoryDetails | null>(null)
@@ -25,12 +38,15 @@ const branchFeedbackMessages = ref<Record<string, string>>({})
 const commitClearToken = ref(0)
 const hasCommitDraft = ref(false)
 const areTerminalsCollapsed = ref(false)
+const confirmationDialog = ref<ConfirmationDialog | null>(null)
+const appFeedback = ref<AppFeedback | null>(null)
 const autoRefreshRemainingMs = ref(AUTO_REFRESH_INTERVAL_MS)
 const scriptTerminals = ref<Record<string, ScriptTerminal>>({})
 let removeScriptOutputListener: (() => void) | undefined
 let removeWindowFocusListener: (() => void) | undefined
 let autoRefreshTickTimer: number | undefined
 let statusFeedbackTimer: number | undefined
+let appFeedbackTimer: number | undefined
 let nextAutoRefreshAt = 0
 let lastFocusRefreshAt = 0
 const appOwnedRunIds = new Set<string>()
@@ -75,9 +91,65 @@ const autoRefreshLabel = computed(() => {
 
   return `${minutes}:${seconds.toString().padStart(2, '0')} until auto refresh`
 })
+const appActivityLabel = computed(() => {
+  if (statusActionLabel.value) {
+    return statusActionLabel.value
+  }
+
+  if (syncingBranchName.value) {
+    return `Syncing ${syncingBranchName.value}...`
+  }
+
+  if (deletingBranchName.value) {
+    return `Removing ${deletingBranchName.value}...`
+  }
+
+  if (isDetailLoading.value) {
+    return 'Refreshing repository...'
+  }
+
+  if (isLoading.value) {
+    return 'Refreshing repositories...'
+  }
+
+  return null
+})
 
 function normalizeError(error: unknown) {
   return error instanceof Error ? error.message : 'Something went wrong.'
+}
+
+function showAppFeedback(message: string, tone: AppFeedback['tone'] = 'success') {
+  appFeedback.value = { message, tone }
+
+  if (appFeedbackTimer !== undefined) {
+    window.clearTimeout(appFeedbackTimer)
+  }
+
+  appFeedbackTimer = window.setTimeout(() => {
+    appFeedback.value = null
+    appFeedbackTimer = undefined
+  }, 4000)
+}
+
+function confirmAction(options: Omit<ConfirmationDialog, 'resolve'>) {
+  return new Promise<boolean>((resolve) => {
+    confirmationDialog.value = {
+      ...options,
+      resolve,
+    }
+  })
+}
+
+function closeConfirmation(confirmed: boolean) {
+  const dialog = confirmationDialog.value
+
+  if (!dialog) {
+    return
+  }
+
+  confirmationDialog.value = null
+  dialog.resolve(confirmed)
 }
 
 async function loadRepositories() {
@@ -186,11 +258,14 @@ async function deleteBranch(branchName: string) {
     return
   }
 
-  if (
-    !window.confirm(
-      `Remove local branch "${branchName}" from ${selectedDetails.value.name}?\n\nThis only deletes the local branch.`,
-    )
-  ) {
+  const confirmed = await confirmAction({
+    title: 'Remove local branch',
+    message: `Remove "${branchName}" from ${selectedDetails.value.name}? This only deletes the local branch.`,
+    confirmLabel: 'Remove branch',
+    danger: true,
+  })
+
+  if (!confirmed) {
     return
   }
 
@@ -204,6 +279,7 @@ async function deleteBranch(branchName: string) {
     })
     await loadRepositories()
     showStatusFeedback(`Removed ${branchName}.`)
+    showAppFeedback(`Removed branch ${branchName}.`)
   } catch (error) {
     errorMessage.value = normalizeError(error)
   } finally {
@@ -217,11 +293,13 @@ async function syncBranch(branchName: string) {
     return
   }
 
-  if (
-    !window.confirm(
-      `Sync branch "${branchName}" in ${selectedDetails.value.name}?\n\nThis will fetch/pull and fast-forward the local branch when possible.`,
-    )
-  ) {
+  const confirmed = await confirmAction({
+    title: 'Sync branch',
+    message: `Sync "${branchName}" in ${selectedDetails.value.name}? This will fetch/pull and fast-forward the local branch when possible.`,
+    confirmLabel: 'Sync branch',
+  })
+
+  if (!confirmed) {
     return
   }
 
@@ -235,6 +313,7 @@ async function syncBranch(branchName: string) {
     })
     await loadRepositories()
     showBranchFeedback(branchName, 'Synced')
+    showAppFeedback(`Synced branch ${branchName}.`)
   } catch (error) {
     errorMessage.value = normalizeError(error)
   } finally {
@@ -288,6 +367,7 @@ async function runStatusAction(
     selectedDetails.value = await action()
     await loadRepositories()
     showStatusFeedback(successMessage)
+    showAppFeedback(successMessage)
     return true
   } catch (error) {
     errorMessage.value = normalizeError(error)
@@ -362,11 +442,14 @@ async function removeRepository(repoPath: string) {
   const repository = repositories.value.find((savedRepository) => savedRepository.path === repoPath)
   const repositoryName = repository?.name ?? repoPath
 
-  if (
-    !window.confirm(
-      `Remove "${repositoryName}" from Web Dev Companion?\n\nThe repository folder will stay on disk.`,
-    )
-  ) {
+  const confirmed = await confirmAction({
+    title: 'Remove repository',
+    message: `Remove "${repositoryName}" from Web Dev Companion? The repository folder will stay on disk.`,
+    confirmLabel: 'Remove repository',
+    danger: true,
+  })
+
+  if (!confirmed) {
     return
   }
 
@@ -380,6 +463,8 @@ async function removeRepository(repoPath: string) {
       selectedPath.value = null
       selectedDetails.value = null
     }
+
+    showAppFeedback(`Removed ${repositoryName}.`)
   } catch (error) {
     errorMessage.value = normalizeError(error)
   } finally {
@@ -530,6 +615,12 @@ function handlePageExit() {
     statusFeedbackTimer = undefined
   }
 
+  if (appFeedbackTimer !== undefined) {
+    window.clearTimeout(appFeedbackTimer)
+    appFeedbackTimer = undefined
+  }
+
+  closeConfirmation(false)
   stopAutoRefreshTimer()
   stopOwnedScripts()
 }
@@ -556,6 +647,16 @@ onBeforeUnmount(() => {
 <template>
   <main class="app-shell">
     <AppHeader :repository-count="repositories.length" />
+
+    <div
+      v-if="appActivityLabel || appFeedback"
+      class="app-feedback"
+      :class="appActivityLabel ? 'info' : (appFeedback?.tone ?? 'info')"
+      role="status"
+    >
+      <span v-if="appActivityLabel" class="activity-dot" aria-hidden="true"></span>
+      <span>{{ appActivityLabel ?? appFeedback?.message }}</span>
+    </div>
 
     <p v-if="errorMessage" class="alert" role="alert">{{ errorMessage }}</p>
 
@@ -607,6 +708,35 @@ onBeforeUnmount(() => {
         @toggle="areTerminalsCollapsed = !areTerminalsCollapsed"
         @stop="stopTerminal"
       />
+    </div>
+
+    <div
+      v-if="confirmationDialog"
+      class="modal-backdrop"
+      role="presentation"
+      @click.self="closeConfirmation(false)"
+    >
+      <section
+        class="confirm-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-title"
+      >
+        <h2 id="confirm-title">{{ confirmationDialog.title }}</h2>
+        <p>{{ confirmationDialog.message }}</p>
+        <div class="confirm-actions">
+          <button type="button" class="secondary" @click="closeConfirmation(false)">
+            Cancel
+          </button>
+          <button
+            type="button"
+            :class="{ danger: confirmationDialog.danger }"
+            @click="closeConfirmation(true)"
+          >
+            {{ confirmationDialog.confirmLabel }}
+          </button>
+        </div>
+      </section>
     </div>
   </main>
 </template>

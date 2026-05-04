@@ -157,6 +157,18 @@ button.secondary.active {
   color: var(--brand-text-hover);
 }
 
+button.danger {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: var(--danger-contrast);
+}
+
+button.danger:hover:not(:disabled) {
+  border-color: var(--danger-hover);
+  background: var(--danger-hover);
+  color: var(--danger-contrast);
+}
+
 #app {
   min-height: 100vh;
 }
@@ -276,6 +288,80 @@ h3 {
   padding: 12px 14px;
   background: var(--danger-soft);
   color: var(--danger-text);
+}
+
+.app-feedback {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  background: var(--surface);
+  color: var(--muted-strong);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.app-feedback.success {
+  border-color: var(--success-text);
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.app-feedback.info {
+  border-color: var(--info-text);
+  background: var(--info-soft);
+  color: var(--info-text);
+}
+
+.activity-dot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.72;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 8, 12, 0.62);
+}
+
+.confirm-dialog {
+  display: grid;
+  width: min(440px, 100%);
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.confirm-dialog h2 {
+  margin: 0;
+  font-size: 1.18rem;
+}
+
+.confirm-dialog p {
+  margin-bottom: 0;
+  color: var(--muted-strong);
+}
+
+.confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
 }
 
 .dashboard,

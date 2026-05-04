@@ -239,6 +239,7 @@ function branchSyncTitle(
                     {{ branchSyncLabel(branch) }}
                   </span>
                   <button
+                    v-if="!branch.inSyncWithRemote"
                     type="button"
                     class="secondary branch-action"
                     :class="{ pending: isSyncingBranch(branch.name, syncingBranchName) }"

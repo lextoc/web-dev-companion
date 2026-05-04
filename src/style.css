@@ -893,9 +893,19 @@ pre {
   padding: 24px 14px;
 }
 
+.clean-state {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.86rem;
+  text-align: center;
+}
+
 .git-status-card {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   align-content: start;
   grid-auto-rows: max-content;
   height: 100%;
@@ -905,7 +915,7 @@ pre {
 
 .commit-form {
   display: grid;
-  gap: 8px;
+  gap: 7px;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px;
@@ -942,7 +952,7 @@ pre {
 
 .commit-form textarea {
   width: 100%;
-  min-height: 78px;
+  min-height: 64px;
   resize: vertical;
   border: 1px solid var(--border-control);
   border-radius: 7px;
@@ -981,48 +991,21 @@ pre {
   font-weight: 800;
 }
 
-.git-status-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  background: var(--surface);
-}
-
-.git-status-summary span {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 800;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.git-status-summary strong {
-  flex: 0 0 auto;
-  color: var(--muted-strong);
-  font-size: 0.82rem;
-}
-
 .git-status-groups {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .status-counts {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .status-counts div {
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 8px;
+  padding: 7px;
   background: var(--surface);
 }
 

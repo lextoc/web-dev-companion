@@ -378,17 +378,6 @@ function branchSyncTitle(
             <h3>Status</h3>
           </div>
           <div class="git-status-card">
-            <div class="git-status-summary">
-              <span>{{ selectedDetails.gitStatus.branch }}</span>
-              <strong>
-                {{
-                  selectedDetails.gitStatus.clean
-                    ? "Working tree clean"
-                    : "Working tree has changes"
-                }}
-              </strong>
-            </div>
-
             <div class="status-counts" aria-label="Working tree summary">
               <div
                 v-for="item in statusCounts(selectedDetails.gitStatus)"
@@ -409,7 +398,13 @@ function branchSyncTitle(
               <div class="commit-form-heading">
                 <div>
                   <span>Commit</span>
-                  <strong>{{ selectedDetails.gitStatus.staged.length }} staged</strong>
+                  <strong>
+                    {{
+                      selectedDetails.gitStatus.staged.length === 1
+                        ? "1 staged file"
+                        : `${selectedDetails.gitStatus.staged.length} staged files`
+                    }}
+                  </strong>
                 </div>
                 <button
                   v-if="selectedDetails.gitStatus.staged.length > 0"
@@ -463,8 +458,8 @@ function branchSyncTitle(
               {{ statusFeedbackMessage }}
             </p>
 
-            <div v-if="selectedDetails.gitStatus.clean" class="empty-state compact-empty">
-              No staged, unstaged, or untracked changes.
+            <div v-if="selectedDetails.gitStatus.clean" class="clean-state">
+              Working tree clean.
             </div>
 
             <div v-else class="git-status-groups">

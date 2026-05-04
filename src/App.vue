@@ -17,6 +17,7 @@ const isLoading = ref(false)
 const isDetailLoading = ref(false)
 const syncingBranchName = ref<string | null>(null)
 const statusActionLabel = ref<string | null>(null)
+const commitClearToken = ref(0)
 const autoRefreshRemainingMs = ref(AUTO_REFRESH_INTERVAL_MS)
 const scriptTerminals = ref<Record<string, ScriptTerminal>>({})
 let removeScriptOutputListener: (() => void) | undefined
@@ -189,7 +190,7 @@ async function syncBranch(branchName: string) {
 
 async function runStatusAction(actionLabel: string, action: () => Promise<RepositoryDetails>) {
   if (!selectedDetails.value) {
-    return
+    return false
   }
 
   isDetailLoading.value = true
@@ -199,8 +200,10 @@ async function runStatusAction(actionLabel: string, action: () => Promise<Reposi
   try {
     selectedDetails.value = await action()
     await loadRepositories()
+    return true
   } catch (error) {
     errorMessage.value = normalizeError(error)
+    return false
   } finally {
     isDetailLoading.value = false
     statusActionLabel.value = null
@@ -242,12 +245,16 @@ async function commitStatus(message: string) {
   }
 
   const repoPath = selectedDetails.value.path
-  await runStatusAction('Committing...', () =>
+  const didCommit = await runStatusAction('Committing...', () =>
     window.repositories.commit({
       repoPath,
       message,
     }),
   )
+
+  if (didCommit) {
+    commitClearToken.value += 1
+  }
 }
 
 async function removeRepository(repoPath: string) {
@@ -448,6 +455,7 @@ onBeforeUnmount(() => {
           :auto-refresh-progress="autoRefreshProgress"
           :syncing-branch-name="syncingBranchName"
           :status-action-label="statusActionLabel"
+          :commit-clear-token="commitClearToken"
           :npm-scripts="npmScripts"
           :script-terminals-by-script="currentRepoScriptTerminals"
           @back="closeDetails"

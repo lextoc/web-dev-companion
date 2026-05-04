@@ -442,15 +442,17 @@ function registerRepositoryHandlers() {
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 1280,
-    height: 900,
-    minWidth: 1080,
+    width: 1600,
+    height: 1000,
+    minWidth: 1180,
     minHeight: 720,
     icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
     webPreferences: {
       preload: path.join(currentDirectory, 'preload.js'),
     },
   })
+
+  win.maximize()
 
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {

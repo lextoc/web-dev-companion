@@ -150,7 +150,7 @@ button.secondary:hover:not(:disabled) {
 }
 
 .app-shell {
-  width: min(1500px, 100%);
+  width: min(1800px, 100%);
   margin: 0 auto;
   padding: 32px;
 }

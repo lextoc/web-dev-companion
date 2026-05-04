@@ -30,6 +30,10 @@ const terminalGroups = computed(() => {
       ),
     }))
 })
+
+const runningTerminalCount = computed(() =>
+  props.terminals.filter((terminal) => terminal.isRunning).length,
+)
 </script>
 
 <template>
@@ -45,6 +49,12 @@ const terminalGroups = computed(() => {
       >
         {{ collapsed ? 'Show' : 'Hide' }}
       </button>
+    </div>
+
+    <div v-if="collapsed" class="active-terminals-mini" aria-label="Terminal activity">
+      <span class="terminal-mini-dot" :class="{ running: runningTerminalCount > 0 }"></span>
+      <strong>{{ runningTerminalCount }}</strong>
+      <small>running</small>
     </div>
 
     <div v-if="terminalGroups.length && !collapsed" class="active-terminal-groups">

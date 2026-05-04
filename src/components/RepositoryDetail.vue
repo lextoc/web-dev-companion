@@ -275,33 +275,29 @@ function branchSyncTitle(
 
 <template>
   <section class="detail-view">
-    <nav class="detail-nav" aria-label="Repository detail navigation">
-      <button type="button" class="secondary" @click="$emit('back')">
-        Back
-      </button>
-      <button
-        type="button"
-        class="secondary refresh-button"
-        :disabled="isDetailLoading"
-        :title="autoRefreshLabel"
-        @click="$emit('refresh')"
-      >
-        <span class="refresh-button-label">Refresh</span>
-        <span class="refresh-progress" aria-hidden="true">
-          <span
-            class="refresh-progress-fill"
-            :style="{ width: `${autoRefreshProgress}%` }"
-          ></span>
-        </span>
-      </button>
-    </nav>
+    <div class="detail-sticky-bar">
+      <nav class="detail-nav" aria-label="Repository detail navigation">
+        <button type="button" class="secondary" @click="$emit('back')">
+          Back
+        </button>
+        <button
+          type="button"
+          class="secondary refresh-button"
+          :disabled="isDetailLoading"
+          :title="autoRefreshLabel"
+          @click="$emit('refresh')"
+        >
+          <span class="refresh-button-label">Refresh</span>
+          <span class="refresh-progress" aria-hidden="true">
+            <span
+              class="refresh-progress-fill"
+              :style="{ width: `${autoRefreshProgress}%` }"
+            ></span>
+          </span>
+        </button>
+      </nav>
 
-    <div v-if="isDetailLoading && !selectedDetails" class="empty-state">
-      Loading repository...
-    </div>
-
-    <template v-else-if="selectedDetails">
-      <header class="detail-header">
+      <header v-if="selectedDetails" class="detail-header">
         <div>
           <p class="repo-path">{{ selectedDetails.path }}</p>
           <h2>{{ selectedDetails.name }}</h2>
@@ -310,7 +306,13 @@ function branchSyncTitle(
           {{ selectedDetails.dirty ? "Changes" : "Clean" }}
         </span>
       </header>
+    </div>
 
+    <div v-if="isDetailLoading && !selectedDetails" class="empty-state">
+      Loading repository...
+    </div>
+
+    <template v-else-if="selectedDetails">
       <div class="summary-strip">
         <div>
           <span>Branch</span>
@@ -403,7 +405,7 @@ function branchSyncTitle(
               <div
                 v-for="item in statusCounts(selectedDetails.gitStatus)"
                 :key="item.key"
-                :class="{ active: item.count > 0 }"
+                :class="[item.key, { active: item.count > 0 }]"
               >
                 <strong>{{ item.count }}</strong>
                 <span>{{ item.label }}</span>
@@ -482,7 +484,7 @@ function branchSyncTitle(
                 v-for="group in statusGroups(selectedDetails.gitStatus)"
                 :key="group.key"
                 class="git-status-group"
-                :class="{ empty: group.entries.length === 0 }"
+                :class="[group.key, { empty: group.entries.length === 0 }]"
               >
                 <div class="git-status-group-heading">
                   <div class="git-status-group-title">
@@ -507,7 +509,7 @@ function branchSyncTitle(
 
                 <ul v-if="group.entries.length > 0" class="git-status-list">
                   <li v-for="entry in group.entries" :key="`${group.key}-${entry.path}`">
-                    <code>{{ statusCode(entry) }}</code>
+                    <code class="status-code" :class="group.key">{{ statusCode(entry) }}</code>
                     <div>
                       <strong>{{ entry.path }}</strong>
                       <small v-if="entry.originalPath">

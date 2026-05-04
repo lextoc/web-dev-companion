@@ -28,6 +28,8 @@
   --success-text: #1f6a45;
   --warning-soft: #fff0d4;
   --warning-text: #8d551b;
+  --info-soft: #e8f1fb;
+  --info-text: #2d5b87;
   --terminal-panel: #111820;
   --terminal-bg: #080d12;
   --terminal-border: #24313d;
@@ -77,6 +79,8 @@
     --success-text: #8ad8aa;
     --warning-soft: #3a2d18;
     --warning-text: #f1c47d;
+    --info-soft: #172b3d;
+    --info-text: #8ebde8;
     --terminal-panel: #0c1116;
     --terminal-bg: #05080c;
     --terminal-border: #2a3946;
@@ -171,7 +175,7 @@ button.secondary.active {
 }
 
 .app-layout.terminals-collapsed {
-  grid-template-columns: minmax(0, 1fr) 88px;
+  grid-template-columns: minmax(0, 1fr) 78px;
 }
 
 .main-pane {
@@ -361,7 +365,8 @@ h3 {
 
 .active-terminals.collapsed {
   justify-items: center;
-  padding: 10px;
+  gap: 10px;
+  padding: 10px 8px;
 }
 
 .active-terminals-heading {
@@ -404,6 +409,34 @@ h3 {
   width: 100%;
   min-width: 0;
   padding: 0 4px;
+}
+
+.active-terminals-mini {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.active-terminals-mini strong {
+  color: var(--text);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.terminal-mini-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--border-muted);
+}
+
+.terminal-mini-dot.running {
+  background: var(--warning-text);
+  box-shadow: 0 0 0 4px var(--warning-soft);
 }
 
 .active-terminal-groups {
@@ -609,6 +642,19 @@ h3 {
   gap: 12px;
 }
 
+.detail-sticky-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--app-bg) 82%, var(--surface));
+  box-shadow: var(--shadow);
+}
+
 .refresh-button {
   position: relative;
   overflow: hidden;
@@ -643,8 +689,8 @@ h3 {
 .detail-header {
   justify-content: space-between;
   gap: 24px;
-  border-bottom: 1px solid var(--border-soft);
-  padding-bottom: 18px;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 12px;
 }
 
 .summary-strip {
@@ -685,8 +731,11 @@ h3 {
 .detail-panel {
   display: grid;
   gap: 12px;
+  border: 1px solid var(--border);
   border-top: 3px solid var(--brand);
-  padding: 14px 0 0;
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface-soft);
 }
 
 .scripts-panel {
@@ -694,6 +743,8 @@ h3 {
 }
 
 .git-overview-panel {
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 620px;
   min-width: 0;
 }
 
@@ -736,7 +787,8 @@ pre {
 }
 
 .git-log-table-wrap {
-  max-height: 520px;
+  height: 100%;
+  min-height: 0;
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -848,7 +900,8 @@ pre {
 .git-status-card {
   display: grid;
   gap: 12px;
-  max-height: 520px;
+  height: 100%;
+  min-height: 0;
   overflow: auto;
 }
 
@@ -980,6 +1033,26 @@ pre {
   background: var(--surface-hover);
 }
 
+.status-counts div.staged.active {
+  border-color: var(--success-text);
+  background: var(--success-soft);
+}
+
+.status-counts div.unstaged.active {
+  border-color: var(--warning-text);
+  background: var(--warning-soft);
+}
+
+.status-counts div.untracked.active {
+  border-color: var(--info-text);
+  background: var(--info-soft);
+}
+
+.status-counts div.conflicted.active {
+  border-color: var(--danger-text);
+  background: var(--danger-soft);
+}
+
 .status-counts strong,
 .status-counts span {
   display: block;
@@ -1011,8 +1084,29 @@ pre {
   background: var(--surface);
 }
 
+.git-status-group {
+  border-left-width: 4px;
+}
+
+.git-status-group.staged {
+  border-left-color: var(--success-text);
+}
+
+.git-status-group.unstaged {
+  border-left-color: var(--warning-text);
+}
+
+.git-status-group.untracked {
+  border-left-color: var(--info-text);
+}
+
+.git-status-group.conflicted {
+  border-left-color: var(--danger-text);
+}
+
 .git-branches {
-  max-height: 520px;
+  height: 100%;
+  min-height: 0;
   overflow: auto;
 }
 
@@ -1035,6 +1129,8 @@ pre {
 }
 
 .git-branch-list li.current {
+  border: 1px solid var(--brand-ring);
+  background: var(--surface-hover);
   box-shadow: inset 3px 0 0 var(--brand);
 }
 
@@ -1152,9 +1248,34 @@ pre {
 }
 
 .git-status-list code {
+  display: grid;
+  min-height: 24px;
+  min-width: 34px;
+  place-items: center;
+  border-radius: 6px;
   color: var(--muted-strong);
   font-size: 0.76rem;
   white-space: pre;
+}
+
+.status-code.staged {
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.status-code.unstaged {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.status-code.untracked {
+  background: var(--info-soft);
+  color: var(--info-text);
+}
+
+.status-code.conflicted {
+  background: var(--danger-soft);
+  color: var(--danger-text);
 }
 
 .git-status-list strong,
@@ -1308,6 +1429,16 @@ code {
   .detail-layout {
     grid-template-columns: 1fr;
   }
+
+  .git-overview-panel {
+    height: auto;
+  }
+
+  .git-log-table-wrap,
+  .git-status-card,
+  .git-branches {
+    max-height: 520px;
+  }
 }
 
 @media (max-width: 760px) {
@@ -1327,6 +1458,10 @@ code {
     position: static;
     max-height: none;
     order: -1;
+  }
+
+  .detail-sticky-bar {
+    position: static;
   }
 
   .top-bar,

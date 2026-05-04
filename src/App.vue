@@ -6,7 +6,7 @@ import RepositoryDashboard from './components/RepositoryDashboard.vue'
 import RepositoryDetail from './components/RepositoryDetail.vue'
 import type { RepositoryDetails, RepositorySummary, ScriptOutput, ScriptTerminal } from './repositories'
 
-const AUTO_REFRESH_INTERVAL_MS = 5 * 60 * 1000
+const AUTO_REFRESH_INTERVAL_MS = 60 * 1000
 
 const repositories = ref<RepositorySummary[]>([])
 const selectedPath = ref<string | null>(null)

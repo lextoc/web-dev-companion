@@ -6,5 +6,6 @@
 @import "./styles/dashboard.css";
 @import "./styles/detail.css";
 @import "./styles/scripts.css";
+@import "./styles/native.css";
 @import "./styles/density.css";
 @import "./styles/responsive.css";

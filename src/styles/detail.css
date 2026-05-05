@@ -854,10 +854,12 @@ pre {
 
 .staged-preview span {
   min-width: 0;
+  direction: rtl;
   overflow: hidden;
   color: var(--muted-strong);
   font-size: 0.76rem;
   font-weight: 800;
+  text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

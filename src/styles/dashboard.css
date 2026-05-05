@@ -4,6 +4,10 @@
   gap: 22px;
 }
 
+.dashboard {
+  --dashboard-side-width: minmax(360px, 430px);
+}
+
 .add-repo {
   display: grid;
   gap: 9px;
@@ -42,14 +46,21 @@
 
 .dashboard-toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(160px, 220px) auto auto;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) var(--dashboard-side-width);
+  gap: 18px;
   align-items: end;
 }
 
-.dashboard-toolbar label {
+.dashboard-toolbar label,
+.dashboard-toolbar-actions {
   display: grid;
   gap: 6px;
+}
+
+.dashboard-toolbar-actions {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+  gap: 12px;
 }
 
 .dashboard-toolbar span {
@@ -72,7 +83,7 @@
 
 .dashboard-result-count {
   display: grid;
-  min-width: 118px;
+  min-width: 112px;
   min-height: 42px;
   align-content: center;
   border: 1px solid var(--border-soft);
@@ -102,7 +113,8 @@
 
 .dashboard-add-toggle {
   min-height: 42px;
-  padding: 0 14px;
+  padding: 0 13px;
+  white-space: nowrap;
 }
 
 .dashboard-add-toggle.active {
@@ -113,7 +125,7 @@
 
 .dashboard-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
+  grid-template-columns: minmax(0, 1fr) var(--dashboard-side-width);
   gap: 18px;
   align-items: start;
 }

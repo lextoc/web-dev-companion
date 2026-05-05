@@ -9,6 +9,10 @@
     grid-template-columns: 1fr;
   }
 
+  .dashboard-toolbar {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-git-log.git-log-sidebar {
     position: static;
   }
@@ -131,6 +135,10 @@
 
   .dashboard-result-count {
     min-width: 0;
+  }
+
+  .dashboard-toolbar-actions {
+    grid-template-columns: 1fr;
   }
 
   .repo-card-main {

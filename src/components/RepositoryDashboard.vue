@@ -126,7 +126,7 @@ const repositorySections = computed(() => {
 
     <template v-else>
       <div class="dashboard-toolbar">
-        <label>
+        <label class="dashboard-search-control">
           <span>Search</span>
           <input
             v-model="searchQuery"
@@ -135,27 +135,30 @@ const repositorySections = computed(() => {
             autocomplete="off"
           />
         </label>
-        <label>
-          <span>Sort</span>
-          <select v-model="sortMode">
-            <option value="dirty">Changes first</option>
-            <option value="name">Name</option>
-            <option value="scripts">Script count</option>
-          </select>
-        </label>
-        <div class="dashboard-result-count">
-          <strong>{{ filteredRepositories.length }}</strong>
-          <span>{{ filteredRepositories.length === 1 ? 'repository' : 'repositories' }}</span>
+
+        <div class="dashboard-toolbar-actions">
+          <label class="dashboard-sort-control">
+            <span>Sort</span>
+            <select v-model="sortMode">
+              <option value="dirty">Changes first</option>
+              <option value="name">Name</option>
+              <option value="scripts">Script count</option>
+            </select>
+          </label>
+          <div class="dashboard-result-count">
+            <strong>{{ filteredRepositories.length }}</strong>
+            <span>{{ filteredRepositories.length === 1 ? 'repository' : 'repositories' }}</span>
+          </div>
+          <button
+            type="button"
+            class="secondary dashboard-add-toggle"
+            :class="{ active: isAddRepositoryOpen }"
+            :aria-expanded="isAddRepositoryOpen"
+            @click="isAddRepositoryOpen = !isAddRepositoryOpen"
+          >
+            Add repository
+          </button>
         </div>
-        <button
-          type="button"
-          class="secondary dashboard-add-toggle"
-          :class="{ active: isAddRepositoryOpen }"
-          :aria-expanded="isAddRepositoryOpen"
-          @click="isAddRepositoryOpen = !isAddRepositoryOpen"
-        >
-          Add repository
-        </button>
       </div>
 
       <form v-if="isAddRepositoryOpen" class="add-repo" @submit.prevent="$emit('add')">

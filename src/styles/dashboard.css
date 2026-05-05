@@ -543,9 +543,9 @@
 }
 
 .active-terminal-actions {
-  display: flex;
-  width: 96px;
-  flex-wrap: wrap;
+  display: grid;
+  width: 104px;
+  grid-template-columns: repeat(2, 38px);
   gap: 7px;
   justify-content: flex-end;
 }
@@ -562,14 +562,20 @@
 }
 
 .active-terminal-item .subtle-icon-button {
-  width: 34px;
-  min-height: 34px;
+  width: 38px;
+  min-height: 36px;
   padding: 0;
 }
 
 .active-terminal-item .terminal-action-button {
-  flex: 1 1 100%;
+  grid-column: 1 / -1;
   min-width: 0;
+}
+
+.terminal-action-placeholder {
+  width: 38px;
+  min-height: 36px;
+  visibility: hidden;
 }
 
 .terminal-stop.secondary {

@@ -202,30 +202,35 @@ function getTerminalPreview(terminal: ScriptTerminal) {
             </div>
             <div class="active-terminal-actions">
               <button
-                v-if="entry.pinnedScript && !entry.terminal"
+                v-if="entry.terminal || entry.pinnedScript"
                 type="button"
-                class="secondary terminal-restart terminal-action-button"
-                :aria-label="`Start ${entry.scriptName}`"
-                title="Start script"
-                @click.stop="$emit('startPinned', entry.pinnedScript)"
+                class="terminal-stop terminal-action-button"
+                :class="{ secondary: !entry.terminal?.isRunning }"
+                :aria-label="
+                  entry.terminal
+                    ? `${entry.terminal.isRunning ? 'Stop' : 'Close'} ${entry.scriptName}`
+                    : `Start ${entry.scriptName}`
+                "
+                :title="entry.terminal ? (entry.terminal.isRunning ? 'Stop script' : 'Close terminal') : 'Start script'"
+                @click.stop="
+                  entry.terminal
+                    ? $emit('stop', entry.terminal.runId)
+                    : entry.pinnedScript && $emit('startPinned', entry.pinnedScript)
+                "
                 @keydown.enter.stop
                 @keydown.space.stop
               >
-                <AppIcon name="play" class="button-icon" />
-                <span>Start</span>
-              </button>
-              <button
-                v-if="entry.pinnedScript"
-                type="button"
-                class="secondary terminal-pin subtle-icon-button"
-                :aria-label="`Unpin ${entry.scriptName}`"
-                title="Unpin script"
-                @click.stop="$emit('unpinPinned', entry.pinnedScript)"
-                @keydown.enter.stop
-                @keydown.space.stop
-              >
-                <AppIcon name="pin-off" class="button-icon" />
-                <span class="visually-hidden">Unpin</span>
+                <AppIcon
+                  :name="entry.terminal ? (entry.terminal.isRunning ? 'square' : 'close') : 'play'"
+                  class="button-icon"
+                />
+                <span>
+                  {{
+                    entry.terminal
+                      ? (entry.terminal.isRunning ? 'Stop' : 'Close')
+                      : 'Start'
+                  }}
+                </span>
               </button>
               <button
                 v-if="entry.terminal"
@@ -240,19 +245,29 @@ function getTerminalPreview(terminal: ScriptTerminal) {
                 <AppIcon name="restart" class="button-icon" />
                 <span class="visually-hidden">Restart</span>
               </button>
+              <span
+                v-else
+                class="terminal-action-placeholder"
+                aria-hidden="true"
+              ></span>
               <button
-                v-if="entry.terminal"
+                v-if="entry.pinnedScript"
                 type="button"
-                class="terminal-stop terminal-action-button"
-                :class="{ secondary: !entry.terminal.isRunning }"
-                :aria-label="`${entry.terminal.isRunning ? 'Stop' : 'Close'} ${entry.scriptName}`"
-                @click.stop="$emit('stop', entry.terminal.runId)"
+                class="secondary terminal-pin subtle-icon-button"
+                :aria-label="`Unpin ${entry.scriptName}`"
+                title="Unpin script"
+                @click.stop="$emit('unpinPinned', entry.pinnedScript)"
                 @keydown.enter.stop
                 @keydown.space.stop
               >
-                <AppIcon :name="entry.terminal.isRunning ? 'square' : 'close'" class="button-icon" />
-                <span>{{ entry.terminal.isRunning ? 'Stop' : 'Close' }}</span>
+                <AppIcon name="pin-off" class="button-icon" />
+                <span class="visually-hidden">Unpin</span>
               </button>
+              <span
+                v-else
+                class="terminal-action-placeholder"
+                aria-hidden="true"
+              ></span>
             </div>
           </article>
         </div>

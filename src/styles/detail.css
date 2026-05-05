@@ -763,75 +763,83 @@ pre {
 }
 
 .commit-panel.ready .commit-form-wide {
-  border-color: transparent;
-  border-top-width: 6px;
+  border-color: color-mix(in srgb, var(--success-text) 28%, var(--border));
+  border-top-color: transparent;
+  border-top-width: 5px;
   background:
-    radial-gradient(circle at 100% 0%, rgba(108, 222, 177, 0.38), transparent 34%) padding-box,
-    radial-gradient(circle at 0% 100%, rgba(11, 74, 65, 0.76), transparent 42%) padding-box,
-    linear-gradient(135deg, #0d342f 0%, #16473f 46%, #0f6658 100%) padding-box,
-    linear-gradient(90deg, #6ee7d8 0%, #2ec27e 42%, #f0b45f 100%) border-box;
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--success-soft) 84%, var(--surface)),
+      color-mix(in srgb, var(--surface) 82%, var(--success-soft))
+    ) padding-box,
+    linear-gradient(90deg, var(--brand), var(--success-text), var(--accent)) border-box;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 18px 38px rgba(16, 83, 72, 0.24);
+    inset 0 1px 0 color-mix(in srgb, var(--surface) 70%, transparent),
+    0 12px 26px color-mix(in srgb, var(--success-text) 12%, transparent);
 }
 
 .commit-panel.ready .commit-form label,
 .commit-panel.ready .commit-queue-heading span {
-  color: #d9f4e7;
+  color: var(--success-text);
 }
 
 .commit-panel.ready .commit-queue-heading strong {
-  color: #ffffff;
+  color: var(--success-text);
 }
 
 .commit-panel.ready .commit-form textarea {
-  border-color: #8abbb0;
-  background: #f7fbf9;
-  color: #142720;
+  border-color: color-mix(in srgb, var(--success-text) 32%, var(--border-control));
+  background: var(--surface);
+  color: var(--text);
 }
 
 .commit-panel.ready .commit-form textarea:focus {
-  border-color: #d9f4e7;
-  box-shadow: 0 0 0 3px rgba(217, 244, 231, 0.28);
+  border-color: var(--success-text);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success-text) 24%, transparent);
 }
 
 .commit-panel.ready .commit-submit:not(:disabled) {
-  border-color: #f7fbf9;
-  background: #f7fbf9;
-  color: #16473f;
-  box-shadow: 0 8px 18px rgba(7, 22, 18, 0.24);
+  border-color: color-mix(in srgb, var(--success-text) 82%, var(--brand));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--success-text) 84%, var(--brand)),
+      color-mix(in srgb, var(--brand) 82%, var(--success-text))
+    );
+  color: var(--brand-contrast);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--success-text) 22%, transparent);
 }
 
 .commit-panel.ready .commit-submit:not(:disabled):hover {
-  border-color: #d9f4e7;
-  background: #d9f4e7;
-  color: #123c36;
+  border-color: var(--success-text);
+  background: var(--brand-hover);
+  color: var(--brand-contrast);
 }
 
 .commit-panel.ready .commit-submit:disabled {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.16);
-  color: rgba(255, 255, 255, 0.82);
+  border-color: color-mix(in srgb, var(--success-text) 20%, var(--border-control));
+  background: color-mix(in srgb, var(--surface) 64%, transparent);
+  color: var(--muted-strong);
   opacity: 1;
 }
 
 .commit-panel.ready .commit-queue {
-  border-color: rgba(217, 244, 231, 0.28);
-  background: rgba(11, 48, 42, 0.64);
+  border-color: color-mix(in srgb, var(--success-text) 24%, var(--border-soft));
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .commit-panel.ready .commit-queue p {
-  color: #b9d9d0;
+  color: var(--muted-strong);
 }
 
 .commit-panel.ready .staged-preview li {
-  border-color: #8abbb0;
-  background: #f7fbf9;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18);
+  border-color: color-mix(in srgb, var(--success-text) 24%, var(--border-soft));
+  background: var(--surface);
+  box-shadow: none;
 }
 
 .commit-panel.ready .staged-preview-file small {
-  color: #45645e;
+  color: var(--muted);
 }
 
 .commit-form label {

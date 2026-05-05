@@ -170,11 +170,14 @@ button.secondary.active {
   position: absolute;
   z-index: 60;
   top: calc(100% + 5px);
-  right: 0;
   left: 0;
   display: grid;
+  width: max-content;
+  min-width: 100%;
+  max-width: min(560px, calc(100vw - 32px));
   max-height: min(280px, 48vh);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   border: 1px solid var(--border-control);
   border-radius: 8px;
   padding: 5px;

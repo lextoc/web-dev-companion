@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import type { CommandPaletteItem } from '../command-palette'
+import AppIcon from './AppIcon.vue'
 
 const props = defineProps<{
   items: CommandPaletteItem[]
@@ -41,6 +42,22 @@ const filteredItems = computed(() => {
     return terms.every((term) => searchableText.includes(term))
   })
 })
+const groupedItems = computed(() => {
+  const groups: Array<{ section: string; entries: Array<{ item: CommandPaletteItem; index: number }> }> = []
+
+  for (const [index, item] of filteredItems.value.entries()) {
+    let group = groups.find((entry) => entry.section === item.section)
+
+    if (!group) {
+      group = { section: item.section, entries: [] }
+      groups.push(group)
+    }
+
+    group.entries.push({ item, index })
+  }
+
+  return groups
+})
 
 watch(
   () => filteredItems.value.length,
@@ -78,7 +95,7 @@ function runSelected() {
   const selectedItem = filteredItems.value[selectedIndex.value]
 
   if (selectedItem) {
-    emit('run', selectedItem.id)
+    emit('run', selectedItem.actionId ?? selectedItem.id)
   }
 }
 </script>
@@ -108,32 +125,44 @@ function runSelected() {
         />
       </div>
 
-      <ol v-if="filteredItems.length > 0" class="command-palette-list" role="listbox">
-        <li
-          v-for="(item, index) in filteredItems"
-          :id="`command-palette-item-${item.id}`"
-          :key="item.id"
-          role="option"
-          :aria-selected="index === selectedIndex"
+      <div v-if="filteredItems.length > 0" class="command-palette-list" role="listbox">
+        <section
+          v-for="group in groupedItems"
+          :key="group.section"
+          class="command-palette-group"
+          :aria-label="group.section"
         >
-          <button
-            type="button"
-            class="command-palette-item"
-            :class="{ active: index === selectedIndex }"
-            @mouseenter="selectedIndex = index"
-            @click="$emit('run', item.id)"
-          >
-            <span class="command-palette-item-main">
-              <strong>{{ item.title }}</strong>
-              <span v-if="item.subtitle">{{ item.subtitle }}</span>
-            </span>
-            <span class="command-palette-item-side">
-              <span>{{ item.section }}</span>
-              <kbd v-if="item.meta">{{ item.meta }}</kbd>
-            </span>
-          </button>
-        </li>
-      </ol>
+          <h3>{{ group.section }}</h3>
+          <ol>
+            <li
+              v-for="{ item, index } in group.entries"
+              :id="`command-palette-item-${index}`"
+              :key="item.id"
+              role="option"
+              :aria-selected="index === selectedIndex"
+            >
+              <button
+                type="button"
+                class="command-palette-item"
+                :class="{ active: index === selectedIndex }"
+                @mouseenter="selectedIndex = index"
+                @click="$emit('run', item.actionId ?? item.id)"
+              >
+                <span class="command-palette-item-icon" aria-hidden="true">
+                  <AppIcon :name="item.icon" />
+                </span>
+                <span class="command-palette-item-main">
+                  <strong>{{ item.title }}</strong>
+                  <span v-if="item.subtitle">{{ item.subtitle }}</span>
+                </span>
+                <span class="command-palette-item-side">
+                  <kbd v-if="item.meta">{{ item.meta }}</kbd>
+                </span>
+              </button>
+            </li>
+          </ol>
+        </section>
+      </div>
 
       <div v-else class="command-palette-empty">
         No matching commands.

@@ -189,10 +189,31 @@
 
 .command-palette-list {
   display: grid;
-  gap: 3px;
+  gap: 10px;
   overflow: auto;
   margin: 0;
-  padding: 8px;
+  padding: 10px;
+}
+
+.command-palette-group {
+  display: grid;
+  gap: 4px;
+}
+
+.command-palette-group h3 {
+  margin: 0;
+  padding: 5px 8px 3px;
+  color: var(--muted-strong);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.command-palette-group ol {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
   list-style: none;
 }
 
@@ -200,9 +221,9 @@
   display: grid;
   width: 100%;
   min-height: 58px;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   border-color: transparent;
   padding: 8px 10px;
   background: transparent;
@@ -215,6 +236,27 @@
   border-color: var(--brand-ring);
   background: color-mix(in srgb, var(--surface-hover) 78%, var(--surface));
   color: var(--text);
+}
+
+.command-palette-item-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+}
+
+.command-palette-item-icon .app-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.command-palette-item.active .command-palette-item-icon,
+.command-palette-item:hover:not(:disabled) .command-palette-item-icon {
+  background: var(--success-soft);
+  color: var(--brand-text-hover);
 }
 
 .command-palette-item-main {
@@ -243,7 +285,6 @@
   color: var(--muted-strong);
   font-size: 0.72rem;
   font-weight: 900;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 

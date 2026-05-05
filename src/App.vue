@@ -31,6 +31,8 @@ import type { AppSettings } from './settings'
 const FOCUS_REFRESH_THROTTLE_MS = 2000
 const PINNED_REPOSITORIES_KEY = 'web-dev-companion:pinned-repositories'
 const PINNED_SCRIPTS_KEY = 'web-dev-companion:pinned-scripts'
+const RECENT_COMMANDS_KEY = 'web-dev-companion:recent-commands'
+const MAX_RECENT_COMMANDS = 6
 
 type AppHistoryState =
   | { view: 'dashboard' }
@@ -58,6 +60,7 @@ const isDashboardGitLogLoading = ref(false)
 const repositoryActivitiesByPath = ref<Record<string, RepositoryLocalActivity[]>>({})
 const isCommandPaletteOpen = ref(false)
 const isMacPlatform = ref(false)
+const recentCommandIds = ref<string[]>([])
 let removeScriptOutputListener: (() => void) | undefined
 let removeWindowFocusListener: (() => void) | undefined
 let removeMenuCommandListener: (() => void) | undefined
@@ -184,6 +187,7 @@ const commandPaletteItems = computed(() => {
 
   addItem({
     id: 'action:add-repository',
+    icon: 'folder',
     title: 'Add repository',
     section: 'App',
     subtitle: 'Choose a repository folder to save',
@@ -191,6 +195,7 @@ const commandPaletteItems = computed(() => {
   })
   addItem({
     id: 'action:refresh',
+    icon: 'restart',
     title: selectedPath.value ? 'Refresh repository' : 'Refresh repositories',
     section: 'App',
     subtitle: selectedPath.value ? 'Reload current repository details' : 'Reload saved repositories',
@@ -198,6 +203,7 @@ const commandPaletteItems = computed(() => {
   })
   addItem({
     id: 'action:settings',
+    icon: 'command',
     title: 'Open settings',
     section: 'App',
     meta: isMacPlatform.value ? '⌘,' : 'Ctrl ,',
@@ -207,6 +213,7 @@ const commandPaletteItems = computed(() => {
   if (selectedPath.value) {
     addItem({
       id: 'action:back',
+      icon: 'arrow-left',
       title: 'Back to repositories',
       section: 'Navigation',
       meta: 'Esc',
@@ -217,6 +224,7 @@ const commandPaletteItems = computed(() => {
   if (currentRepoPath) {
     addItem({
       id: 'action:open-files',
+      icon: 'folder',
       title: 'Open repository files',
       section: 'Repository',
       subtitle: currentRepoPath,
@@ -224,6 +232,7 @@ const commandPaletteItems = computed(() => {
     })
     addItem({
       id: 'action:open-editor',
+      icon: 'edit',
       title: 'Open repository in editor',
       section: 'Repository',
       subtitle: currentRepoPath,
@@ -231,6 +240,7 @@ const commandPaletteItems = computed(() => {
     })
     addItem({
       id: 'action:open-terminal',
+      icon: 'terminal',
       title: 'Open repository terminal',
       section: 'Repository',
       subtitle: currentRepoPath,
@@ -238,6 +248,7 @@ const commandPaletteItems = computed(() => {
     })
     addItem({
       id: 'action:copy-path',
+      icon: 'copy',
       title: 'Copy repository path',
       section: 'Repository',
       subtitle: currentRepoPath,
@@ -248,6 +259,7 @@ const commandPaletteItems = computed(() => {
   if (hasRunningScripts.value) {
     addItem({
       id: 'action:stop-scripts',
+      icon: 'terminal',
       title: 'Stop running scripts',
       section: 'Scripts',
       subtitle: `${activeTerminals.value.filter((terminal) => terminal.isRunning).length} running`,
@@ -258,6 +270,7 @@ const commandPaletteItems = computed(() => {
   for (const repository of repositories.value) {
     addItem({
       id: `repository:${repository.path}`,
+      icon: 'repository',
       title: repository.name,
       section: 'Repositories',
       subtitle: repository.path,
@@ -270,6 +283,7 @@ const commandPaletteItems = computed(() => {
     for (const [scriptName, command] of Object.entries(selectedDetails.value.npmScripts)) {
       addItem({
         id: `script:${selectedDetails.value.path}\n${scriptName}`,
+        icon: 'play',
         title: `Run ${scriptName}`,
         section: 'Current scripts',
         subtitle: command,
@@ -282,6 +296,7 @@ const commandPaletteItems = computed(() => {
   for (const script of pinnedScripts.value) {
     addItem({
       id: `script:${script.repoPath}\n${script.scriptName}`,
+      icon: 'play',
       title: `Run ${script.scriptName}`,
       section: 'Pinned scripts',
       subtitle: `${script.repoName} · ${script.command}`,
@@ -293,6 +308,7 @@ const commandPaletteItems = computed(() => {
   for (const terminal of activeTerminals.value) {
     addItem({
       id: `terminal:${terminal.runId}`,
+      icon: 'terminal',
       title: `Open ${terminal.scriptName}`,
       section: 'Terminals',
       subtitle: terminal.repoName,
@@ -301,7 +317,19 @@ const commandPaletteItems = computed(() => {
     })
   }
 
-  return [...items.values()]
+  const baseItems = [...items.values()]
+  const recentItems = recentCommandIds.value
+    .map((commandId) => items.get(commandId))
+    .filter((item): item is CommandPaletteItem => Boolean(item))
+    .map((item) => ({
+      ...item,
+      id: `recent:${item.id}`,
+      actionId: item.actionId ?? item.id,
+      section: 'Recent',
+      keywords: [...(item.keywords ?? []), 'recent'],
+    }))
+
+  return [...recentItems, ...baseItems]
 })
 
 function currentHistoryState() {
@@ -408,6 +436,17 @@ function loadPinnedScripts() {
   }
 }
 
+function loadRecentCommands() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RECENT_COMMANDS_KEY) ?? '[]')
+    recentCommandIds.value = Array.isArray(parsed)
+      ? parsed.filter((commandId): commandId is string => typeof commandId === 'string')
+      : []
+  } catch {
+    recentCommandIds.value = []
+  }
+}
+
 function savePinnedRepositories(repoPaths: string[]) {
   pinnedRepositoryPaths.value = repoPaths
   localStorage.setItem(PINNED_REPOSITORIES_KEY, JSON.stringify(repoPaths))
@@ -416,6 +455,18 @@ function savePinnedRepositories(repoPaths: string[]) {
 function savePinnedScripts(scripts: PinnedScript[]) {
   pinnedScripts.value = scripts
   localStorage.setItem(PINNED_SCRIPTS_KEY, JSON.stringify(scripts))
+}
+
+function saveRecentCommands(commandIds: string[]) {
+  recentCommandIds.value = commandIds.slice(0, MAX_RECENT_COMMANDS)
+  localStorage.setItem(RECENT_COMMANDS_KEY, JSON.stringify(recentCommandIds.value))
+}
+
+function rememberCommand(commandId: string) {
+  saveRecentCommands([
+    commandId,
+    ...recentCommandIds.value.filter((recentCommandId) => recentCommandId !== commandId),
+  ])
 }
 
 function pinnedScriptKey(script: Pick<PinnedScript, 'repoPath' | 'scriptName'>) {
@@ -1028,6 +1079,7 @@ function isEditableTarget(target: EventTarget | null) {
 }
 
 async function runCommandPaletteItem(itemId: string) {
+  rememberCommand(itemId)
   closeCommandPalette()
 
   if (itemId === 'action:add-repository') {
@@ -1258,6 +1310,7 @@ onMounted(() => {
   autoRefreshRemainingMs.value = appSettings.value.autoRefreshIntervalMs
   loadPinnedRepositories()
   loadPinnedScripts()
+  loadRecentCommands()
   removeScriptOutputListener = window.repositories.onScriptOutput(handleScriptOutput)
   removeWindowFocusListener = window.repositories.onWindowFocus(() => {
     void refreshOnWindowFocus()

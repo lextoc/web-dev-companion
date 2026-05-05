@@ -12,6 +12,7 @@ defineProps<{
     | "pin"
     | "pin-off"
     | "play"
+    | "repository"
     | "restart"
     | "stop"
     | "terminal"
@@ -46,6 +47,12 @@ defineProps<{
     </g>
     <g v-else-if="name === 'play'">
       <path d="M8 5v14l11-7z" />
+    </g>
+    <g v-else-if="name === 'repository'">
+      <path d="M5 5h14v14H5z" />
+      <path d="M8 9h8" />
+      <path d="M8 12h8" />
+      <path d="M8 15h5" />
     </g>
     <g v-else-if="name === 'restart'">
       <path d="M21 2v6h-6" />

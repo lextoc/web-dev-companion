@@ -847,7 +847,6 @@ onBeforeUnmount(() => {
 <template>
   <main class="app-shell">
     <AppHeader
-      :repository-count="repositories.length"
       :active-repository-name="selectedDetails?.name ?? selectedSummary?.name"
       :active-repository-path="selectedDetails?.path ?? selectedSummary?.path"
       :activity-label="appActivityLabel"

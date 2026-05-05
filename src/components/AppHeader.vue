@@ -1,6 +1,5 @@
 <script setup lang="ts">
 defineProps<{
-  repositoryCount: number
   activeRepositoryName?: string
   activeRepositoryPath?: string
   activityLabel?: string | null
@@ -35,10 +34,6 @@ defineEmits<{
       <button type="button" class="secondary" @click="$emit('settings')">
         Settings
       </button>
-      <div class="repo-count">
-        <span>{{ repositoryCount }}</span>
-        <small>saved</small>
-      </div>
     </div>
   </header>
 </template>

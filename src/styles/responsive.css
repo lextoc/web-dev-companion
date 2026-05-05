@@ -115,14 +115,6 @@
     max-width: 100%;
   }
 
-  .repo-count {
-    border-left: 0;
-    border-top: 4px solid var(--accent);
-    padding-top: 12px;
-    padding-left: 0;
-    text-align: left;
-  }
-
   .detail-layout,
   .git-detail-layout,
   .git-main-grid,

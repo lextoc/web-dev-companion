@@ -194,6 +194,14 @@ button.secondary.active {
   text-align: left;
 }
 
+.app-dropdown-option-label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .app-dropdown-option:hover:not(:disabled),
 .app-dropdown-option.highlighted {
   border-color: transparent;

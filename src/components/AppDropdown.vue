@@ -147,7 +147,7 @@ onBeforeUnmount(() => {
         @mouseenter="highlightedIndex = index"
         @click="selectOption(option)"
       >
-        {{ option.label }}
+        <span class="app-dropdown-option-label">{{ option.label }}</span>
       </button>
     </div>
   </div>

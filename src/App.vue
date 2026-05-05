@@ -46,6 +46,7 @@ const isLoading = ref(false)
 const isDetailLoading = ref(false)
 const syncingBranchName = ref<string | null>(null)
 const deletingBranchName = ref<string | null>(null)
+const checkingOutBranchName = ref<string | null>(null)
 const statusActionLabel = ref<string | null>(null)
 const pendingStatusActionKey = ref<string | null>(null)
 const statusFeedbackMessage = ref<string | null>(null)
@@ -155,6 +156,10 @@ const appActivityLabel = computed(() => {
 
   if (deletingBranchName.value) {
     return `Removing ${deletingBranchName.value}...`
+  }
+
+  if (checkingOutBranchName.value) {
+    return `Switching to ${checkingOutBranchName.value}...`
   }
 
   if (isDetailLoading.value) {
@@ -719,6 +724,68 @@ async function deleteBranch(branchName: string) {
     showRepositoryError(selectedDetails.value.path, `Could not remove branch "${branchName}"`, error)
   } finally {
     deletingBranchName.value = null
+    resetAutoRefreshTimer()
+  }
+}
+
+async function checkoutBranch(branchName: string) {
+  if (!selectedDetails.value) {
+    return
+  }
+
+  checkingOutBranchName.value = branchName
+  clearError()
+  const repoPath = selectedDetails.value.path
+
+  try {
+    selectedDetails.value = await window.repositories.checkoutBranch({
+      repoPath,
+      branchName,
+    })
+    await loadRepositories()
+    showBranchFeedback(branchName, 'Checked out')
+    showAppFeedback(`Checked out branch ${branchName}.`)
+    recordRepositoryActivity({
+      repoPath,
+      kind: 'branch-sync',
+      title: `Checked out branch "${branchName}"`,
+      tone: 'success',
+    })
+  } catch (error) {
+    showRepositoryError(repoPath, `Could not check out branch "${branchName}"`, error)
+  } finally {
+    checkingOutBranchName.value = null
+    resetAutoRefreshTimer()
+  }
+}
+
+async function checkoutRemoteBranch(remoteBranchName: string) {
+  if (!selectedDetails.value) {
+    return
+  }
+
+  checkingOutBranchName.value = remoteBranchName
+  clearError()
+  const repoPath = selectedDetails.value.path
+
+  try {
+    selectedDetails.value = await window.repositories.checkoutRemoteBranch({
+      repoPath,
+      remoteBranchName,
+    })
+    await loadRepositories()
+    showBranchFeedback(remoteBranchName, 'Created local branch')
+    showAppFeedback(`Created branch from ${remoteBranchName}.`)
+    recordRepositoryActivity({
+      repoPath,
+      kind: 'branch-sync',
+      title: `Created branch from "${remoteBranchName}"`,
+      tone: 'success',
+    })
+  } catch (error) {
+    showRepositoryError(repoPath, `Could not create branch from "${remoteBranchName}"`, error)
+  } finally {
+    checkingOutBranchName.value = null
     resetAutoRefreshTimer()
   }
 }
@@ -1381,6 +1448,7 @@ onBeforeUnmount(() => {
           :auto-refresh-progress="autoRefreshProgress"
           :syncing-branch-name="syncingBranchName"
           :deleting-branch-name="deletingBranchName"
+          :checking-out-branch-name="checkingOutBranchName"
           :status-action-label="statusActionLabel"
           :pending-status-action-key="pendingStatusActionKey"
           :status-feedback-message="statusFeedbackMessage"
@@ -1393,6 +1461,8 @@ onBeforeUnmount(() => {
           @back="closeDetails"
           @refresh="refreshSelectedRepository"
           @delete-branch="deleteBranch"
+          @checkout-branch="checkoutBranch"
+          @checkout-remote-branch="checkoutRemoteBranch"
           @sync-branch="syncBranch"
           @stage-files="stageFiles"
           @unstage-files="unstageFiles"

@@ -5,6 +5,7 @@ import { promisify } from 'node:util'
 import type {
   GitBranchEntry,
   GitLogEntry,
+  GitRemoteBranchEntry,
   GitStatusEntry,
   GitStatusSummary,
 } from '../src/repositories'
@@ -295,6 +296,39 @@ export async function readGitBranches(repoPath: string): Promise<GitBranchEntry[
         inSyncWithRemote: Boolean(branch.upstream) && !remoteGone && ahead === 0 && behind === 0,
         canDelete: !deleteReason,
         deleteReason,
+      }
+    })
+}
+
+export async function readGitRemoteBranches(
+  repoPath: string,
+  localBranches: GitBranchEntry[],
+): Promise<GitRemoteBranchEntry[]> {
+  const output = await tryRunGit(repoPath, [
+    'for-each-ref',
+    'refs/remotes',
+    '--format=%(refname:short)',
+    '--sort=refname',
+  ])
+  const localBranchNames = new Set(localBranches.map((branch) => branch.name))
+
+  if (!output) {
+    return []
+  }
+
+  return output
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((name) => name && !name.endsWith('/HEAD'))
+    .map((name) => {
+      const [remote, ...localNameParts] = name.split('/')
+      const localName = localNameParts.join('/')
+
+      return {
+        name,
+        remote,
+        localName,
+        hasLocalBranch: localBranchNames.has(localName),
       }
     })
 }

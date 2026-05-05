@@ -1,6 +1,8 @@
 import path from 'node:path'
 import type { BrowserWindow as BrowserWindowType, OpenDialogOptions } from 'electron'
 import type {
+  CheckoutBranchRequest,
+  CheckoutRemoteBranchRequest,
   CommitRequest,
   DeleteBranchRequest,
   DesktopMenuCommand,
@@ -223,6 +225,12 @@ function registerRepositoryHandlers() {
   ipcMain.handle('repositories:add-by-path', (_event, repoPath: string) => repositoryService.addRepository(repoPath))
   ipcMain.handle('repositories:remove', (_event, repoPath: string) => repositoryService.removeRepository(repoPath))
   ipcMain.handle('repositories:details', (_event, repoPath: string) => repositoryService.readRepositoryDetails(repoPath))
+  ipcMain.handle('repositories:checkout-branch', (_event, request: CheckoutBranchRequest) =>
+    repositoryService.checkoutBranch(request),
+  )
+  ipcMain.handle('repositories:checkout-remote-branch', (_event, request: CheckoutRemoteBranchRequest) =>
+    repositoryService.checkoutRemoteBranch(request),
+  )
   ipcMain.handle('repositories:delete-branch', (_event, request: DeleteBranchRequest) =>
     repositoryService.deleteBranch(request),
   )

@@ -560,6 +560,40 @@ pre {
   font-size: 0.74rem;
 }
 
+.remote-branch-checkout {
+  display: grid;
+  gap: 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 7px;
+  padding: 8px;
+  background: var(--surface-soft);
+}
+
+.remote-branch-checkout label {
+  color: var(--muted-strong);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.remote-branch-checkout div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.remote-branch-checkout select {
+  min-width: 0;
+  min-height: 32px;
+  border: 1px solid var(--border-control);
+  border-radius: 6px;
+  padding: 0 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.78rem;
+}
+
 .compact-empty {
   padding: 24px 14px;
 }

@@ -21,6 +21,7 @@ const props = defineProps<{
   autoRefreshProgress: number;
   syncingBranchName: string | null;
   deletingBranchName: string | null;
+  checkingOutBranchName: string | null;
   statusActionLabel: string | null;
   pendingStatusActionKey: string | null;
   statusFeedbackMessage: string | null;
@@ -36,6 +37,8 @@ const emit = defineEmits<{
   back: [];
   refresh: [];
   deleteBranch: [branchName: string];
+  checkoutBranch: [branchName: string];
+  checkoutRemoteBranch: [remoteBranchName: string];
   syncBranch: [branchName: string];
   stageFiles: [request: { paths: string[]; actionKey: string }];
   unstageFiles: [request: { paths: string[]; actionKey: string }];
@@ -56,6 +59,7 @@ const emit = defineEmits<{
 const commitMessage = ref("");
 const timelineLimit = ref(20);
 const branchFilter = ref("all");
+const selectedRemoteBranchName = ref("");
 const activeDetailTab = ref<"git" | "scripts">("git");
 const selectedStatusDiff = ref<StatusFileDiff | null>(null);
 const statusDiffLoadingKey = ref<string | null>(null);
@@ -105,6 +109,11 @@ const filteredBranches = computed(() =>
     return true;
   }),
 );
+const remoteBranchesToCreate = computed(() =>
+  [...(props.selectedDetails?.gitRemoteBranches ?? [])]
+    .filter((branch) => !branch.hasLocalBranch)
+    .sort((branchA, branchB) => branchA.localName.localeCompare(branchB.localName)),
+);
 
 const stagedPreview = computed(() => props.selectedDetails?.gitStatus.staged.slice(0, 4) ?? []);
 const hiddenStagedFileCount = computed(() =>
@@ -122,7 +131,18 @@ watch(
   () => props.selectedDetails?.path,
   () => {
     activeDetailTab.value = "git";
+    selectedRemoteBranchName.value = "";
   },
+);
+
+watch(
+  remoteBranchesToCreate,
+  (branches) => {
+    if (!branches.some((branch) => branch.name === selectedRemoteBranchName.value)) {
+      selectedRemoteBranchName.value = branches[0]?.name ?? "";
+    }
+  },
+  { immediate: true },
 );
 
 watch(commitMessage, (message) => {
@@ -390,6 +410,16 @@ function isDeletingBranch(branchName: string, deletingBranchName: string | null)
   return deletingBranchName === branchName;
 }
 
+function isCheckingOutBranch(branchName: string, checkingOutBranchName: string | null) {
+  return checkingOutBranchName === branchName;
+}
+
+function branchCheckoutDisabledReason(gitStatus: RepositoryDetails["gitStatus"]) {
+  return gitStatus.clean
+    ? undefined
+    : "Commit, stash, or discard working tree changes before switching branches.";
+}
+
 function branchSyncTitle(
   branch: RepositoryDetails["gitBranches"][number],
   gitStatus: RepositoryDetails["gitStatus"],
@@ -442,6 +472,14 @@ function branchSafetyNotes(
   }
 
   return [...new Set(notes)];
+}
+
+function checkoutSelectedRemoteBranch() {
+  if (!selectedRemoteBranchName.value) {
+    return;
+  }
+
+  emit("checkoutRemoteBranch", selectedRemoteBranchName.value);
 }
 </script>
 
@@ -786,10 +824,58 @@ function branchSafetyNotes(
 
           <section class="detail-panel git-overview-panel branches-panel">
             <div class="panel-heading">
-              <h3>Local branches</h3>
+              <h3>Branches</h3>
               <span class="panel-count">{{ selectedDetails.gitBranches.length }}</span>
             </div>
             <div class="git-branches">
+              <form
+                v-if="remoteBranchesToCreate.length > 0"
+                class="remote-branch-checkout"
+                @submit.prevent="checkoutSelectedRemoteBranch"
+              >
+                <label for="remote-branch-select">
+                  Create from remote
+                </label>
+                <div>
+                  <select
+                    id="remote-branch-select"
+                    v-model="selectedRemoteBranchName"
+                    :disabled="
+                      Boolean(checkingOutBranchName) ||
+                      Boolean(syncingBranchName) ||
+                      Boolean(deletingBranchName) ||
+                      Boolean(branchCheckoutDisabledReason(selectedDetails.gitStatus))
+                    "
+                  >
+                    <option
+                      v-for="branch in remoteBranchesToCreate"
+                      :key="branch.name"
+                      :value="branch.name"
+                    >
+                      {{ branch.name }}
+                    </option>
+                  </select>
+                  <button
+                    type="submit"
+                    class="secondary branch-action"
+                    :disabled="
+                      !selectedRemoteBranchName ||
+                      Boolean(checkingOutBranchName) ||
+                      Boolean(syncingBranchName) ||
+                      Boolean(deletingBranchName) ||
+                      Boolean(branchCheckoutDisabledReason(selectedDetails.gitStatus))
+                    "
+                    :title="branchCheckoutDisabledReason(selectedDetails.gitStatus) ?? 'Create and check out a local tracking branch'"
+                  >
+                    {{
+                      checkingOutBranchName === selectedRemoteBranchName
+                        ? "Creating..."
+                        : "Create"
+                    }}
+                  </button>
+                </div>
+              </form>
+
               <div class="branch-filters" aria-label="Branch filters">
                 <button
                   v-for="filter in branchFilters"
@@ -805,6 +891,9 @@ function branchSafetyNotes(
 
               <p v-if="syncingBranchName" class="branch-pending">
                 Syncing {{ syncingBranchName }}...
+              </p>
+              <p v-else-if="checkingOutBranchName" class="branch-pending">
+                Switching to {{ checkingOutBranchName }}...
               </p>
 
               <ul v-if="filteredBranches.length > 0" class="git-branch-list">
@@ -839,6 +928,22 @@ function branchSafetyNotes(
                     <span class="branch-sync" :class="{ synced: branch.inSyncWithRemote }">
                       {{ branchSyncLabel(branch) }}
                     </span>
+                    <button
+                      v-if="!branch.current"
+                      type="button"
+                      class="secondary branch-action"
+                      :class="{ pending: isCheckingOutBranch(branch.name, checkingOutBranchName) }"
+                      :disabled="
+                        Boolean(branchCheckoutDisabledReason(selectedDetails.gitStatus)) ||
+                        Boolean(checkingOutBranchName) ||
+                        Boolean(syncingBranchName) ||
+                        Boolean(deletingBranchName)
+                      "
+                      :title="branchCheckoutDisabledReason(selectedDetails.gitStatus) ?? 'Switch to this local branch'"
+                      @click="$emit('checkoutBranch', branch.name)"
+                    >
+                      {{ isCheckingOutBranch(branch.name, checkingOutBranchName) ? "Switching..." : "Switch" }}
+                    </button>
                     <button
                       v-if="!branch.inSyncWithRemote"
                       type="button"

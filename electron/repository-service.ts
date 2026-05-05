@@ -2,6 +2,8 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
 import type {
+  CheckoutBranchRequest,
+  CheckoutRemoteBranchRequest,
   CommitRequest,
   DeleteBranchRequest,
   RepositoryDetails,
@@ -19,6 +21,7 @@ import {
   normalizeRepositoryPath,
   readGitBranches,
   readGitLogEntries,
+  readGitRemoteBranches,
   readGitStatus,
   readPackageScripts,
   runGit,
@@ -139,12 +142,14 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
       readPackageScripts(normalizedPath),
       detectPackageManager(normalizedPath),
     ])
+    const gitRemoteBranches = await readGitRemoteBranches(normalizedPath, gitBranches)
 
     return {
       ...summary,
       gitLog,
       gitStatus,
       gitBranches,
+      gitRemoteBranches,
       remotes: remotes || 'No git remotes configured.',
       npmScripts,
       packageManager,
@@ -226,6 +231,70 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     }
 
     await runGit(normalizedPath, ['branch', '-D', '--', branchName])
+
+    return readRepositoryDetails(normalizedPath)
+  }
+
+  async function assertCleanWorkingTreeForCheckout(normalizedPath: string) {
+    const gitStatus = await readGitStatus(normalizedPath)
+
+    if (!gitStatus.clean) {
+      throw new Error('Commit, stash, or discard working tree changes before switching branches.')
+    }
+  }
+
+  async function checkoutBranch(request: CheckoutBranchRequest): Promise<RepositoryDetails> {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+    const branchName = request.branchName.trim()
+
+    if (!branchName) {
+      throw new Error('Branch name is required.')
+    }
+
+    await assertCleanWorkingTreeForCheckout(normalizedPath)
+
+    const branch = (await readGitBranches(normalizedPath)).find((entry) => entry.name === branchName)
+
+    if (!branch) {
+      throw new Error(`Branch "${branchName}" was not found.`)
+    }
+
+    if (!branch.current) {
+      await runGit(normalizedPath, ['switch', '--', branchName], 120000)
+    }
+
+    return readRepositoryDetails(normalizedPath)
+  }
+
+  async function checkoutRemoteBranch(request: CheckoutRemoteBranchRequest): Promise<RepositoryDetails> {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+    const remoteBranchName = request.remoteBranchName.trim()
+
+    if (!remoteBranchName) {
+      throw new Error('Remote branch name is required.')
+    }
+
+    await assertCleanWorkingTreeForCheckout(normalizedPath)
+
+    const localBranches = await readGitBranches(normalizedPath)
+    const remoteBranch = (await readGitRemoteBranches(normalizedPath, localBranches))
+      .find((entry) => entry.name === remoteBranchName)
+
+    if (!remoteBranch) {
+      throw new Error(`Remote branch "${remoteBranchName}" was not found.`)
+    }
+
+    const localBranchName = request.localBranchName?.trim() || remoteBranch.localName
+
+    if (!localBranchName) {
+      throw new Error('Local branch name is required.')
+    }
+
+    if (localBranches.some((branch) => branch.name === localBranchName)) {
+      throw new Error(`Local branch "${localBranchName}" already exists.`)
+    }
+
+    await runGit(normalizedPath, ['switch', '--track', '-c', localBranchName, remoteBranch.name], 120000)
 
     return readRepositoryDetails(normalizedPath)
   }
@@ -409,6 +478,8 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
 
   return {
     addRepository,
+    checkoutBranch,
+    checkoutRemoteBranch,
     commit,
     deleteBranch,
     diffFile,

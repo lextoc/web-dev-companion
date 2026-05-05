@@ -53,10 +53,18 @@ export interface GitBranchEntry {
   deleteReason?: string
 }
 
+export interface GitRemoteBranchEntry {
+  name: string
+  remote: string
+  localName: string
+  hasLocalBranch: boolean
+}
+
 export interface RepositoryDetails extends RepositorySummary {
   gitLog: GitLogEntry[]
   gitStatus: GitStatusSummary
   gitBranches: GitBranchEntry[]
+  gitRemoteBranches: GitRemoteBranchEntry[]
   remotes: string
   npmScripts: Record<string, string>
   packageManager?: string
@@ -70,6 +78,17 @@ export interface DeleteBranchRequest {
 export interface SyncBranchRequest {
   repoPath: string
   branchName: string
+}
+
+export interface CheckoutBranchRequest {
+  repoPath: string
+  branchName: string
+}
+
+export interface CheckoutRemoteBranchRequest {
+  repoPath: string
+  remoteBranchName: string
+  localBranchName?: string
 }
 
 export interface StatusFileRequest {
@@ -146,6 +165,8 @@ export interface RepositoryApi {
   addByPath: (repoPath: string) => Promise<RepositorySummary[]>
   remove: (repoPath: string) => Promise<RepositorySummary[]>
   details: (repoPath: string) => Promise<RepositoryDetails>
+  checkoutBranch: (request: CheckoutBranchRequest) => Promise<RepositoryDetails>
+  checkoutRemoteBranch: (request: CheckoutRemoteBranchRequest) => Promise<RepositoryDetails>
   deleteBranch: (request: DeleteBranchRequest) => Promise<RepositoryDetails>
   syncBranch: (request: SyncBranchRequest) => Promise<RepositoryDetails>
   stageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>

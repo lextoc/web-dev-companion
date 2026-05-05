@@ -230,10 +230,13 @@
 }
 
 .active-terminals {
-  position: sticky;
+  position: fixed;
   top: var(--top-bar-height);
+  right: max(0px, calc((100vw - 2160px) / 2));
+  z-index: 15;
   display: grid;
   gap: 12px;
+  width: var(--scripts-sidebar-width);
   height: calc(100vh - var(--top-bar-height));
   max-height: none;
   align-content: start;
@@ -241,7 +244,7 @@
   border: 0;
   border-left: 1px solid var(--border);
   border-radius: 0;
-  margin-top: calc(var(--top-bar-gap) * -1);
+  margin-top: 0;
   padding: 18px 18px 24px;
   background:
     linear-gradient(
@@ -254,7 +257,11 @@
 }
 
 .active-terminals.collapsed {
+  position: sticky;
+  right: auto;
+  z-index: auto;
   gap: 0;
+  width: auto;
   height: auto;
   overflow: hidden;
   border: 0;

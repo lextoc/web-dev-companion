@@ -73,6 +73,9 @@
 
   .active-terminals {
     position: static;
+    right: auto;
+    z-index: auto;
+    width: auto;
     height: auto;
     max-height: none;
     border: 1px solid var(--border);
@@ -251,6 +254,9 @@
 
   .active-terminals {
     position: static;
+    right: auto;
+    z-index: auto;
+    width: auto;
     height: auto;
     max-height: none;
     border: 1px solid var(--border);

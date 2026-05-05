@@ -191,7 +191,6 @@ h2 {
 
 .repo-card,
 .detail-panel,
-.active-terminals,
 .add-repo {
   background: color-mix(in srgb, var(--surface) 88%, var(--app-bg));
 }
@@ -213,7 +212,7 @@ h2 {
   color: var(--muted-strong);
 }
 
-.active-terminals {
+.active-terminals:not(.collapsed) {
   border-top-width: 1px;
   background:
     linear-gradient(

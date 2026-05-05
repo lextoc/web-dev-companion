@@ -1,5 +1,6 @@
 .app-shell {
   --shell-x: 24px;
+  --scripts-sidebar-width: 360px;
   --top-bar-gap: 18px;
   --top-bar-height: 76px;
   width: min(2160px, 100%);
@@ -9,7 +10,7 @@
 
 .app-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr) var(--scripts-sidebar-width);
   gap: 18px;
   align-items: start;
   margin-right: calc(var(--shell-x) * -1);

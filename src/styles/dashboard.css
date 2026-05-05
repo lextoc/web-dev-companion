@@ -46,9 +46,13 @@
 
 .dashboard-toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--dashboard-side-width);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
   align-items: end;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--surface) 86%, var(--app-bg));
 }
 
 .dashboard-toolbar label,
@@ -58,7 +62,7 @@
 }
 
 .dashboard-toolbar-actions {
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(180px, 240px) auto auto;
   align-items: end;
   gap: 12px;
 }
@@ -136,7 +140,9 @@
 }
 
 .dashboard-repositories {
+  display: grid;
   min-width: 0;
+  gap: 18px;
 }
 
 .dashboard-git-log.git-log-sidebar {

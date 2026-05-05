@@ -131,62 +131,62 @@ const repositorySections = computed(() => {
     </div>
 
     <template v-else>
-      <div class="dashboard-toolbar">
-        <label class="dashboard-search-control">
-          <span>Search</span>
-          <input
-            v-model="searchQuery"
-            type="search"
-            placeholder="Repository, branch, or path"
-            autocomplete="off"
-          />
-        </label>
-
-        <div class="dashboard-toolbar-actions">
-          <label class="dashboard-sort-control">
-            <span>Sort</span>
-            <AppDropdown
-              id="dashboard-sort"
-              v-model="sortMode"
-              :options="sortOptions"
-            />
-          </label>
-          <div class="dashboard-result-count">
-            <strong>{{ filteredRepositories.length }}</strong>
-            <span>{{ filteredRepositories.length === 1 ? 'repository' : 'repositories' }}</span>
-          </div>
-          <button
-            type="button"
-            class="secondary dashboard-add-toggle"
-            :class="{ active: isAddRepositoryOpen }"
-            :aria-expanded="isAddRepositoryOpen"
-            @click="isAddRepositoryOpen = !isAddRepositoryOpen"
-          >
-            Add repository
-          </button>
-        </div>
-      </div>
-
-      <form v-if="isAddRepositoryOpen" class="add-repo" @submit.prevent="$emit('add')">
-        <label for="repo-path">Repository path</label>
-        <div class="add-row">
-          <input
-            id="repo-path"
-            :value="repoPathInput"
-            type="text"
-            placeholder="Path to repository folder"
-            autocomplete="off"
-            @input="$emit('update:repoPathInput', ($event.target as HTMLInputElement).value)"
-          />
-          <button type="submit" :disabled="isLoading">Add</button>
-          <button type="button" class="secondary" :disabled="isLoading" @click="$emit('browse')">
-            Browse
-          </button>
-        </div>
-      </form>
-
       <div class="dashboard-workspace">
         <div class="dashboard-repositories">
+          <div class="dashboard-toolbar">
+            <label class="dashboard-search-control">
+              <span>Search repositories</span>
+              <input
+                v-model="searchQuery"
+                type="search"
+                placeholder="Repository, branch, or path"
+                autocomplete="off"
+              />
+            </label>
+
+            <div class="dashboard-toolbar-actions">
+              <label class="dashboard-sort-control">
+                <span>Sort</span>
+                <AppDropdown
+                  id="dashboard-sort"
+                  v-model="sortMode"
+                  :options="sortOptions"
+                />
+              </label>
+              <div class="dashboard-result-count">
+                <strong>{{ filteredRepositories.length }}</strong>
+                <span>{{ filteredRepositories.length === 1 ? 'repository' : 'repositories' }}</span>
+              </div>
+              <button
+                type="button"
+                class="secondary dashboard-add-toggle"
+                :class="{ active: isAddRepositoryOpen }"
+                :aria-expanded="isAddRepositoryOpen"
+                @click="isAddRepositoryOpen = !isAddRepositoryOpen"
+              >
+                Add repository
+              </button>
+            </div>
+          </div>
+
+          <form v-if="isAddRepositoryOpen" class="add-repo" @submit.prevent="$emit('add')">
+            <label for="repo-path">Repository path</label>
+            <div class="add-row">
+              <input
+                id="repo-path"
+                :value="repoPathInput"
+                type="text"
+                placeholder="Path to repository folder"
+                autocomplete="off"
+                @input="$emit('update:repoPathInput', ($event.target as HTMLInputElement).value)"
+              />
+              <button type="submit" :disabled="isLoading">Add</button>
+              <button type="button" class="secondary" :disabled="isLoading" @click="$emit('browse')">
+                Browse
+              </button>
+            </div>
+          </form>
+
           <div v-if="filteredRepositories.length === 0" class="empty-state">
             No repositories match this filter.
           </div>

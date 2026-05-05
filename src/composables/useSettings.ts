@@ -12,10 +12,6 @@ function applyThemeMode(themeMode: AppSettings['themeMode']) {
   document.documentElement.dataset.theme = themeMode
 }
 
-function applyDensityMode(densityMode: AppSettings['densityMode']) {
-  document.documentElement.dataset.density = densityMode
-}
-
 function normalizeSettings(settings: Partial<AppSettings>): AppSettings {
   const autoRefreshIntervalMs = Number(settings.autoRefreshIntervalMs)
 
@@ -23,9 +19,6 @@ function normalizeSettings(settings: Partial<AppSettings>): AppSettings {
     autoRefreshIntervalMs: autoRefreshIntervalMs > 0
       ? autoRefreshIntervalMs
       : DEFAULT_APP_SETTINGS.autoRefreshIntervalMs,
-    densityMode: settings.densityMode === 'compact' || settings.densityMode === 'comfortable'
-      ? settings.densityMode
-      : DEFAULT_APP_SETTINGS.densityMode,
     editorCommand: typeof settings.editorCommand === 'string'
       ? settings.editorCommand
       : DEFAULT_APP_SETTINGS.editorCommand,
@@ -41,7 +34,7 @@ export function useSettings() {
 
   function applySettings(settings: AppSettings) {
     applyThemeMode(settings.themeMode)
-    applyDensityMode(settings.densityMode)
+    document.documentElement.removeAttribute('data-density')
   }
 
   function loadAppSettings() {

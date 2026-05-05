@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import ActiveTerminalsSidebar from './components/ActiveTerminalsSidebar.vue'
 import AppHeader from './components/AppHeader.vue'
+import CommandPalette from './components/CommandPalette.vue'
 import RepositoryDashboard from './components/RepositoryDashboard.vue'
 import RepositoryDetail from './components/RepositoryDetail.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
@@ -13,6 +14,7 @@ import {
   type RepositoryActivityInput,
   type RepositoryLocalActivity,
 } from './activity-timeline'
+import type { CommandPaletteItem } from './command-palette'
 import { useConfirmations } from './composables/useConfirmations'
 import { useSettings } from './composables/useSettings'
 import { useTerminals } from './composables/useTerminals'
@@ -54,6 +56,8 @@ const lastRepositoryListRefreshAt = ref<Date | null>(null)
 const dashboardGitLogEntries = ref<RepositoryGitLogEntry[]>([])
 const isDashboardGitLogLoading = ref(false)
 const repositoryActivitiesByPath = ref<Record<string, RepositoryLocalActivity[]>>({})
+const isCommandPaletteOpen = ref(false)
+const isMacPlatform = ref(false)
 let removeScriptOutputListener: (() => void) | undefined
 let removeWindowFocusListener: (() => void) | undefined
 let removeMenuCommandListener: (() => void) | undefined
@@ -168,6 +172,137 @@ const hasTerminalSidebarContent = computed(() =>
 const isTerminalSidebarCollapsed = computed(() =>
   areTerminalsCollapsed.value || !hasTerminalSidebarContent.value,
 )
+const commandShortcutLabel = computed(() =>
+  isMacPlatform.value ? '⌘K' : 'Ctrl K',
+)
+const commandPaletteItems = computed(() => {
+  const items = new Map<string, CommandPaletteItem>()
+  const addItem = (item: CommandPaletteItem) => {
+    items.set(item.id, item)
+  }
+  const currentRepoPath = activeRepositoryPath()
+
+  addItem({
+    id: 'action:add-repository',
+    title: 'Add repository',
+    section: 'App',
+    subtitle: 'Choose a repository folder to save',
+    keywords: ['browse', 'folder', 'new'],
+  })
+  addItem({
+    id: 'action:refresh',
+    title: selectedPath.value ? 'Refresh repository' : 'Refresh repositories',
+    section: 'App',
+    subtitle: selectedPath.value ? 'Reload current repository details' : 'Reload saved repositories',
+    keywords: ['reload', 'sync'],
+  })
+  addItem({
+    id: 'action:settings',
+    title: 'Open settings',
+    section: 'App',
+    meta: isMacPlatform.value ? '⌘,' : 'Ctrl ,',
+    keywords: ['preferences'],
+  })
+
+  if (selectedPath.value) {
+    addItem({
+      id: 'action:back',
+      title: 'Back to repositories',
+      section: 'Navigation',
+      meta: 'Esc',
+      keywords: ['dashboard', 'home'],
+    })
+  }
+
+  if (currentRepoPath) {
+    addItem({
+      id: 'action:open-files',
+      title: 'Open repository files',
+      section: 'Repository',
+      subtitle: currentRepoPath,
+      keywords: ['finder', 'explorer', 'folder'],
+    })
+    addItem({
+      id: 'action:open-editor',
+      title: 'Open repository in editor',
+      section: 'Repository',
+      subtitle: currentRepoPath,
+      keywords: ['code', 'ide'],
+    })
+    addItem({
+      id: 'action:open-terminal',
+      title: 'Open repository terminal',
+      section: 'Repository',
+      subtitle: currentRepoPath,
+      keywords: ['shell', 'console'],
+    })
+    addItem({
+      id: 'action:copy-path',
+      title: 'Copy repository path',
+      section: 'Repository',
+      subtitle: currentRepoPath,
+      keywords: ['clipboard'],
+    })
+  }
+
+  if (hasRunningScripts.value) {
+    addItem({
+      id: 'action:stop-scripts',
+      title: 'Stop running scripts',
+      section: 'Scripts',
+      subtitle: `${activeTerminals.value.filter((terminal) => terminal.isRunning).length} running`,
+      keywords: ['cancel', 'abort'],
+    })
+  }
+
+  for (const repository of repositories.value) {
+    addItem({
+      id: `repository:${repository.path}`,
+      title: repository.name,
+      section: 'Repositories',
+      subtitle: repository.path,
+      meta: repository.dirty ? 'Changes' : repository.branch,
+      keywords: [repository.branch, repository.lastCommit, repository.remote ?? ''],
+    })
+  }
+
+  if (selectedDetails.value) {
+    for (const [scriptName, command] of Object.entries(selectedDetails.value.npmScripts)) {
+      addItem({
+        id: `script:${selectedDetails.value.path}\n${scriptName}`,
+        title: `Run ${scriptName}`,
+        section: 'Current scripts',
+        subtitle: command,
+        meta: selectedDetails.value.packageManager ?? 'npm',
+        keywords: [selectedDetails.value.name, selectedDetails.value.path],
+      })
+    }
+  }
+
+  for (const script of pinnedScripts.value) {
+    addItem({
+      id: `script:${script.repoPath}\n${script.scriptName}`,
+      title: `Run ${script.scriptName}`,
+      section: 'Pinned scripts',
+      subtitle: `${script.repoName} · ${script.command}`,
+      meta: script.packageManager ?? 'npm',
+      keywords: [script.repoName, script.repoPath],
+    })
+  }
+
+  for (const terminal of activeTerminals.value) {
+    addItem({
+      id: `terminal:${terminal.runId}`,
+      title: `Open ${terminal.scriptName}`,
+      section: 'Terminals',
+      subtitle: terminal.repoName,
+      meta: terminal.isRunning ? 'Running' : 'Finished',
+      keywords: [terminal.command, terminal.repoPath],
+    })
+  }
+
+  return [...items.values()]
+})
 
 function currentHistoryState() {
   const state = window.history.state
@@ -871,6 +1006,121 @@ async function handleMenuCommand(command: DesktopMenuCommand) {
   }
 }
 
+function openCommandPalette() {
+  isCommandPaletteOpen.value = true
+}
+
+function closeCommandPalette() {
+  isCommandPaletteOpen.value = false
+}
+
+function isEditableTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+
+  return (
+    target.isContentEditable ||
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLSelectElement ||
+    target instanceof HTMLTextAreaElement
+  )
+}
+
+async function runCommandPaletteItem(itemId: string) {
+  closeCommandPalette()
+
+  if (itemId === 'action:add-repository') {
+    await chooseAndAddRepository()
+    return
+  }
+
+  if (itemId === 'action:refresh') {
+    if (selectedPath.value) {
+      await refreshSelectedRepository()
+      return
+    }
+
+    await loadRepositories()
+    return
+  }
+
+  if (itemId === 'action:settings') {
+    isSettingsOpen.value = true
+    return
+  }
+
+  if (itemId === 'action:back') {
+    closeDetails()
+    return
+  }
+
+  if (itemId === 'action:stop-scripts') {
+    stopOwnedScripts()
+    showAppFeedback('Stopped running scripts.', 'info')
+    return
+  }
+
+  const repoPath = activeRepositoryPath()
+
+  if (itemId === 'action:open-files' && repoPath) {
+    await openRepositoryInFileManager(repoPath)
+    return
+  }
+
+  if (itemId === 'action:open-editor' && repoPath) {
+    await openRepositoryInEditor(repoPath)
+    return
+  }
+
+  if (itemId === 'action:open-terminal' && repoPath) {
+    await openRepositoryInTerminal(repoPath)
+    return
+  }
+
+  if (itemId === 'action:copy-path' && repoPath) {
+    await copyRepositoryPath(repoPath)
+    return
+  }
+
+  if (itemId.startsWith('repository:')) {
+    const selectedRepositoryPath = itemId.slice('repository:'.length)
+    const repository = repositories.value.find((entry) => entry.path === selectedRepositoryPath)
+
+    if (repository) {
+      await openRepository(repository)
+    }
+
+    return
+  }
+
+  if (itemId.startsWith('script:')) {
+    const scriptKey = itemId.slice('script:'.length)
+    const separatorIndex = scriptKey.lastIndexOf('\n')
+    const scriptRepoPath = scriptKey.slice(0, separatorIndex)
+    const scriptName = scriptKey.slice(separatorIndex + 1)
+
+    if (selectedDetails.value?.path === scriptRepoPath) {
+      await runScript(scriptName)
+      return
+    }
+
+    const pinnedScript = pinnedScripts.value.find((script) =>
+      script.repoPath === scriptRepoPath && script.scriptName === scriptName,
+    )
+
+    if (pinnedScript) {
+      await runRepositoryScript(pinnedScript)
+    }
+
+    return
+  }
+
+  if (itemId.startsWith('terminal:')) {
+    openTerminal(itemId.slice('terminal:'.length))
+  }
+}
+
 async function copyRepositoryPath(repoPath: string) {
   try {
     await navigator.clipboard.writeText(repoPath)
@@ -951,8 +1201,58 @@ function handleHistoryNavigation(event: PopStateEvent) {
   void applyHistoryState(event.state as AppHistoryState | undefined)
 }
 
+function handleGlobalKeydown(event: KeyboardEvent) {
+  const key = event.key.toLowerCase()
+
+  if ((event.metaKey || event.ctrlKey) && key === 'k') {
+    event.preventDefault()
+    openCommandPalette()
+    return
+  }
+
+  if (event.key === '/' && !isEditableTarget(event.target)) {
+    event.preventDefault()
+    openCommandPalette()
+    return
+  }
+
+  if (event.key !== 'Escape') {
+    return
+  }
+
+  if (isCommandPaletteOpen.value) {
+    event.preventDefault()
+    closeCommandPalette()
+    return
+  }
+
+  if (selectedTerminal.value) {
+    event.preventDefault()
+    closeTerminalModal()
+    return
+  }
+
+  if (confirmationDialog.value) {
+    event.preventDefault()
+    closeConfirmation(false)
+    return
+  }
+
+  if (isSettingsOpen.value) {
+    event.preventDefault()
+    isSettingsOpen.value = false
+    return
+  }
+
+  if (!isEditableTarget(event.target) && selectedPath.value) {
+    event.preventDefault()
+    closeDetails()
+  }
+}
+
 onMounted(() => {
-  document.documentElement.dataset.platform = navigator.platform.toLowerCase().includes('mac') ? 'mac' : 'other'
+  isMacPlatform.value = navigator.platform.toLowerCase().includes('mac')
+  document.documentElement.dataset.platform = isMacPlatform.value ? 'mac' : 'other'
   replaceHistoryState({ view: 'dashboard' })
   loadAppSettings()
   autoRefreshRemainingMs.value = appSettings.value.autoRefreshIntervalMs
@@ -968,6 +1268,7 @@ onMounted(() => {
   window.addEventListener('popstate', handleHistoryNavigation)
   window.addEventListener('pagehide', handlePageExit)
   window.addEventListener('beforeunload', handlePageExit)
+  window.addEventListener('keydown', handleGlobalKeydown)
   void loadRepositories()
 })
 
@@ -975,6 +1276,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('popstate', handleHistoryNavigation)
   window.removeEventListener('pagehide', handlePageExit)
   window.removeEventListener('beforeunload', handlePageExit)
+  window.removeEventListener('keydown', handleGlobalKeydown)
   handlePageExit()
   removeScriptOutputListener?.()
   removeWindowFocusListener?.()
@@ -989,6 +1291,8 @@ onBeforeUnmount(() => {
       :active-repository-path="selectedDetails?.path ?? selectedSummary?.path"
       :activity-label="appActivityLabel"
       :active-script-count="activeTerminals.length"
+      :command-shortcut-label="commandShortcutLabel"
+      @command-palette="openCommandPalette"
       @settings="isSettingsOpen = true"
     />
 
@@ -1081,6 +1385,13 @@ onBeforeUnmount(() => {
       :settings="appSettings"
       @close="isSettingsOpen = false"
       @save="saveAppSettings"
+    />
+
+    <CommandPalette
+      v-if="isCommandPaletteOpen"
+      :items="commandPaletteItems"
+      @close="closeCommandPalette"
+      @run="runCommandPaletteItem"
     />
 
     <div

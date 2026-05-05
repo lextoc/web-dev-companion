@@ -1,20 +1,57 @@
 .detail-nav {
-  justify-content: space-between;
-  column-gap: 12px;
-  row-gap: 2px;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
 }
 
-.detail-sticky-bar {
-  position: sticky;
-  top: 92px;
-  z-index: 5;
+.detail-command-bar {
   display: grid;
-  gap: 14px;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 12px;
-  background: color-mix(in srgb, var(--app-bg) 82%, var(--surface));
-  box-shadow: var(--shadow);
+  padding: 8px;
+  background: color-mix(in srgb, var(--surface) 82%, var(--app-bg));
+}
+
+.detail-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-color: color-mix(in srgb, var(--info-text) 52%, var(--border-control));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--info-soft) 76%, var(--surface)),
+      color-mix(in srgb, var(--info-soft) 52%, var(--surface))
+    );
+  color: color-mix(in srgb, var(--info-text) 84%, var(--text));
+}
+
+.detail-back-button:hover:not(:disabled) {
+  border-color: var(--info-text);
+  background: color-mix(in srgb, var(--info-soft) 72%, var(--surface-hover));
+  color: color-mix(in srgb, var(--info-text) 72%, var(--text));
+}
+
+.detail-back-button .button-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.detail-context-pills {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-refresh-area {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .refresh-button {
@@ -48,33 +85,17 @@
   background: var(--brand-hover);
 }
 
-.detail-header {
-  justify-content: space-between;
-  gap: 24px;
-  border-top: 1px solid var(--border-soft);
-  padding-top: 12px;
-}
-
 .detail-quick-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 10px;
+  justify-content: flex-end;
 }
 
 .detail-quick-actions button {
   min-height: 32px;
   padding: 0 10px;
   font-size: 0.76rem;
-}
-
-.detail-header-pills {
-  display: flex;
-  min-width: 0;
-  flex: 0 1 auto;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
 }
 
 .detail-tabs {
@@ -203,9 +224,9 @@
 
 .git-log-sidebar {
   position: sticky;
-  top: 186px;
+  top: 112px;
   align-self: start;
-  height: min(760px, calc(100vh - 210px));
+  height: min(760px, calc(100vh - 136px));
   min-height: 480px;
   border-top: 3px solid var(--accent);
   border-top-color: var(--accent);

@@ -4,7 +4,6 @@ import {
   AUTO_REFRESH_INTERVAL_OPTIONS,
   DEFAULT_APP_SETTINGS,
   type AppSettings,
-  type DensityMode,
   type ThemeMode,
 } from '../settings'
 
@@ -29,7 +28,6 @@ watch(
 function saveSettings() {
   emit('save', {
     autoRefreshIntervalMs: Number(draft.autoRefreshIntervalMs) || DEFAULT_APP_SETTINGS.autoRefreshIntervalMs,
-    densityMode: draft.densityMode,
     editorCommand: draft.editorCommand.trim() || DEFAULT_APP_SETTINGS.editorCommand,
     themeMode: draft.themeMode,
   })
@@ -39,11 +37,6 @@ const themeOptions: Array<{ label: string; value: ThemeMode }> = [
   { label: 'System', value: 'system' },
   { label: 'Light', value: 'light' },
   { label: 'Dark', value: 'dark' },
-]
-
-const densityOptions: Array<{ label: string; value: DensityMode }> = [
-  { label: 'Comfortable', value: 'comfortable' },
-  { label: 'Compact', value: 'compact' },
 ]
 </script>
 
@@ -72,15 +65,6 @@ const densityOptions: Array<{ label: string; value: DensityMode }> = [
         <span>Theme</span>
         <select v-model="draft.themeMode">
           <option v-for="option in themeOptions" :key="option.value" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
-      </label>
-
-      <label>
-        <span>Density</span>
-        <select v-model="draft.densityMode">
-          <option v-for="option in densityOptions" :key="option.value" :value="option.value">
             {{ option.label }}
           </option>
         </select>

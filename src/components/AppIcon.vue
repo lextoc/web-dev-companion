@@ -1,6 +1,8 @@
 <script setup lang="ts">
 defineProps<{
   name:
+    | "arrow-left"
+    | "command"
     | "copy"
     | "close"
     | "edit"
@@ -24,7 +26,14 @@ defineProps<{
     aria-hidden="true"
     focusable="false"
   >
-    <g v-if="name === 'pin'">
+    <g v-if="name === 'arrow-left'">
+      <path d="M19 12H5" />
+      <path d="M12 5l-7 7 7 7" />
+    </g>
+    <g v-else-if="name === 'command'">
+      <path d="M9 9H7.5A2.5 2.5 0 1 1 10 6.5V18a2.5 2.5 0 1 1-2.5-2.5H18a2.5 2.5 0 1 1-2.5 2.5V6.5A2.5 2.5 0 1 1 18 9z" />
+    </g>
+    <g v-else-if="name === 'pin'">
       <path d="M12 16v5" />
       <path d="M8 5h8" />
       <path d="M10 5v5l-3 5h10l-3-5V5" />

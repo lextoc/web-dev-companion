@@ -233,44 +233,44 @@ code {
 }
 
 .ansi-fg-black {
-  color: #111820;
+  color: var(--ansi-black);
 }
 
 .ansi-fg-red,
 .ansi-fg-bright-red {
-  color: #ff8a80;
+  color: var(--ansi-red);
 }
 
 .ansi-fg-green,
 .ansi-fg-bright-green {
-  color: #8ee6a8;
+  color: var(--ansi-green);
 }
 
 .ansi-fg-yellow,
 .ansi-fg-bright-yellow {
-  color: #ffd37a;
+  color: var(--ansi-yellow);
 }
 
 .ansi-fg-blue,
 .ansi-fg-bright-blue {
-  color: #8fc7ff;
+  color: var(--ansi-blue);
 }
 
 .ansi-fg-magenta,
 .ansi-fg-bright-magenta {
-  color: #e7a0ff;
+  color: var(--ansi-magenta);
 }
 
 .ansi-fg-cyan,
 .ansi-fg-bright-cyan {
-  color: #78ddd6;
+  color: var(--ansi-cyan);
 }
 
 .ansi-fg-white,
 .ansi-fg-bright-white {
-  color: var(--terminal-title);
+  color: var(--ansi-white);
 }
 
 .ansi-fg-bright-black {
-  color: #9aa9b5;
+  color: var(--ansi-bright-black);
 }

@@ -1,12 +1,16 @@
 <script setup lang="ts">
+import AppIcon from './AppIcon.vue'
+
 defineProps<{
   activeRepositoryName?: string
   activeRepositoryPath?: string
   activityLabel?: string | null
   activeScriptCount: number
+  commandShortcutLabel: string
 }>()
 
 defineEmits<{
+  commandPalette: []
   settings: []
 }>()
 </script>
@@ -31,6 +35,16 @@ defineEmits<{
       <span v-if="activeScriptCount > 0" class="state-chip warning">
         {{ activeScriptCount }} active
       </span>
+      <button
+        type="button"
+        class="secondary command-palette-trigger"
+        title="Open command palette"
+        @click="$emit('commandPalette')"
+      >
+        <AppIcon name="command" class="button-icon" />
+        <span>Command</span>
+        <kbd>{{ commandShortcutLabel }}</kbd>
+      </button>
       <button type="button" class="secondary" @click="$emit('settings')">
         Settings
       </button>

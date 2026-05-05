@@ -10,6 +10,7 @@ import type {
   StatusFileDiff,
   StatusFileDiffType,
 } from "../repositories";
+import AppIcon from "./AppIcon.vue";
 import NpmScriptsPanel from "./NpmScriptsPanel.vue";
 
 const props = defineProps<{
@@ -446,11 +447,37 @@ function branchSafetyNotes(
 
 <template>
   <section class="detail-view">
-    <div class="detail-sticky-bar">
+    <div class="detail-command-bar">
       <nav class="detail-nav" aria-label="Repository detail navigation">
-        <button type="button" class="secondary" @click="$emit('back')">
-          Back
+        <button type="button" class="secondary detail-back-button" @click="$emit('back')">
+          <AppIcon name="arrow-left" class="button-icon" />
+          <span>Back</span>
         </button>
+
+        <div v-if="selectedDetails" class="detail-context-pills" aria-label="Repository state">
+          <span class="branch-pill">{{ selectedDetails.branch }}</span>
+          <span class="status-pill" :class="{ dirty: selectedDetails.dirty }">
+            {{ selectedDetails.dirty ? "Changes" : "Clean" }}
+          </span>
+        </div>
+      </nav>
+
+      <div v-if="selectedDetails" class="detail-quick-actions" aria-label="Repository quick actions">
+        <button type="button" class="secondary" @click="$emit('openInFileManager', selectedDetails.path)">
+          Files
+        </button>
+        <button type="button" class="secondary" @click="$emit('openInEditor', selectedDetails.path)">
+          Editor
+        </button>
+        <button type="button" class="secondary" @click="$emit('openInTerminal', selectedDetails.path)">
+          Terminal
+        </button>
+        <button type="button" class="secondary" @click="$emit('copyPath', selectedDetails.path)">
+          Copy path
+        </button>
+      </div>
+
+      <div class="detail-refresh-area">
         <button
           type="button"
           class="secondary refresh-button"
@@ -466,34 +493,7 @@ function branchSafetyNotes(
             ></span>
           </span>
         </button>
-      </nav>
-
-      <header v-if="selectedDetails" class="detail-header">
-        <div>
-          <p class="repo-path">{{ selectedDetails.path }}</p>
-          <h2>{{ selectedDetails.name }}</h2>
-          <div class="detail-quick-actions" aria-label="Repository quick actions">
-            <button type="button" class="secondary" @click="$emit('openInFileManager', selectedDetails.path)">
-              Files
-            </button>
-            <button type="button" class="secondary" @click="$emit('openInEditor', selectedDetails.path)">
-              Editor
-            </button>
-            <button type="button" class="secondary" @click="$emit('openInTerminal', selectedDetails.path)">
-              Terminal
-            </button>
-            <button type="button" class="secondary" @click="$emit('copyPath', selectedDetails.path)">
-              Copy path
-            </button>
-          </div>
-        </div>
-        <div class="detail-header-pills">
-          <span class="branch-pill">{{ selectedDetails.branch }}</span>
-          <span class="status-pill" :class="{ dirty: selectedDetails.dirty }">
-            {{ selectedDetails.dirty ? "Changes" : "Clean" }}
-          </span>
-        </div>
-      </header>
+      </div>
     </div>
 
     <div v-if="isDetailLoading && !selectedDetails" class="detail-skeleton" aria-label="Loading repository">

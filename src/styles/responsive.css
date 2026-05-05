@@ -93,10 +93,6 @@
     flex-direction: column;
   }
 
-  .detail-sticky-bar {
-    position: static;
-  }
-
   .detail-tabs {
     width: 100%;
   }
@@ -107,10 +103,30 @@
   }
 
   .top-bar,
-  .detail-header,
   .add-row {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .detail-command-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-nav,
+  .detail-quick-actions,
+  .detail-refresh-area {
+    justify-content: stretch;
+  }
+
+  .detail-nav,
+  .detail-quick-actions {
+    align-items: stretch;
+  }
+
+  .detail-nav > button,
+  .detail-quick-actions button,
+  .detail-refresh-area button {
+    flex: 1 1 auto;
   }
 
   .top-actions {

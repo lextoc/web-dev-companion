@@ -28,18 +28,12 @@
   }
 
   .status-panel,
-  .branches-panel,
   .git-log-panel {
     grid-column: 1 / -1;
   }
 
   .git-overview-panel {
     height: auto;
-  }
-
-  .branches-panel {
-    height: auto;
-    min-height: 0;
   }
 
   .git-log-sidebar {

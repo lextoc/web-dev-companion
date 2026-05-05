@@ -214,13 +214,15 @@ h2 {
 
 .active-terminals:not(.collapsed) {
   border-top-width: 1px;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface-soft) 72%, transparent),
-      transparent 38%
-    ),
-    color-mix(in srgb, var(--surface) 88%, var(--app-bg));
+  background: color-mix(in srgb, var(--surface) 88%, var(--app-bg));
+}
+
+.active-terminals:not(.collapsed) .active-terminals-heading {
+  background: color-mix(in srgb, var(--surface) 90%, var(--app-bg));
+}
+
+.active-terminals:not(.collapsed) .active-terminal-item {
+  background: transparent;
 }
 
 .active-terminal-item,

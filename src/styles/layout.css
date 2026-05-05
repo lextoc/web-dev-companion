@@ -5,16 +5,18 @@
   --scripts-sidebar-width: 360px;
   --top-bar-gap: 18px;
   --top-bar-height: 76px;
+  min-height: 100vh;
   width: min(2160px, 100%);
   margin: 0 auto;
-  padding: 0 var(--shell-x) 24px;
+  padding: 0 var(--shell-x);
 }
 
 .app-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--scripts-sidebar-width);
-  gap: var(--app-layout-gap);
-  align-items: start;
+  gap: 0;
+  align-items: stretch;
+  min-height: calc(100vh - var(--top-bar-height));
   margin-right: calc(var(--shell-x) * -1);
 }
 
@@ -25,6 +27,8 @@
 
 .main-pane {
   min-width: 0;
+  min-height: calc(100vh - var(--top-bar-height));
+  padding: 0 var(--app-layout-gap) 24px 0;
 }
 
 .top-bar,

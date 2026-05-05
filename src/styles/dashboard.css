@@ -159,25 +159,20 @@
   right: max(0px, calc((100vw - 2160px) / 2));
   z-index: 15;
   display: grid;
-  gap: 12px;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0;
   width: var(--scripts-sidebar-width);
   height: calc(100vh - var(--top-bar-height));
   max-height: none;
   align-content: start;
-  overflow: auto;
+  overflow: hidden;
   border: 0;
   border-left: 1px solid var(--border);
   border-radius: 0;
   margin-top: 0;
-  padding: 18px 18px 24px;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--accent) 8%, transparent),
-      transparent 22%
-    ),
-    color-mix(in srgb, var(--surface) 92%, var(--app-bg));
-  box-shadow: -16px 0 28px rgba(23, 32, 42, 0.06);
+  padding: 0;
+  background: color-mix(in srgb, var(--surface) 92%, var(--app-bg));
+  box-shadow: none;
 }
 
 .active-terminals.collapsed {
@@ -201,6 +196,10 @@
   justify-content: space-between;
   gap: 10px;
   width: 100%;
+  min-height: 62px;
+  border-bottom: 1px solid var(--border-soft);
+  padding: 14px 16px 12px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--app-bg));
 }
 
 .active-terminals-title {
@@ -303,7 +302,11 @@
 
 .active-terminal-groups {
   display: grid;
-  gap: 12px;
+  align-content: start;
+  gap: 16px;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 14px 20px;
 }
 
 .active-terminal-group {
@@ -339,7 +342,8 @@
 
 .active-terminal-list {
   display: grid;
-  gap: 7px;
+  gap: 0;
+  border-top: 1px solid var(--border-soft);
 }
 
 .active-terminal-item {
@@ -347,21 +351,23 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: start;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 9px;
-  background: var(--surface);
+  border: 1px solid transparent;
+  border-bottom-color: var(--border-soft);
+  border-radius: 0;
+  padding: 11px 3px;
+  background: transparent;
   cursor: pointer;
 }
 
 .active-terminal-item.pinned {
-  border-color: var(--brand-ring);
-  background: color-mix(in srgb, var(--success-soft) 45%, var(--surface));
+  border-left-color: var(--brand-ring);
+  background: color-mix(in srgb, var(--success-soft) 34%, transparent);
   cursor: default;
 }
 
 .active-terminal-item:hover {
-  border-color: var(--brand-ring);
+  border-color: var(--border-soft);
+  border-left-color: var(--brand-ring);
   background: var(--surface-hover);
 }
 
@@ -485,7 +491,8 @@
 }
 
 .active-terminals-empty {
-  margin-bottom: 0;
+  margin: 0;
+  padding: 16px;
   color: var(--muted);
   font-size: 0.9rem;
 }

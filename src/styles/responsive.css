@@ -50,6 +50,11 @@
     margin-right: 0;
   }
 
+  .main-pane {
+    min-height: 0;
+    padding-right: 0;
+  }
+
   .app-layout.terminals-collapsed {
     grid-template-columns: 1fr;
   }
@@ -61,6 +66,8 @@
     width: auto;
     height: auto;
     max-height: none;
+    grid-template-rows: auto;
+    overflow: visible;
     border: 1px solid var(--border);
     border-radius: 8px;
     margin-top: 0;
@@ -234,6 +241,11 @@
     margin-right: 0;
   }
 
+  .main-pane {
+    min-height: 0;
+    padding-right: 0;
+  }
+
   .app-layout.terminals-collapsed {
     grid-template-columns: 1fr;
   }
@@ -245,6 +257,8 @@
     width: auto;
     height: auto;
     max-height: none;
+    grid-template-rows: auto;
+    overflow: visible;
     border: 1px solid var(--border);
     border-radius: 8px;
     margin-top: 0;

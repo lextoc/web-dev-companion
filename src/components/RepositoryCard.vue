@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { RepositorySummary } from '../repositories'
+import AppIcon from './AppIcon.vue'
 
 defineProps<{
   repository: RepositorySummary
@@ -55,19 +56,24 @@ defineEmits<{
         :title="isPinned ? 'Unpin repository' : 'Pin repository'"
         @click="$emit('togglePin', repository.path)"
       >
-        {{ isPinned ? 'Unpin' : 'Pin' }}
+        <AppIcon :name="isPinned ? 'pin-off' : 'pin'" class="button-icon" />
+        <span>{{ isPinned ? 'Unpin' : 'Pin' }}</span>
       </button>
       <button type="button" class="secondary" @click="$emit('openInFileManager', repository.path)">
-        Files
+        <AppIcon name="folder" class="button-icon" />
+        <span>Files</span>
       </button>
       <button type="button" class="secondary" @click="$emit('openInEditor', repository.path)">
-        Editor
+        <AppIcon name="edit" class="button-icon" />
+        <span>Editor</span>
       </button>
       <button type="button" class="secondary" @click="$emit('openInTerminal', repository.path)">
-        Terminal
+        <AppIcon name="terminal" class="button-icon" />
+        <span>Terminal</span>
       </button>
       <button type="button" class="secondary" @click="$emit('copyPath', repository.path)">
-        Copy path
+        <AppIcon name="copy" class="button-icon" />
+        <span>Copy path</span>
       </button>
     </div>
 
@@ -78,7 +84,7 @@ defineEmits<{
       title="Remove"
       @click="$emit('remove', repository.path)"
     >
-      x
+      <AppIcon name="trash" class="button-icon" />
     </button>
   </article>
 </template>

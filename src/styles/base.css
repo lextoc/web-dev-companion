@@ -60,6 +60,62 @@ button:disabled {
   opacity: 0.55;
 }
 
+.app-icon {
+  display: block;
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.button-icon {
+  flex: 0 0 auto;
+  font-size: 1rem;
+}
+
+.subtle-icon-button {
+  display: inline-grid;
+  width: 34px;
+  min-height: 34px;
+  place-items: center;
+  border-color: var(--border-control);
+  padding: 0;
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  color: var(--muted-strong);
+}
+
+.subtle-icon-button:hover:not(:disabled) {
+  border-color: var(--brand);
+  background: var(--surface-hover);
+  color: var(--brand-text-hover);
+}
+
+.subtle-icon-button.active {
+  border-color: var(--brand-ring);
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.terminal-action-button,
+.terminal-collapse {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 button.secondary {
   border-color: var(--border-control);
   background: var(--surface);

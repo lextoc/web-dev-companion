@@ -543,15 +543,33 @@
 }
 
 .active-terminal-actions {
-  display: grid;
+  display: flex;
+  width: 96px;
+  flex-wrap: wrap;
   gap: 7px;
+  justify-content: flex-end;
 }
 
 .active-terminal-item .terminal-stop,
-.active-terminal-item .terminal-restart,
-.active-terminal-item .terminal-pin {
+.active-terminal-item .terminal-restart {
   min-height: 34px;
   padding: 0 11px;
+}
+
+.active-terminal-item .terminal-pin {
+  min-height: 34px;
+  padding: 0;
+}
+
+.active-terminal-item .subtle-icon-button {
+  width: 34px;
+  min-height: 34px;
+  padding: 0;
+}
+
+.active-terminal-item .terminal-action-button {
+  flex: 1 1 100%;
+  min-width: 0;
 }
 
 .terminal-stop.secondary {
@@ -809,6 +827,10 @@
 }
 
 .repo-quick-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-height: 32px;
   padding: 0 8px;
   font-size: 0.74rem;
@@ -888,6 +910,7 @@
   padding: 0;
   background: transparent;
   color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .icon-button:hover:not(:disabled) {

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { plainTerminalText } from '../output-formatting'
 import type { PinnedScript, ScriptTerminal } from '../repositories'
+import AppIcon from './AppIcon.vue'
 
 interface ActivityItem {
   id: string
@@ -152,7 +153,8 @@ function getTerminalPreview(terminal: ScriptTerminal) {
         title="Hide active terminals"
         @click="$emit('toggle')"
       >
-        Hide
+        <AppIcon name="hide" class="button-icon" />
+        <span>Hide</span>
       </button>
     </div>
 
@@ -202,43 +204,54 @@ function getTerminalPreview(terminal: ScriptTerminal) {
               <button
                 v-if="entry.pinnedScript && !entry.terminal"
                 type="button"
-                class="secondary terminal-restart"
+                class="secondary terminal-restart terminal-action-button"
+                :aria-label="`Start ${entry.scriptName}`"
+                title="Start script"
                 @click.stop="$emit('startPinned', entry.pinnedScript)"
                 @keydown.enter.stop
                 @keydown.space.stop
               >
-                Start
+                <AppIcon name="play" class="button-icon" />
+                <span>Start</span>
               </button>
               <button
                 v-if="entry.pinnedScript"
                 type="button"
-                class="secondary terminal-pin"
+                class="secondary terminal-pin subtle-icon-button"
+                :aria-label="`Unpin ${entry.scriptName}`"
+                title="Unpin script"
                 @click.stop="$emit('unpinPinned', entry.pinnedScript)"
                 @keydown.enter.stop
                 @keydown.space.stop
               >
-                Unpin
+                <AppIcon name="pin-off" class="button-icon" />
+                <span class="visually-hidden">Unpin</span>
               </button>
               <button
                 v-if="entry.terminal"
                 type="button"
-                class="secondary terminal-restart"
+                class="secondary terminal-restart subtle-icon-button"
+                :aria-label="`Restart ${entry.scriptName}`"
+                title="Restart script"
                 @click.stop="$emit('restart', entry.terminal.runId)"
                 @keydown.enter.stop
                 @keydown.space.stop
               >
-                Restart
+                <AppIcon name="restart" class="button-icon" />
+                <span class="visually-hidden">Restart</span>
               </button>
               <button
                 v-if="entry.terminal"
                 type="button"
-                class="terminal-stop"
+                class="terminal-stop terminal-action-button"
                 :class="{ secondary: !entry.terminal.isRunning }"
+                :aria-label="`${entry.terminal.isRunning ? 'Stop' : 'Close'} ${entry.scriptName}`"
                 @click.stop="$emit('stop', entry.terminal.runId)"
                 @keydown.enter.stop
                 @keydown.space.stop
               >
-                {{ entry.terminal.isRunning ? 'Stop' : 'Close' }}
+                <AppIcon :name="entry.terminal.isRunning ? 'square' : 'hide'" class="button-icon" />
+                <span>{{ entry.terminal.isRunning ? 'Stop' : 'Close' }}</span>
               </button>
             </div>
           </article>

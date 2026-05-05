@@ -197,6 +197,17 @@ code {
   color: var(--danger-contrast);
 }
 
+.terminal-actions .subtle-icon-button,
+.script-row-heading .subtle-icon-button {
+  width: 30px;
+  min-height: 30px;
+  padding: 0;
+}
+
+.terminal-actions .terminal-action-button {
+  min-height: 30px;
+}
+
 .script-terminal pre {
   min-height: 0;
   max-height: none;

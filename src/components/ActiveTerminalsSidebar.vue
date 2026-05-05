@@ -95,7 +95,6 @@ const terminalGroups = computed<TerminalGroup[]>(() => {
 const runningTerminalCount = computed(() =>
   props.terminals.filter((terminal) => terminal.isRunning).length,
 )
-const doneTerminalCount = computed(() => props.terminals.length - runningTerminalCount.value)
 const pinnedIdleCount = computed(() =>
   props.pinnedScripts.filter((pinnedScript) =>
     !props.terminals.some((terminal) =>
@@ -135,10 +134,9 @@ function getTerminalPreview(terminal: ScriptTerminal) {
       @click="$emit('toggle')"
     >
       <span class="terminal-mini-dot" :class="{ running: runningTerminalCount > 0 }"></span>
+      <span class="terminal-rail-label">Scripts</span>
       <strong>{{ sidebarScriptCount }}</strong>
-      <small>{{ runningTerminalCount }} running</small>
-      <small v-if="doneTerminalCount">{{ doneTerminalCount }} done</small>
-      <small v-if="pinnedIdleCount">{{ pinnedIdleCount }} pinned</small>
+      <small>{{ runningTerminalCount }} run</small>
     </button>
 
     <div v-else class="active-terminals-heading">

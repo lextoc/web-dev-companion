@@ -82,13 +82,15 @@
 }
 
 .dashboard-result-count {
-  display: grid;
+  display: flex;
   min-width: 112px;
   min-height: 42px;
-  align-content: center;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
   border: 1px solid var(--border-soft);
   border-radius: 8px;
-  padding: 6px 10px;
+  padding: 0 10px;
   background: var(--surface-soft);
 }
 
@@ -148,9 +150,14 @@
   padding-bottom: 10px;
 }
 
-.dashboard-git-log .panel-count {
+.dashboard-git-log .git-log-heading .panel-count {
+  display: grid;
   min-width: 26px;
   height: 26px;
+  place-items: center;
+  align-self: start;
+  color: var(--muted-strong);
+  line-height: 1;
 }
 
 .dashboard-git-log-rail {
@@ -282,14 +289,14 @@
 
 .active-terminals-rail {
   display: grid;
-  width: 46px;
-  min-height: 124px;
+  width: 48px;
+  min-height: 158px;
   justify-items: center;
   align-content: center;
-  gap: 5px;
+  gap: 8px;
   border-color: var(--border-control);
-  border-radius: 999px;
-  padding: 10px 4px;
+  border-radius: 24px;
+  padding: 12px 5px;
   background: var(--surface);
   color: var(--muted);
   font-size: 0.68rem;
@@ -304,9 +311,26 @@
 }
 
 .active-terminals-rail strong {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface-subtle);
   color: var(--text);
-  font-size: 1.35rem;
+  font-size: 1rem;
   line-height: 1;
+}
+
+.terminal-rail-label {
+  min-height: 58px;
+  color: var(--muted-strong);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-orientation: mixed;
+  writing-mode: vertical-rl;
 }
 
 .active-terminals-rail small {

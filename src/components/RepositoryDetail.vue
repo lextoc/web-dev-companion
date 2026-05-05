@@ -462,281 +462,16 @@ function branchSafetyNotes(
       <div
         v-if="activeDetailTab === 'git'"
         id="git-overview-panel"
-        class="detail-layout"
+        class="detail-layout git-detail-layout"
         role="tabpanel"
         aria-labelledby="git-overview-tab"
       >
-        <section
-          class="detail-panel commit-panel"
-          :class="{ ready: stagedFileCount(selectedDetails.gitStatus) > 0 }"
-        >
-          <form
-            class="commit-form commit-form-wide"
-            @submit.prevent="
-              submitCommit(selectedDetails.gitStatus, isDetailLoading, pendingStatusActionKey)
-            "
-          >
-            <div class="commit-form-heading">
-              <div>
-                <span>Commit</span>
-                <strong>
-                  {{ commitSummaryLabel(selectedDetails.gitStatus) }}
-                </strong>
-              </div>
-              <div class="commit-heading-actions">
-                <span
-                  v-if="stagedFileCount(selectedDetails.gitStatus) > 0"
-                  class="commit-count-chip"
-                >
-                  {{ stagedFileLabel(selectedDetails.gitStatus) }}
-                </span>
-                <button
-                  v-if="stagedFileCount(selectedDetails.gitStatus) > 0"
-                  type="button"
-                  class="secondary status-action"
-                  :disabled="Boolean(pendingStatusActionKey)"
-                  @click="emitStatusAction('staged', selectedDetails.gitStatus.staged)"
-                >
-                  {{
-                    isStatusActionPending('staged', selectedDetails.gitStatus.staged)
-                      ? 'Unstaging...'
-                      : 'Unstage all'
-                  }}
-                </button>
-              </div>
+        <aside class="detail-panel git-overview-panel git-log-panel git-log-sidebar">
+          <div class="panel-heading git-log-heading">
+            <div>
+              <h3>Git log</h3>
+              <span>{{ visibleGitLog.length }} commits</span>
             </div>
-
-            <div class="commit-message-row">
-              <label for="commit-message">Message</label>
-              <textarea
-                id="commit-message"
-                v-model="commitMessage"
-                rows="3"
-                placeholder="Describe this change"
-                :disabled="pendingStatusActionKey === 'commit'"
-              ></textarea>
-            </div>
-
-            <button
-              type="submit"
-              class="commit-submit"
-              :disabled="
-                Boolean(
-                  commitDisabledReason(
-                    selectedDetails.gitStatus,
-                    isDetailLoading,
-                    pendingStatusActionKey,
-                  ),
-                )
-              "
-              :title="
-                commitDisabledReason(
-                  selectedDetails.gitStatus,
-                  isDetailLoading,
-                  pendingStatusActionKey,
-                )
-              "
-            >
-              {{ pendingStatusActionKey === "commit" ? "Committing..." : "Commit" }}
-            </button>
-
-            <ul v-if="stagedPreview.length > 0" class="staged-preview">
-              <li v-for="entry in stagedPreview" :key="`staged-preview-${entry.path}`">
-                <code>{{ statusCode(entry) }}</code>
-                <span :title="entry.path">{{ entry.path }}</span>
-              </li>
-              <li v-if="hiddenStagedFileCount > 0" class="staged-preview-more">
-                {{ hiddenStagedFileCount }} more staged
-              </li>
-            </ul>
-          </form>
-        </section>
-
-        <section class="detail-panel git-overview-panel status-panel">
-          <div class="panel-heading">
-            <h3>Status</h3>
-          </div>
-          <div class="git-status-card">
-            <div class="status-counts" aria-label="Working tree summary">
-              <div
-                v-for="item in statusCounts(selectedDetails.gitStatus)"
-                :key="item.key"
-                :class="[item.key, { active: item.count > 0 }]"
-              >
-                <strong>{{ item.count }}</strong>
-                <span>{{ item.label }}</span>
-              </div>
-            </div>
-
-            <p v-if="statusActionLabel" class="status-pending">
-              {{ statusActionLabel }}
-            </p>
-            <p v-else-if="statusFeedbackMessage" class="status-feedback">
-              {{ statusFeedbackMessage }}
-            </p>
-
-            <div v-if="selectedDetails.gitStatus.clean" class="clean-state">
-              Working tree clean.
-            </div>
-
-            <div v-else class="git-status-groups">
-              <section
-                v-for="group in statusGroups(selectedDetails.gitStatus)"
-                :key="group.key"
-                class="git-status-group"
-                :class="[group.key, { empty: group.entries.length === 0 }]"
-              >
-                <div class="git-status-group-heading">
-                  <div class="git-status-group-title">
-                    <h4>{{ group.label }}</h4>
-                    <span>{{ group.entries.length }}</span>
-                  </div>
-                  <button
-                    v-if="group.entries.length > 0"
-                    type="button"
-                    class="secondary status-action"
-                    :class="{ pending: isStatusActionPending(group.key, group.entries) }"
-                    :disabled="Boolean(pendingStatusActionKey)"
-                    @click="emitStatusAction(group.key, group.entries)"
-                  >
-                    {{
-                      isStatusActionPending(group.key, group.entries)
-                        ? `${statusActionLabelForGroup(group.key)}...`
-                        : statusActionLabelForGroup(group.key)
-                    }}
-                  </button>
-                </div>
-
-                <ul v-if="group.entries.length > 0" class="git-status-list">
-                  <li v-for="entry in group.entries" :key="`${group.key}-${entry.path}`">
-                    <code class="status-code" :class="group.key">{{ statusCode(entry) }}</code>
-                    <div>
-                      <strong>{{ entry.path }}</strong>
-                      <small v-if="entry.originalPath">
-                        from {{ entry.originalPath }}
-                      </small>
-                      <small>{{ entry.label }}</small>
-                    </div>
-                    <button
-                      type="button"
-                      class="secondary status-action"
-                      :class="{ pending: isStatusActionPending(group.key, [entry]) }"
-                      :disabled="Boolean(pendingStatusActionKey)"
-                      @click="emitStatusAction(group.key, [entry])"
-                    >
-                      {{
-                        isStatusActionPending(group.key, [entry])
-                          ? `${statusActionLabelForEntry(group.key)}...`
-                          : statusActionLabelForEntry(group.key)
-                      }}
-                    </button>
-                  </li>
-                </ul>
-
-                <p v-else>No {{ group.label.toLowerCase() }} changes.</p>
-              </section>
-            </div>
-          </div>
-        </section>
-
-        <section class="detail-panel git-overview-panel branches-panel">
-          <div class="panel-heading">
-            <h3>Local branches</h3>
-            <span class="panel-count">{{ selectedDetails.gitBranches.length }}</span>
-          </div>
-          <div class="git-branches">
-            <div class="branch-filters" aria-label="Branch filters">
-              <button
-                v-for="filter in branchFilters"
-                :key="filter.key"
-                type="button"
-                class="secondary"
-                :class="{ active: branchFilter === filter.key }"
-                @click="branchFilter = filter.key"
-              >
-                {{ filter.label }}
-              </button>
-            </div>
-
-            <p v-if="syncingBranchName" class="branch-pending">
-              Syncing {{ syncingBranchName }}...
-            </p>
-
-            <ul v-if="filteredBranches.length > 0" class="git-branch-list">
-              <li
-                v-for="branch in filteredBranches"
-                :key="branch.name"
-                :class="{ current: branch.current }"
-              >
-                <div>
-                  <strong>{{ branch.name }}</strong>
-                  <small>
-                    {{ branch.upstream ?? "No upstream" }}
-                  </small>
-                  <small v-if="branch.current">Current branch</small>
-                  <span class="branch-health">
-                    <span v-if="branch.ahead > 0">{{ branch.ahead }} ahead</span>
-                    <span v-if="branch.behind > 0">{{ branch.behind }} behind</span>
-                    <span v-if="branch.remoteGone">Remote gone</span>
-                    <span v-if="branch.inSyncWithRemote">In sync</span>
-                  </span>
-                </div>
-                <p v-if="branchFeedbackMessages[branch.name]" class="branch-feedback">
-                  {{ branchFeedbackMessages[branch.name] }}
-                </p>
-                <p
-                  v-else-if="branchSafetyNotes(branch, selectedDetails.gitStatus).length > 0"
-                  class="branch-safety"
-                >
-                  {{ branchSafetyNotes(branch, selectedDetails.gitStatus).join(" ") }}
-                </p>
-                <div class="branch-controls">
-                  <span class="branch-sync" :class="{ synced: branch.inSyncWithRemote }">
-                    {{ branchSyncLabel(branch) }}
-                  </span>
-                  <button
-                    v-if="!branch.inSyncWithRemote"
-                    type="button"
-                    class="secondary branch-action"
-                    :class="{ pending: isSyncingBranch(branch.name, syncingBranchName) }"
-                    :disabled="
-                      Boolean(branchSyncDisabledReason(branch, selectedDetails.gitStatus)) ||
-                      Boolean(syncingBranchName) ||
-                      Boolean(deletingBranchName)
-                    "
-                    :title="branchSyncTitle(branch, selectedDetails.gitStatus, syncingBranchName)"
-                    :aria-busy="isSyncingBranch(branch.name, syncingBranchName)"
-                    @click="$emit('syncBranch', branch.name)"
-                  >
-                    {{
-                      isSyncingBranch(branch.name, syncingBranchName)
-                        ? `${branchSyncActionLabel(branch)}ing...`
-                        : branchSyncActionLabel(branch)
-                    }}
-                  </button>
-                  <button
-                    type="button"
-                    class="secondary branch-action"
-                    :class="{ pending: isDeletingBranch(branch.name, deletingBranchName) }"
-                    :disabled="
-                      !branch.canDelete || Boolean(syncingBranchName) || Boolean(deletingBranchName)
-                    "
-                    :title="branch.deleteReason ?? 'Delete local branch'"
-                    @click="$emit('deleteBranch', branch.name)"
-                  >
-                    {{ isDeletingBranch(branch.name, deletingBranchName) ? "Removing..." : "Remove" }}
-                  </button>
-                </div>
-              </li>
-            </ul>
-
-            <p v-else>No branches match this filter.</p>
-          </div>
-        </section>
-
-        <section class="detail-panel git-overview-panel git-log-panel">
-          <div class="panel-heading">
-            <h3>Git log</h3>
             <div class="segmented-control" aria-label="Git log length">
               <button
                 v-for="limit in [10, 30]"
@@ -750,52 +485,311 @@ function branchSafetyNotes(
               </button>
             </div>
           </div>
-          <div
+          <ol
             v-if="selectedDetails.gitLog.length > 0"
-            class="git-log-table-wrap"
+            class="git-log-rail"
+            aria-label="Recent commits"
           >
-            <table class="git-log-table">
-              <thead>
-                <tr>
-                  <th scope="col">Author</th>
-                  <th scope="col">Commit message</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="entry in visibleGitLog" :key="entry.hash">
-                  <td>
-                    <strong>{{ entry.authorName }}</strong>
-                    <small>{{ entry.authorEmail }}</small>
-                    <time :datetime="entry.dateTime" :title="entry.dateTime">{{ entry.time }}</time>
-                  </td>
-                  <td>
-                    <div class="git-message-cell">
-                      <button
-                        type="button"
-                        class="secondary git-hash-chip"
-                        title="Copy commit hash"
-                        @click="copyCommitHash(entry.hash)"
-                      >
-                        {{ entry.hash }}
-                      </button>
-                      <span :title="entry.message">{{ entry.message }}</span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+            <li v-for="entry in visibleGitLog" :key="entry.hash">
+              <div class="git-log-rail-author">
+                <strong :title="entry.authorName">{{ entry.authorName }}</strong>
+                <small :title="entry.authorEmail">{{ entry.authorEmail }}</small>
+              </div>
+              <p :title="entry.message">{{ entry.message }}</p>
+              <div class="git-log-rail-meta">
+                <button
+                  type="button"
+                  class="secondary git-hash-chip"
+                  title="Copy commit hash"
+                  @click="copyCommitHash(entry.hash)"
+                >
+                  {{ entry.hash }}
+                </button>
+                <time :datetime="entry.dateTime" :title="entry.dateTime">{{ entry.time }}</time>
+              </div>
+            </li>
+          </ol>
           <div v-else class="empty-state compact-empty">
             No git log output available.
           </div>
-        </section>
+        </aside>
 
-        <section class="detail-panel remotes-panel">
-          <div class="panel-heading">
-            <h3>Remotes</h3>
-          </div>
-          <pre>{{ selectedDetails.remotes }}</pre>
-        </section>
+        <div class="git-main-grid">
+          <section
+            class="detail-panel commit-panel"
+            :class="{ ready: stagedFileCount(selectedDetails.gitStatus) > 0 }"
+          >
+            <form
+              class="commit-form commit-form-wide"
+              @submit.prevent="
+                submitCommit(selectedDetails.gitStatus, isDetailLoading, pendingStatusActionKey)
+              "
+            >
+              <div class="commit-form-heading">
+                <div>
+                  <span>Commit</span>
+                  <strong>
+                    {{ commitSummaryLabel(selectedDetails.gitStatus) }}
+                  </strong>
+                </div>
+                <div class="commit-heading-actions">
+                  <span
+                    v-if="stagedFileCount(selectedDetails.gitStatus) > 0"
+                    class="commit-count-chip"
+                  >
+                    {{ stagedFileLabel(selectedDetails.gitStatus) }}
+                  </span>
+                  <button
+                    v-if="stagedFileCount(selectedDetails.gitStatus) > 0"
+                    type="button"
+                    class="secondary status-action"
+                    :disabled="Boolean(pendingStatusActionKey)"
+                    @click="emitStatusAction('staged', selectedDetails.gitStatus.staged)"
+                  >
+                    {{
+                      isStatusActionPending('staged', selectedDetails.gitStatus.staged)
+                        ? 'Unstaging...'
+                        : 'Unstage all'
+                    }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="commit-message-row">
+                <label for="commit-message">Message</label>
+                <textarea
+                  id="commit-message"
+                  v-model="commitMessage"
+                  rows="3"
+                  placeholder="Describe this change"
+                  :disabled="pendingStatusActionKey === 'commit'"
+                ></textarea>
+              </div>
+
+              <button
+                type="submit"
+                class="commit-submit"
+                :disabled="
+                  Boolean(
+                    commitDisabledReason(
+                      selectedDetails.gitStatus,
+                      isDetailLoading,
+                      pendingStatusActionKey,
+                    ),
+                  )
+                "
+                :title="
+                  commitDisabledReason(
+                    selectedDetails.gitStatus,
+                    isDetailLoading,
+                    pendingStatusActionKey,
+                  )
+                "
+              >
+                {{ pendingStatusActionKey === "commit" ? "Committing..." : "Commit" }}
+              </button>
+
+              <ul v-if="stagedPreview.length > 0" class="staged-preview">
+                <li v-for="entry in stagedPreview" :key="`staged-preview-${entry.path}`">
+                  <code>{{ statusCode(entry) }}</code>
+                  <span :title="entry.path">{{ entry.path }}</span>
+                </li>
+                <li v-if="hiddenStagedFileCount > 0" class="staged-preview-more">
+                  {{ hiddenStagedFileCount }} more staged
+                </li>
+              </ul>
+            </form>
+          </section>
+
+          <section class="detail-panel git-overview-panel status-panel">
+            <div class="panel-heading">
+              <h3>Status</h3>
+            </div>
+            <div class="git-status-card">
+              <div class="status-counts" aria-label="Working tree summary">
+                <div
+                  v-for="item in statusCounts(selectedDetails.gitStatus)"
+                  :key="item.key"
+                  :class="[item.key, { active: item.count > 0 }]"
+                >
+                  <strong>{{ item.count }}</strong>
+                  <span>{{ item.label }}</span>
+                </div>
+              </div>
+
+              <p v-if="statusActionLabel" class="status-pending">
+                {{ statusActionLabel }}
+              </p>
+              <p v-else-if="statusFeedbackMessage" class="status-feedback">
+                {{ statusFeedbackMessage }}
+              </p>
+
+              <div v-if="selectedDetails.gitStatus.clean" class="clean-state">
+                Working tree clean.
+              </div>
+
+              <div v-else class="git-status-groups">
+                <section
+                  v-for="group in statusGroups(selectedDetails.gitStatus)"
+                  :key="group.key"
+                  class="git-status-group"
+                  :class="[group.key, { empty: group.entries.length === 0 }]"
+                >
+                  <div class="git-status-group-heading">
+                    <div class="git-status-group-title">
+                      <h4>{{ group.label }}</h4>
+                      <span>{{ group.entries.length }}</span>
+                    </div>
+                    <button
+                      v-if="group.entries.length > 0"
+                      type="button"
+                      class="secondary status-action"
+                      :class="{ pending: isStatusActionPending(group.key, group.entries) }"
+                      :disabled="Boolean(pendingStatusActionKey)"
+                      @click="emitStatusAction(group.key, group.entries)"
+                    >
+                      {{
+                        isStatusActionPending(group.key, group.entries)
+                          ? `${statusActionLabelForGroup(group.key)}...`
+                          : statusActionLabelForGroup(group.key)
+                      }}
+                    </button>
+                  </div>
+
+                  <ul v-if="group.entries.length > 0" class="git-status-list">
+                    <li v-for="entry in group.entries" :key="`${group.key}-${entry.path}`">
+                      <code class="status-code" :class="group.key">{{ statusCode(entry) }}</code>
+                      <div>
+                        <strong>{{ entry.path }}</strong>
+                        <small v-if="entry.originalPath">
+                          from {{ entry.originalPath }}
+                        </small>
+                        <small>{{ entry.label }}</small>
+                      </div>
+                      <button
+                        type="button"
+                        class="secondary status-action"
+                        :class="{ pending: isStatusActionPending(group.key, [entry]) }"
+                        :disabled="Boolean(pendingStatusActionKey)"
+                        @click="emitStatusAction(group.key, [entry])"
+                      >
+                        {{
+                          isStatusActionPending(group.key, [entry])
+                            ? `${statusActionLabelForEntry(group.key)}...`
+                            : statusActionLabelForEntry(group.key)
+                        }}
+                      </button>
+                    </li>
+                  </ul>
+
+                  <p v-else>No {{ group.label.toLowerCase() }} changes.</p>
+                </section>
+              </div>
+            </div>
+          </section>
+
+          <section class="detail-panel git-overview-panel branches-panel">
+            <div class="panel-heading">
+              <h3>Local branches</h3>
+              <span class="panel-count">{{ selectedDetails.gitBranches.length }}</span>
+            </div>
+            <div class="git-branches">
+              <div class="branch-filters" aria-label="Branch filters">
+                <button
+                  v-for="filter in branchFilters"
+                  :key="filter.key"
+                  type="button"
+                  class="secondary"
+                  :class="{ active: branchFilter === filter.key }"
+                  @click="branchFilter = filter.key"
+                >
+                  {{ filter.label }}
+                </button>
+              </div>
+
+              <p v-if="syncingBranchName" class="branch-pending">
+                Syncing {{ syncingBranchName }}...
+              </p>
+
+              <ul v-if="filteredBranches.length > 0" class="git-branch-list">
+                <li
+                  v-for="branch in filteredBranches"
+                  :key="branch.name"
+                  :class="{ current: branch.current }"
+                >
+                  <div>
+                    <strong>{{ branch.name }}</strong>
+                    <small>
+                      {{ branch.upstream ?? "No upstream" }}
+                    </small>
+                    <small v-if="branch.current">Current branch</small>
+                    <span class="branch-health">
+                      <span v-if="branch.ahead > 0">{{ branch.ahead }} ahead</span>
+                      <span v-if="branch.behind > 0">{{ branch.behind }} behind</span>
+                      <span v-if="branch.remoteGone">Remote gone</span>
+                      <span v-if="branch.inSyncWithRemote">In sync</span>
+                    </span>
+                  </div>
+                  <p v-if="branchFeedbackMessages[branch.name]" class="branch-feedback">
+                    {{ branchFeedbackMessages[branch.name] }}
+                  </p>
+                  <p
+                    v-else-if="branchSafetyNotes(branch, selectedDetails.gitStatus).length > 0"
+                    class="branch-safety"
+                  >
+                    {{ branchSafetyNotes(branch, selectedDetails.gitStatus).join(" ") }}
+                  </p>
+                  <div class="branch-controls">
+                    <span class="branch-sync" :class="{ synced: branch.inSyncWithRemote }">
+                      {{ branchSyncLabel(branch) }}
+                    </span>
+                    <button
+                      v-if="!branch.inSyncWithRemote"
+                      type="button"
+                      class="secondary branch-action"
+                      :class="{ pending: isSyncingBranch(branch.name, syncingBranchName) }"
+                      :disabled="
+                        Boolean(branchSyncDisabledReason(branch, selectedDetails.gitStatus)) ||
+                        Boolean(syncingBranchName) ||
+                        Boolean(deletingBranchName)
+                      "
+                      :title="branchSyncTitle(branch, selectedDetails.gitStatus, syncingBranchName)"
+                      :aria-busy="isSyncingBranch(branch.name, syncingBranchName)"
+                      @click="$emit('syncBranch', branch.name)"
+                    >
+                      {{
+                        isSyncingBranch(branch.name, syncingBranchName)
+                          ? `${branchSyncActionLabel(branch)}ing...`
+                          : branchSyncActionLabel(branch)
+                      }}
+                    </button>
+                    <button
+                      type="button"
+                      class="secondary branch-action"
+                      :class="{ pending: isDeletingBranch(branch.name, deletingBranchName) }"
+                      :disabled="
+                        !branch.canDelete || Boolean(syncingBranchName) || Boolean(deletingBranchName)
+                      "
+                      :title="branch.deleteReason ?? 'Delete local branch'"
+                      @click="$emit('deleteBranch', branch.name)"
+                    >
+                      {{ isDeletingBranch(branch.name, deletingBranchName) ? "Removing..." : "Remove" }}
+                    </button>
+                  </div>
+                </li>
+              </ul>
+
+              <p v-else>No branches match this filter.</p>
+            </div>
+          </section>
+
+          <section class="detail-panel remotes-panel">
+            <div class="panel-heading">
+              <h3>Remotes</h3>
+            </div>
+            <pre>{{ selectedDetails.remotes }}</pre>
+          </section>
+        </div>
       </div>
 
       <div

@@ -1,5 +1,7 @@
 @media (max-width: 1280px) {
-  .detail-layout {
+  .detail-layout,
+  .git-detail-layout,
+  .git-main-grid {
     grid-template-columns: 1fr;
   }
 
@@ -13,11 +15,13 @@
     height: auto;
   }
 
-  .git-overview-panel.git-log-panel {
+  .git-log-sidebar {
+    position: static;
     height: auto;
+    min-height: 0;
   }
 
-  .git-log-table-wrap,
+  .git-log-rail,
   .git-status-card,
   .git-branches {
     max-height: 520px;
@@ -90,6 +94,8 @@
   }
 
   .detail-layout,
+  .git-detail-layout,
+  .git-main-grid,
   .dashboard-toolbar,
   .commit-form-wide,
   .script-row {
@@ -156,9 +162,9 @@
     grid-template-columns: 1fr;
   }
 
-  .git-log-table th:first-child,
-  .git-log-table td:first-child {
-    width: 150px;
+  .git-log-heading {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .branch-sync {

@@ -80,8 +80,11 @@
   height: 540px;
 }
 
-:root[data-density="compact"] .git-log-table th,
-:root[data-density="compact"] .git-log-table td,
+:root[data-density="compact"] .git-log-sidebar {
+  height: min(680px, calc(100vh - 190px));
+}
+
+:root[data-density="compact"] .git-log-rail li,
 :root[data-density="compact"] .git-status-list li,
 :root[data-density="compact"] .git-branch-list li {
   padding: 6px;

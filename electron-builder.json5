@@ -5,6 +5,7 @@
   "asar": true,
   "productName": "Web Dev Companion",
   "directories": {
+    "buildResources": "build",
     "output": "release/${version}"
   },
   "files": [
@@ -12,12 +13,14 @@
     "dist-electron"
   ],
   "mac": {
+    "icon": "icon.icns",
     "target": [
       "dmg"
     ],
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
   "win": {
+    "icon": "icon.ico",
     "target": [
       {
         "target": "nsis",
@@ -35,6 +38,7 @@
     "deleteAppDataOnUninstall": false
   },
   "linux": {
+    "icon": "icon.png",
     "target": [
       "AppImage"
     ],

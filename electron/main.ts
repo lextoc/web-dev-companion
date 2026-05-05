@@ -113,7 +113,7 @@ function createWindow() {
     minWidth: 1180,
     minHeight: 720,
     title: 'Web Dev Companion',
-    icon: path.join(process.env.VITE_PUBLIC, 'web-dev-companion.svg'),
+    icon: path.join(process.env.VITE_PUBLIC, 'web-dev-companion.png'),
     webPreferences: {
       preload: path.join(currentDirectory, 'preload.js'),
     },

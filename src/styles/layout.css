@@ -1,6 +1,6 @@
 .app-shell {
   --shell-x: 24px;
-  width: min(1840px, 100%);
+  width: min(2160px, 100%);
   margin: 0 auto;
   padding: 0 var(--shell-x) 24px;
 }

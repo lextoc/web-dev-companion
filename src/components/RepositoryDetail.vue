@@ -5,6 +5,8 @@ import type {
   RepositoryDetails,
   RepositorySummary,
   ScriptTerminal,
+  StatusFileDiff,
+  StatusFileDiffType,
 } from "../repositories";
 import NpmScriptsPanel from "./NpmScriptsPanel.vue";
 
@@ -50,6 +52,9 @@ const commitMessage = ref("");
 const gitLogLimit = ref(10);
 const branchFilter = ref("all");
 const activeDetailTab = ref<"git" | "scripts">("git");
+const selectedStatusDiff = ref<StatusFileDiff | null>(null);
+const statusDiffLoadingKey = ref<string | null>(null);
+const statusDiffError = ref<string | null>(null);
 
 const branchFilters = [
   { key: "all", label: "All" },
@@ -188,6 +193,47 @@ function statusActionLabelForEntry(groupKey: string) {
 
 function statusActionKey(groupKey: string, entries: GitStatusEntry[]) {
   return `${isStagedGroup(groupKey) ? "unstage" : "stage"}:${statusEntryPaths(entries).join("\n")}`;
+}
+
+function statusDiffType(groupKey: string): StatusFileDiffType {
+  if (groupKey === "staged" || groupKey === "untracked" || groupKey === "conflicted") {
+    return groupKey;
+  }
+
+  return "unstaged";
+}
+
+function statusDiffKey(groupKey: string, entry: GitStatusEntry) {
+  return `${groupKey}:${entry.path}`;
+}
+
+async function openStatusDiff(groupKey: string, entry: GitStatusEntry) {
+  if (!props.selectedDetails || statusDiffLoadingKey.value) {
+    return;
+  }
+
+  const loadingKey = statusDiffKey(groupKey, entry);
+  statusDiffLoadingKey.value = loadingKey;
+  statusDiffError.value = null;
+
+  try {
+    selectedStatusDiff.value = await window.repositories.diffFile({
+      repoPath: props.selectedDetails.path,
+      path: entry.path,
+      diffType: statusDiffType(groupKey),
+    });
+  } catch (error) {
+    statusDiffError.value = error instanceof Error ? error.message : "Could not load file changes.";
+  } finally {
+    if (statusDiffLoadingKey.value === loadingKey) {
+      statusDiffLoadingKey.value = null;
+    }
+  }
+}
+
+function closeStatusDiff() {
+  selectedStatusDiff.value = null;
+  statusDiffError.value = null;
 }
 
 function isStatusActionPending(groupKey: string, entries: GitStatusEntry[]) {
@@ -659,13 +705,25 @@ function branchSafetyNotes(
                   <ul v-if="group.entries.length > 0" class="git-status-list">
                     <li v-for="entry in group.entries" :key="`${group.key}-${entry.path}`">
                       <code class="status-code" :class="group.key">{{ statusCode(entry) }}</code>
-                      <div>
+                      <button
+                        type="button"
+                        class="status-file-button"
+                        :disabled="Boolean(statusDiffLoadingKey)"
+                        :aria-busy="statusDiffLoadingKey === statusDiffKey(group.key, entry)"
+                        @click="openStatusDiff(group.key, entry)"
+                      >
                         <strong>{{ entry.path }}</strong>
                         <small v-if="entry.originalPath">
                           from {{ entry.originalPath }}
                         </small>
-                        <small>{{ entry.label }}</small>
-                      </div>
+                        <small>
+                          {{
+                            statusDiffLoadingKey === statusDiffKey(group.key, entry)
+                              ? "Loading changes..."
+                              : `${entry.label} · View changes`
+                          }}
+                        </small>
+                      </button>
                       <button
                         type="button"
                         class="secondary status-action"
@@ -819,6 +877,28 @@ function branchSafetyNotes(
       <button type="button" class="secondary" :disabled="isDetailLoading" @click="$emit('refresh')">
         Retry
       </button>
+    </div>
+
+    <div
+      v-if="selectedStatusDiff || statusDiffError"
+      class="modal-backdrop status-diff-backdrop"
+      role="presentation"
+      @click.self="closeStatusDiff"
+    >
+      <section class="status-diff-modal" role="dialog" aria-modal="true" aria-labelledby="status-diff-title">
+        <header class="status-diff-header">
+          <div>
+            <span>File changes</span>
+            <h2 id="status-diff-title">
+              {{ selectedStatusDiff?.path ?? "Could not load changes" }}
+            </h2>
+          </div>
+          <button type="button" class="secondary" @click="closeStatusDiff">Close</button>
+        </header>
+
+        <p v-if="statusDiffError" class="status-diff-error">{{ statusDiffError }}</p>
+        <pre v-else class="status-diff-output">{{ selectedStatusDiff?.content }}</pre>
+      </section>
     </div>
   </section>
 </template>

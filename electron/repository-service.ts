@@ -7,6 +7,8 @@ import type {
   RepositoryDetails,
   RepositoryActionRequest,
   RepositorySummary,
+  StatusFileDiff,
+  StatusFileDiffRequest,
   StatusFileRequest,
   SyncBranchRequest,
 } from '../src/repositories'
@@ -24,6 +26,8 @@ import {
 } from './git'
 
 type ElectronShell = typeof import('electron').shell
+
+const maxInlineFileDiffBytes = 500_000
 
 function launchDetached(command: string, args: string[], cwd?: string) {
   return new Promise<void>((resolve, reject) => {
@@ -314,6 +318,54 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     return normalizedPaths
   }
 
+  async function readUntrackedFileDiff(repoPath: string, statusPath: string): Promise<string> {
+    const absoluteFilePath = path.resolve(repoPath, statusPath)
+    const relativePath = path.relative(repoPath, absoluteFilePath)
+
+    if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+      throw new Error('File path must stay inside the repository.')
+    }
+
+    const stats = await fs.stat(absoluteFilePath)
+
+    if (!stats.isFile()) {
+      return `Untracked path is not a regular file: ${statusPath}`
+    }
+
+    if (stats.size > maxInlineFileDiffBytes) {
+      return `Untracked file is too large to preview (${Math.ceil(stats.size / 1024)} KB).`
+    }
+
+    const content = await fs.readFile(absoluteFilePath, 'utf8')
+
+    return [
+      `--- /dev/null`,
+      `+++ b/${statusPath}`,
+      '@@ untracked file @@',
+      ...content.split('\n').map((line) => `+${line}`),
+    ].join('\n')
+  }
+
+  async function diffFile(request: StatusFileDiffRequest): Promise<StatusFileDiff> {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+    const [statusPath] = normalizeStatusPaths([request.path])
+    let content = ''
+
+    if (request.diffType === 'staged') {
+      content = await tryRunGit(normalizedPath, ['diff', '--cached', '--no-ext-diff', '--', statusPath])
+    } else if (request.diffType === 'untracked') {
+      content = await readUntrackedFileDiff(normalizedPath, statusPath)
+    } else {
+      content = await tryRunGit(normalizedPath, ['diff', '--no-ext-diff', '--', statusPath])
+    }
+
+    return {
+      path: statusPath,
+      diffType: request.diffType,
+      content: content || 'No diff output available for this file.',
+    }
+  }
+
   async function stageFiles(request: StatusFileRequest): Promise<RepositoryDetails> {
     const normalizedPath = await normalizeRepositoryPath(request.repoPath)
     const statusPaths = normalizeStatusPaths(request.paths)
@@ -359,6 +411,7 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     addRepository,
     commit,
     deleteBranch,
+    diffFile,
     listRepositories,
     openInEditor,
     openInFileManager,

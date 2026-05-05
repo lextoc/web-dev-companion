@@ -81,7 +81,13 @@
     padding: 12px;
   }
 
+  .status-diff-modal {
+    height: calc(100vh - 32px);
+    padding: 12px;
+  }
+
   .terminal-modal-header,
+  .status-diff-header,
   .terminal-modal-actions {
     align-items: stretch;
     flex-direction: column;

@@ -77,6 +77,20 @@ export interface StatusFileRequest {
   paths: string[]
 }
 
+export type StatusFileDiffType = 'staged' | 'unstaged' | 'untracked' | 'conflicted'
+
+export interface StatusFileDiffRequest {
+  repoPath: string
+  path: string
+  diffType: StatusFileDiffType
+}
+
+export interface StatusFileDiff {
+  path: string
+  diffType: StatusFileDiffType
+  content: string
+}
+
 export interface CommitRequest {
   repoPath: string
   message: string
@@ -135,6 +149,7 @@ export interface RepositoryApi {
   syncBranch: (request: SyncBranchRequest) => Promise<RepositoryDetails>
   stageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
   unstageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
+  diffFile: (request: StatusFileDiffRequest) => Promise<StatusFileDiff>
   commit: (request: CommitRequest) => Promise<RepositoryDetails>
   openInFileManager: (request: RepositoryActionRequest) => Promise<boolean>
   openInEditor: (request: RepositoryActionRequest) => Promise<boolean>

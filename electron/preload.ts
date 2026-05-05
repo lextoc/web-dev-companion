@@ -13,6 +13,7 @@ const repositories: RepositoryApi = {
   syncBranch: (request) => ipcRenderer.invoke('repositories:sync-branch', request),
   stageFiles: (request) => ipcRenderer.invoke('repositories:stage-files', request),
   unstageFiles: (request) => ipcRenderer.invoke('repositories:unstage-files', request),
+  diffFile: (request) => ipcRenderer.invoke('repositories:diff-file', request),
   commit: (request) => ipcRenderer.invoke('repositories:commit', request),
   openInFileManager: (request) => ipcRenderer.invoke('repositories:open-in-file-manager', request),
   openInEditor: (request) => ipcRenderer.invoke('repositories:open-in-editor', request),

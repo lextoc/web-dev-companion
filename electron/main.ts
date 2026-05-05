@@ -17,6 +17,8 @@ const currentDirectory = __dirname
 const appName = 'Web Dev Companion'
 const repositoriesFileName = 'repositories.json'
 
+app.setName(appName)
+
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -46,8 +48,6 @@ function appIconPath() {
 }
 
 function configureAppIdentity() {
-  app.setName(appName)
-
   if (process.platform === 'darwin') {
     const appIcon = nativeImage.createFromPath(appIconPath())
 

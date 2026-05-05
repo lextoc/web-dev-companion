@@ -1,5 +1,7 @@
 import { spawn } from 'node:child_process'
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
+import os from 'node:os'
+import path from 'node:path'
 import type { ScriptOutput, ScriptRunRequest } from '../src/repositories'
 import {
   detectPackageManager,
@@ -13,6 +15,64 @@ interface ScriptRunnerOptions {
 
 function commandForPackageManager(packageManager: string | undefined) {
   return packageManager || 'npm'
+}
+
+function shellQuote(value: string) {
+  return `'${value.replace(/'/g, "'\\''")}'`
+}
+
+function scriptCommand(packageManager: string, scriptName: string) {
+  return `${shellQuote(packageManager)} run ${shellQuote(scriptName)}`
+}
+
+function childProcessEnv() {
+  const homeDirectory = os.homedir()
+  const pathEntries = [
+    process.env.PATH,
+    '/opt/homebrew/bin',
+    '/opt/homebrew/sbin',
+    '/usr/local/bin',
+    '/usr/local/sbin',
+    '/usr/bin',
+    '/bin',
+    '/usr/sbin',
+    '/sbin',
+    path.join(homeDirectory, '.local', 'bin'),
+    path.join(homeDirectory, '.cargo', 'bin'),
+    path.join(homeDirectory, '.volta', 'bin'),
+    path.join(homeDirectory, '.asdf', 'shims'),
+  ].filter((entry): entry is string => Boolean(entry))
+
+  return {
+    ...process.env,
+    PATH: [...new Set(pathEntries.flatMap((entry) => entry.split(path.delimiter).filter(Boolean)))].join(
+      path.delimiter,
+    ),
+  }
+}
+
+function launchCommand(packageManager: string, scriptName: string) {
+  if (process.platform === 'win32') {
+    return {
+      command: packageManager,
+      args: ['run', scriptName],
+      shell: true,
+    }
+  }
+
+  if (process.platform === 'darwin') {
+    return {
+      command: process.env.SHELL || '/bin/zsh',
+      args: ['-ilc', scriptCommand(packageManager, scriptName)],
+      shell: false,
+    }
+  }
+
+  return {
+    command: process.env.SHELL || '/bin/sh',
+    args: ['-lc', scriptCommand(packageManager, scriptName)],
+    shell: false,
+  }
 }
 
 export function createScriptRunner({ sendOutput }: ScriptRunnerOptions) {
@@ -54,11 +114,13 @@ export function createScriptRunner({ sendOutput }: ScriptRunnerOptions) {
 
     pendingScriptRuns.delete(runId)
 
-    const child = spawn(packageManager, ['run', scriptName], {
+    const launch = launchCommand(packageManager, scriptName)
+    const child = spawn(launch.command, launch.args, {
       cwd: repoPath,
       detached: process.platform !== 'win32',
-      env: process.env,
-      shell: true,
+      env: childProcessEnv(),
+      shell: launch.shell,
+      windowsHide: true,
     })
 
     runningScripts.set(runId, child)

@@ -196,7 +196,7 @@ watch(
                     @keydown.space.stop
                   >
                     <AppIcon
-                      :name="scriptTerminalsByScript[scriptName].isRunning ? 'square' : 'close'"
+                      :name="scriptTerminalsByScript[scriptName].isRunning ? 'stop' : 'close'"
                       class="button-icon"
                     />
                     <span>{{ scriptTerminalsByScript[scriptName].isRunning ? 'Stop' : 'Close' }}</span>

@@ -11,7 +11,7 @@ defineProps<{
     | 'pin-off'
     | 'play'
     | 'restart'
-    | 'square'
+    | 'stop'
     | 'terminal'
     | 'trash'
 }>()
@@ -42,8 +42,8 @@ defineProps<{
       <path d="M19 7v5h-5" />
       <path d="M18.2 12A6.2 6.2 0 1 1 16.4 7.6L19 10.1" />
     </g>
-    <g v-else-if="name === 'square'">
-      <path d="M7 7h10v10H7z" />
+    <g v-else-if="name === 'stop'">
+      <rect x="7" y="7" width="10" height="10" rx="1.5" class="app-icon-fill" />
     </g>
     <g v-else-if="name === 'hide'">
       <path d="M18 6L6 18" />

@@ -221,7 +221,7 @@ function getTerminalPreview(terminal: ScriptTerminal) {
                 @keydown.space.stop
               >
                 <AppIcon
-                  :name="entry.terminal ? (entry.terminal.isRunning ? 'square' : 'close') : 'play'"
+                  :name="entry.terminal ? (entry.terminal.isRunning ? 'stop' : 'close') : 'play'"
                   class="button-icon"
                 />
                 <span>

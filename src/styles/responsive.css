@@ -6,25 +6,8 @@
     grid-template-columns: 1fr;
   }
 
-  .dashboard-workspace {
-    grid-template-columns: 1fr;
-  }
-
   .dashboard-toolbar {
     grid-template-columns: 1fr;
-  }
-
-  .dashboard-git-log.git-log-sidebar {
-    position: static;
-  }
-
-  .dashboard-git-log.git-log-sidebar {
-    height: auto;
-    min-height: 0;
-  }
-
-  .dashboard-git-log-rail {
-    max-height: 420px;
   }
 
   .status-panel,

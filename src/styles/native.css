@@ -231,10 +231,6 @@ h2 {
   background: color-mix(in srgb, var(--surface-soft) 46%, var(--surface));
 }
 
-.dashboard-git-log .git-log-heading {
-  padding-bottom: 8px;
-}
-
 .git-log-rail li:hover,
 .active-terminal-item:hover,
 .repo-card-main:hover:not(:disabled) {

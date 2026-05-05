@@ -129,6 +129,7 @@ export interface ScriptTerminal {
   command: string
   output: string
   isRunning: boolean
+  startedAt: number
 }
 
 export interface PinnedScript {
@@ -159,4 +160,24 @@ export interface RepositoryApi {
   stopScripts: (runIds: string[]) => void
   onScriptOutput: (listener: (output: ScriptOutput) => void) => () => void
   onWindowFocus: (listener: () => void) => () => void
+}
+
+export type DesktopMenuCommand =
+  | 'add-repository'
+  | 'back'
+  | 'open-in-editor'
+  | 'open-in-file-manager'
+  | 'open-in-terminal'
+  | 'refresh'
+  | 'settings'
+  | 'stop-scripts'
+
+export interface DesktopNotificationRequest {
+  title: string
+  body: string
+}
+
+export interface DesktopApi {
+  notify: (request: DesktopNotificationRequest) => Promise<boolean>
+  onMenuCommand: (listener: (command: DesktopMenuCommand) => void) => () => void
 }

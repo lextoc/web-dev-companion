@@ -1,5 +1,5 @@
 import * as electron from 'electron'
-import type { RepositoryApi } from '../src/repositories'
+import type { DesktopApi, RepositoryApi } from '../src/repositories'
 
 const { contextBridge, ipcRenderer } = electron
 
@@ -45,6 +45,21 @@ const repositories: RepositoryApi = {
   },
 }
 
+const desktop: DesktopApi = {
+  notify: (request) => ipcRenderer.invoke('desktop:notify', request),
+  onMenuCommand: (listener) => {
+    const wrappedListener = (_event: Electron.IpcRendererEvent, command: Parameters<typeof listener>[0]) => {
+      listener(command)
+    }
+
+    ipcRenderer.on('desktop:menu-command', wrappedListener)
+
+    return () => {
+      ipcRenderer.off('desktop:menu-command', wrappedListener)
+    }
+  },
+}
+
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
   on(...args: Parameters<typeof ipcRenderer.on>) {
@@ -69,3 +84,4 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 })
 
 contextBridge.exposeInMainWorld('repositories', repositories)
+contextBridge.exposeInMainWorld('desktop', desktop)

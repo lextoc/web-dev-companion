@@ -84,6 +84,7 @@ export function useTerminals({
         ? `signal ${output.signal}`
         : `exit ${output.exitCode ?? 0}`
       const didSucceed = output.exitCode === 0
+      const elapsedMs = Date.now() - terminal.startedAt
       const title = didSucceed
         ? `Script "${terminal.scriptName}" finished`
         : output.signal
@@ -98,6 +99,13 @@ export function useTerminals({
         meta: exitLabel,
         tone: didSucceed ? 'success' : output.signal ? 'warning' : 'error',
       })
+
+      if (!output.signal && (!didSucceed || elapsedMs >= 10_000)) {
+        void window.desktop.notify({
+          title,
+          body: `${terminal.repoName} - ${exitLabel}`,
+        })
+      }
     }
 
     scriptTerminals.value[output.runId] = {
@@ -144,6 +152,7 @@ export function useTerminals({
           command: scriptRun.command,
           output: `$ ${scriptRun.command}\n`,
           isRunning: true,
+          startedAt: Date.now(),
         },
       }
       recordRepositoryActivity?.({

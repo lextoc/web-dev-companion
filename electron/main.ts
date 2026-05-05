@@ -3,6 +3,8 @@ import type { BrowserWindow as BrowserWindowType, OpenDialogOptions } from 'elec
 import type {
   CommitRequest,
   DeleteBranchRequest,
+  DesktopMenuCommand,
+  DesktopNotificationRequest,
   RepositoryActionRequest,
   ScriptOutput,
   ScriptRunRequest,
@@ -13,7 +15,16 @@ import type {
 import { createRepositoryService } from './repository-service'
 import { createScriptRunner } from './script-runner'
 
-const { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } = require('electron') as typeof import('electron')
+const {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Menu,
+  nativeImage,
+  Notification,
+  shell,
+} = require('electron') as typeof import('electron')
 const currentDirectory = __dirname
 const appName = 'Web Dev Companion'
 const repositoriesFileName = 'repositories.json'
@@ -74,6 +85,136 @@ function sendScriptOutput(output: ScriptOutput) {
   }
 }
 
+function sendMenuCommand(command: DesktopMenuCommand) {
+  if (!win || win.isDestroyed() || win.webContents.isDestroyed()) {
+    return
+  }
+
+  win.webContents.send('desktop:menu-command', command)
+}
+
+function configureApplicationMenu() {
+  const isMac = process.platform === 'darwin'
+  const template: Electron.MenuItemConstructorOptions[] = [
+    ...(isMac
+      ? [
+          {
+            label: appName,
+            submenu: [
+              { role: 'about' as const },
+              { type: 'separator' as const },
+              {
+                label: 'Settings...',
+                accelerator: 'Command+,',
+                click: () => sendMenuCommand('settings'),
+              },
+              { type: 'separator' as const },
+              { role: 'services' as const },
+              { type: 'separator' as const },
+              { role: 'hide' as const },
+              { role: 'hideOthers' as const },
+              { role: 'unhide' as const },
+              { type: 'separator' as const },
+              { role: 'quit' as const },
+            ],
+          },
+        ]
+      : []),
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'Add Repository...',
+          accelerator: isMac ? 'Command+O' : 'Ctrl+O',
+          click: () => sendMenuCommand('add-repository'),
+        },
+        {
+          label: 'Back',
+          accelerator: isMac ? 'Command+[' : 'Alt+Left',
+          click: () => sendMenuCommand('back'),
+        },
+        ...(isMac
+          ? []
+          : [
+              { type: 'separator' as const },
+              {
+                label: 'Settings...',
+                accelerator: 'Ctrl+,',
+                click: () => sendMenuCommand('settings'),
+              },
+              { type: 'separator' as const },
+              { role: 'quit' as const },
+            ]),
+      ],
+    },
+    {
+      label: 'Repository',
+      submenu: [
+        {
+          label: 'Refresh',
+          accelerator: isMac ? 'Command+R' : 'Ctrl+R',
+          click: () => sendMenuCommand('refresh'),
+        },
+        { type: 'separator' },
+        {
+          label: 'Open in Editor',
+          accelerator: isMac ? 'Command+E' : 'Ctrl+E',
+          click: () => sendMenuCommand('open-in-editor'),
+        },
+        {
+          label: 'Open in Files',
+          accelerator: isMac ? 'Command+Shift+F' : 'Ctrl+Shift+F',
+          click: () => sendMenuCommand('open-in-file-manager'),
+        },
+        {
+          label: 'Open in Terminal',
+          accelerator: isMac ? 'Command+`' : 'Ctrl+`',
+          click: () => sendMenuCommand('open-in-terminal'),
+        },
+      ],
+    },
+    {
+      label: 'Scripts',
+      submenu: [
+        {
+          label: 'Stop Running Scripts',
+          accelerator: isMac ? 'Command+Shift+S' : 'Ctrl+Shift+S',
+          click: () => sendMenuCommand('stop-scripts'),
+        },
+      ],
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' },
+      ],
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'zoom' },
+        ...(isMac
+          ? [
+              { type: 'separator' as const },
+              { role: 'front' as const },
+            ]
+          : [{ role: 'close' as const }]),
+      ],
+    },
+  ]
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
 const repositoryService = createRepositoryService(repositoriesFilePath, shell)
 const scriptRunner = createScriptRunner({ sendOutput: sendScriptOutput })
 
@@ -110,6 +251,19 @@ function registerRepositoryHandlers() {
   ipcMain.handle('repositories:start-script', (_event, request: ScriptRunRequest) => scriptRunner.startScript(request))
   ipcMain.handle('repositories:stop-script', (_event, runId: string) => scriptRunner.stopScript(runId))
   ipcMain.handle('repositories:choose-and-add', chooseAndAddRepository)
+  ipcMain.handle('desktop:notify', (_event, request: DesktopNotificationRequest) => {
+    if (!Notification.isSupported()) {
+      return false
+    }
+
+    new Notification({
+      title: request.title,
+      body: request.body,
+      icon: appIconPath(),
+    }).show()
+
+    return true
+  })
   ipcMain.on('repositories:stop-scripts', (_event, runIds: string[]) => {
     for (const runId of runIds) {
       scriptRunner.stopScript(runId)
@@ -142,7 +296,9 @@ function createWindow() {
     ...(process.platform === 'darwin'
       ? {
           titleBarStyle: 'hiddenInset' as const,
-          trafficLightPosition: { x: 18, y: 10 },
+          trafficLightPosition: { x: 18, y: 17 },
+          vibrancy: 'sidebar' as const,
+          visualEffectState: 'active' as const,
         }
       : {}),
     webPreferences: {
@@ -184,6 +340,7 @@ app.on('activate', () => {
 
 app.whenReady().then(() => {
   configureAppIdentity()
+  configureApplicationMenu()
   registerRepositoryHandlers()
   createWindow()
 })

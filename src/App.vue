@@ -17,7 +17,13 @@ import { useConfirmations } from './composables/useConfirmations'
 import { useSettings } from './composables/useSettings'
 import { useTerminals } from './composables/useTerminals'
 import { useToasts } from './composables/useToasts'
-import type { PinnedScript, RepositoryDetails, RepositoryGitLogEntry, RepositorySummary } from './repositories'
+import type {
+  DesktopMenuCommand,
+  PinnedScript,
+  RepositoryDetails,
+  RepositoryGitLogEntry,
+  RepositorySummary,
+} from './repositories'
 import type { AppSettings } from './settings'
 
 const FOCUS_REFRESH_THROTTLE_MS = 2000
@@ -50,6 +56,7 @@ const isDashboardGitLogLoading = ref(false)
 const repositoryActivitiesByPath = ref<Record<string, RepositoryLocalActivity[]>>({})
 let removeScriptOutputListener: (() => void) | undefined
 let removeWindowFocusListener: (() => void) | undefined
+let removeMenuCommandListener: (() => void) | undefined
 let autoRefreshTickTimer: number | undefined
 let statusFeedbackTimer: number | undefined
 let nextAutoRefreshAt = 0
@@ -320,6 +327,10 @@ function showRepositoryError(repoPath: string, title: string, error: unknown) {
     tone: 'error',
   })
   showError(error)
+}
+
+function activeRepositoryPath() {
+  return selectedDetails.value?.path ?? selectedSummary.value?.path
 }
 
 function togglePinnedRepository(repoPath: string) {
@@ -810,6 +821,56 @@ async function openRepositoryInTerminal(repoPath: string) {
   }
 }
 
+async function handleMenuCommand(command: DesktopMenuCommand) {
+  if (command === 'settings') {
+    isSettingsOpen.value = true
+    return
+  }
+
+  if (command === 'add-repository') {
+    await chooseAndAddRepository()
+    return
+  }
+
+  if (command === 'back') {
+    if (selectedPath.value) {
+      closeDetails()
+    }
+
+    return
+  }
+
+  if (command === 'refresh') {
+    if (selectedPath.value) {
+      await refreshSelectedRepository()
+      return
+    }
+
+    await loadRepositories()
+    return
+  }
+
+  if (command === 'stop-scripts') {
+    stopOwnedScripts()
+    showAppFeedback('Stopped running scripts.', 'info')
+    return
+  }
+
+  const repoPath = activeRepositoryPath()
+
+  if (!repoPath) {
+    return
+  }
+
+  if (command === 'open-in-editor') {
+    await openRepositoryInEditor(repoPath)
+  } else if (command === 'open-in-file-manager') {
+    await openRepositoryInFileManager(repoPath)
+  } else if (command === 'open-in-terminal') {
+    await openRepositoryInTerminal(repoPath)
+  }
+}
+
 async function copyRepositoryPath(repoPath: string) {
   try {
     await navigator.clipboard.writeText(repoPath)
@@ -901,6 +962,9 @@ onMounted(() => {
   removeWindowFocusListener = window.repositories.onWindowFocus(() => {
     void refreshOnWindowFocus()
   })
+  removeMenuCommandListener = window.desktop.onMenuCommand((command) => {
+    void handleMenuCommand(command)
+  })
   window.addEventListener('popstate', handleHistoryNavigation)
   window.addEventListener('pagehide', handlePageExit)
   window.addEventListener('beforeunload', handlePageExit)
@@ -914,6 +978,7 @@ onBeforeUnmount(() => {
   handlePageExit()
   removeScriptOutputListener?.()
   removeWindowFocusListener?.()
+  removeMenuCommandListener?.()
 })
 </script>
 

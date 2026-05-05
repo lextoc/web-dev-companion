@@ -763,31 +763,70 @@ pre {
 }
 
 .commit-panel.ready .commit-form-wide {
-  border-color: color-mix(in srgb, var(--success-text) 36%, var(--brand));
-  background:
-    radial-gradient(
-      circle at 100% 0%,
-      color-mix(in srgb, var(--success-soft) 76%, transparent),
-      transparent 34%
-    ),
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--success-soft) 88%, var(--surface)),
-      color-mix(in srgb, var(--brand) 14%, var(--surface)) 58%,
-      color-mix(in srgb, var(--surface) 86%, var(--success-soft))
-    );
+  border-color: #0f6658;
+  background: #16473f;
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 42%, transparent),
-    0 12px 30px color-mix(in srgb, var(--success-text) 12%, transparent);
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 18px 38px rgba(16, 83, 72, 0.24);
 }
 
 .commit-panel.ready .commit-form label,
 .commit-panel.ready .commit-queue-heading span {
-  color: color-mix(in srgb, var(--success-text) 76%, var(--text));
+  color: #d9f4e7;
 }
 
 .commit-panel.ready .commit-queue-heading strong {
-  color: var(--success-text);
+  color: #ffffff;
+}
+
+.commit-panel.ready .commit-form textarea {
+  border-color: #8abbb0;
+  background: #f7fbf9;
+  color: #142720;
+}
+
+.commit-panel.ready .commit-form textarea:focus {
+  border-color: #d9f4e7;
+  box-shadow: 0 0 0 3px rgba(217, 244, 231, 0.28);
+}
+
+.commit-panel.ready .commit-submit:not(:disabled) {
+  border-color: #f7fbf9;
+  background: #f7fbf9;
+  color: #16473f;
+  box-shadow: 0 8px 18px rgba(7, 22, 18, 0.24);
+}
+
+.commit-panel.ready .commit-submit:not(:disabled):hover {
+  border-color: #d9f4e7;
+  background: #d9f4e7;
+  color: #123c36;
+}
+
+.commit-panel.ready .commit-submit:disabled {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.82);
+  opacity: 1;
+}
+
+.commit-panel.ready .commit-queue {
+  border-color: #2a6e63;
+  background: #123c36;
+}
+
+.commit-panel.ready .commit-queue p {
+  color: #b9d9d0;
+}
+
+.commit-panel.ready .staged-preview li {
+  border-color: #8abbb0;
+  background: #f7fbf9;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.commit-panel.ready .staged-preview-file small {
+  color: #45645e;
 }
 
 .commit-form label {

@@ -10,10 +10,15 @@
   grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px;
-  background: color-mix(in srgb, var(--surface) 82%, var(--app-bg));
+  width: calc(100% + var(--shell-x) + var(--app-layout-gap));
+  min-height: var(--detail-command-bar-height);
+  margin-left: calc(var(--shell-x) * -1);
+  margin-top: calc(var(--top-bar-gap) * -1);
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  padding: 10px var(--app-layout-gap) 10px var(--shell-x);
+  background: color-mix(in srgb, var(--app-bg) 78%, var(--surface));
 }
 
 .detail-back-button {

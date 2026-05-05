@@ -118,6 +118,9 @@
 
   .detail-command-bar {
     grid-template-columns: 1fr;
+    width: calc(100% + (var(--shell-x) * 2));
+    margin-left: calc(var(--shell-x) * -1);
+    padding-right: var(--shell-x);
   }
 
   .detail-nav,
@@ -262,6 +265,12 @@
     border: 1px solid var(--border);
     border-radius: 8px;
     margin-top: 0;
+  }
+
+  .detail-command-bar {
+    width: calc(100% + (var(--shell-x) * 2));
+    margin-left: calc(var(--shell-x) * -1);
+    padding-right: var(--shell-x);
   }
 
   .repo-card {

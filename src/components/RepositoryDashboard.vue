@@ -29,6 +29,7 @@ defineEmits<{
 
 const searchQuery = ref('')
 const sortMode = ref<'dirty' | 'name' | 'scripts'>('dirty')
+const isAddRepositoryOpen = ref(false)
 const pinnedRepositorySet = computed(() => new Set(props.pinnedRepositoryPaths))
 
 const filteredRepositories = computed(() => {
@@ -93,24 +94,6 @@ const repositorySections = computed(() => {
 
 <template>
   <section class="dashboard">
-    <form class="add-repo" @submit.prevent="$emit('add')">
-      <label for="repo-path">Repository path</label>
-      <div class="add-row">
-        <input
-          id="repo-path"
-          :value="repoPathInput"
-          type="text"
-          placeholder="Path to repository folder"
-          autocomplete="off"
-          @input="$emit('update:repoPathInput', ($event.target as HTMLInputElement).value)"
-        />
-        <button type="submit" :disabled="isLoading">Add</button>
-        <button type="button" class="secondary" :disabled="isLoading" @click="$emit('browse')">
-          Browse
-        </button>
-      </div>
-    </form>
-
     <div v-if="isLoading && repositories.length === 0" class="repo-skeleton-grid" aria-label="Loading repositories">
       <article v-for="index in 6" :key="index" class="repo-card skeleton-card">
         <span></span>
@@ -122,9 +105,23 @@ const repositorySections = computed(() => {
     <div v-else-if="repositories.length === 0" class="empty-state">
       <strong>No repositories saved.</strong>
       <span>Add a path manually or browse to a repository folder.</span>
-      <button type="button" class="secondary" :disabled="isLoading" @click="$emit('browse')">
-        Browse for repository
-      </button>
+      <form class="add-repo empty-add-repo" @submit.prevent="$emit('add')">
+        <label for="empty-repo-path">Repository path</label>
+        <div class="add-row">
+          <input
+            id="empty-repo-path"
+            :value="repoPathInput"
+            type="text"
+            placeholder="Path to repository folder"
+            autocomplete="off"
+            @input="$emit('update:repoPathInput', ($event.target as HTMLInputElement).value)"
+          />
+          <button type="submit" :disabled="isLoading">Add</button>
+          <button type="button" class="secondary" :disabled="isLoading" @click="$emit('browse')">
+            Browse
+          </button>
+        </div>
+      </form>
     </div>
 
     <template v-else>
@@ -150,86 +147,106 @@ const repositorySections = computed(() => {
           <strong>{{ filteredRepositories.length }}</strong>
           <span>{{ filteredRepositories.length === 1 ? 'repository' : 'repositories' }}</span>
         </div>
-      </div>
-
-      <div v-if="filteredRepositories.length === 0" class="empty-state">
-        No repositories match this filter.
-      </div>
-
-      <div v-else class="repo-sections">
-        <section
-          v-for="section in repositorySections"
-          :key="section.key"
-          class="repo-section"
+        <button
+          type="button"
+          class="secondary dashboard-add-toggle"
+          :class="{ active: isAddRepositoryOpen }"
+          :aria-expanded="isAddRepositoryOpen"
+          @click="isAddRepositoryOpen = !isAddRepositoryOpen"
         >
-          <div class="repo-section-heading">
-            <h2>{{ section.title }}</h2>
-            <span>{{ section.count }}</span>
+          Add repository
+        </button>
+      </div>
+
+      <form v-if="isAddRepositoryOpen" class="add-repo" @submit.prevent="$emit('add')">
+        <label for="repo-path">Repository path</label>
+        <div class="add-row">
+          <input
+            id="repo-path"
+            :value="repoPathInput"
+            type="text"
+            placeholder="Path to repository folder"
+            autocomplete="off"
+            @input="$emit('update:repoPathInput', ($event.target as HTMLInputElement).value)"
+          />
+          <button type="submit" :disabled="isLoading">Add</button>
+          <button type="button" class="secondary" :disabled="isLoading" @click="$emit('browse')">
+            Browse
+          </button>
+        </div>
+      </form>
+
+      <div class="dashboard-workspace">
+        <div class="dashboard-repositories">
+          <div v-if="filteredRepositories.length === 0" class="empty-state">
+            No repositories match this filter.
           </div>
 
-          <div class="repo-grid">
-            <RepositoryCard
-              v-for="repository in section.repositories"
-              :key="repository.path"
-              :repository="repository"
-              :is-pinned="pinnedRepositorySet.has(repository.path)"
-              :running-script-count="runningScriptsByRepositoryPath[repository.path] ?? 0"
-              :last-refreshed-label="lastRefreshedLabel"
-              @open="$emit('open', $event)"
-              @remove="$emit('remove', $event)"
-              @toggle-pin="$emit('togglePin', $event)"
-              @copy-path="$emit('copyPath', $event)"
-              @open-in-editor="$emit('openInEditor', $event)"
-              @open-in-file-manager="$emit('openInFileManager', $event)"
-              @open-in-terminal="$emit('openInTerminal', $event)"
-            />
+          <div v-else class="repo-sections">
+            <section
+              v-for="section in repositorySections"
+              :key="section.key"
+              class="repo-section"
+            >
+              <div class="repo-section-heading">
+                <h2>{{ section.title }}</h2>
+                <span>{{ section.count }}</span>
+              </div>
+
+              <div class="repo-grid">
+                <RepositoryCard
+                  v-for="repository in section.repositories"
+                  :key="repository.path"
+                  :repository="repository"
+                  :is-pinned="pinnedRepositorySet.has(repository.path)"
+                  :running-script-count="runningScriptsByRepositoryPath[repository.path] ?? 0"
+                  :last-refreshed-label="lastRefreshedLabel"
+                  @open="$emit('open', $event)"
+                  @remove="$emit('remove', $event)"
+                  @toggle-pin="$emit('togglePin', $event)"
+                  @copy-path="$emit('copyPath', $event)"
+                  @open-in-editor="$emit('openInEditor', $event)"
+                  @open-in-file-manager="$emit('openInFileManager', $event)"
+                  @open-in-terminal="$emit('openInTerminal', $event)"
+                />
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <section class="dashboard-git-log" aria-labelledby="dashboard-git-log-title">
+          <div class="dashboard-git-log-heading">
+            <div>
+              <h2 id="dashboard-git-log-title">Recent commits</h2>
+              <p>Across saved repositories</p>
+            </div>
+            <span>{{ isGitLogLoading ? 'Refreshing...' : `${mixedGitLog.length} commits` }}</span>
+          </div>
+
+          <ol v-if="mixedGitLog.length > 0" class="dashboard-commit-feed">
+            <li v-for="entry in mixedGitLog" :key="`${entry.repoPath}-${entry.hash}`" class="dashboard-commit-entry">
+              <div class="dashboard-commit-entry-heading">
+                <strong class="repo-chip" :title="entry.repoName">{{ entry.repoName }}</strong>
+                <time :datetime="entry.dateTime" :title="entry.dateTime">{{ entry.time }}</time>
+              </div>
+
+              <p class="dashboard-commit-message">
+                <code>{{ entry.hash }}</code>
+                <span>{{ entry.message }}</span>
+              </p>
+
+              <div class="dashboard-commit-author">
+                <strong :title="entry.authorName">{{ entry.authorName }}</strong>
+                <small :title="entry.authorEmail">{{ entry.authorEmail }}</small>
+              </div>
+            </li>
+          </ol>
+
+          <div v-else class="dashboard-git-log-empty">
+            {{ isGitLogLoading ? 'Loading repository git logs...' : 'No git log entries available.' }}
           </div>
         </section>
       </div>
-
-      <section class="dashboard-git-log" aria-labelledby="dashboard-git-log-title">
-        <div class="dashboard-git-log-heading">
-          <div>
-            <h2 id="dashboard-git-log-title">Recent commits</h2>
-            <p>Latest git log entries across all repositories.</p>
-          </div>
-          <span>{{ isGitLogLoading ? 'Refreshing...' : `${mixedGitLog.length} commits` }}</span>
-        </div>
-
-        <div v-if="mixedGitLog.length > 0" class="dashboard-git-log-table-wrap">
-          <table class="dashboard-git-log-table">
-            <thead>
-              <tr>
-                <th scope="col">Repository</th>
-                <th scope="col">Author</th>
-                <th scope="col">Commit message</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="entry in mixedGitLog" :key="`${entry.repoPath}-${entry.hash}`">
-                <td>
-                  <strong :title="entry.repoName">{{ entry.repoName }}</strong>
-                  <time :datetime="entry.dateTime" :title="entry.dateTime">{{ entry.time }}</time>
-                </td>
-                <td>
-                  <strong :title="entry.authorName">{{ entry.authorName }}</strong>
-                  <small :title="entry.authorEmail">{{ entry.authorEmail }}</small>
-                </td>
-                <td>
-                  <div class="dashboard-git-message-cell">
-                    <code>{{ entry.hash }}</code>
-                    <span :title="entry.message">{{ entry.message }}</span>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-else class="dashboard-git-log-empty">
-          {{ isGitLogLoading ? 'Loading repository git logs...' : 'No git log entries available.' }}
-        </div>
-      </section>
     </template>
   </section>
 </template>

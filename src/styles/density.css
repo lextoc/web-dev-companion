@@ -32,18 +32,18 @@
 }
 
 :root[data-density="compact"] .add-repo {
-  padding: 12px 0;
+  padding: 10px;
 }
 
 :root[data-density="compact"] .repo-card-main {
-  min-height: 118px;
-  gap: 7px;
-  padding: 34px 42px 10px 14px;
+  min-height: 96px;
+  gap: 6px;
+  padding: 10px 14px;
 }
 
 :root[data-density="compact"] .repo-quick-actions {
   gap: 6px;
-  padding: 8px;
+  padding: 10px 38px 10px 10px;
 }
 
 :root[data-density="compact"] .repo-quick-actions button,

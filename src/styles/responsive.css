@@ -5,6 +5,18 @@
     grid-template-columns: 1fr;
   }
 
+  .dashboard-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-git-log {
+    position: static;
+  }
+
+  .dashboard-commit-feed {
+    max-height: 420px;
+  }
+
   .status-panel,
   .branches-panel,
   .git-log-panel {
@@ -117,10 +129,23 @@
   }
 
   .repo-card-main {
-    min-height: 150px;
+    min-height: 0;
+  }
+
+  .repo-title-row,
+  .dashboard-commit-entry-heading,
+  .dashboard-commit-message {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .repo-card-badges {
+    justify-content: flex-start;
+    max-width: 100%;
   }
 
   .repo-quick-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     width: auto;
     border-top: 1px solid var(--border-soft);
     border-left: 0;
@@ -134,13 +159,6 @@
 
   .dashboard-git-log-heading > span {
     width: fit-content;
-  }
-
-  .dashboard-git-log-table th:first-child,
-  .dashboard-git-log-table td:first-child,
-  .dashboard-git-log-table th:nth-child(2),
-  .dashboard-git-log-table td:nth-child(2) {
-    width: 140px;
   }
 
   .commit-form-wide > button {

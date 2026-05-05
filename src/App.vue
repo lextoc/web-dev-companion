@@ -137,6 +137,14 @@ const appActivityLabel = computed(() => {
 
   return null
 })
+const hasTerminalSidebarContent = computed(() =>
+  activeTerminals.value.length > 0 ||
+  pinnedScripts.value.length > 0 ||
+  activityItems.value.length > 0,
+)
+const isTerminalSidebarCollapsed = computed(() =>
+  areTerminalsCollapsed.value || !hasTerminalSidebarContent.value,
+)
 
 function currentHistoryState() {
   const state = window.history.state
@@ -847,7 +855,7 @@ onBeforeUnmount(() => {
       @settings="isSettingsOpen = true"
     />
 
-    <div class="app-layout" :class="{ 'terminals-collapsed': areTerminalsCollapsed }">
+    <div class="app-layout" :class="{ 'terminals-collapsed': isTerminalSidebarCollapsed }">
       <div class="main-pane">
         <RepositoryDashboard
           v-if="!selectedPath"
@@ -911,8 +919,8 @@ onBeforeUnmount(() => {
         :terminals="activeTerminals"
         :pinned-scripts="pinnedScripts"
         :activity-items="activityItems"
-        :collapsed="areTerminalsCollapsed"
-        @toggle="areTerminalsCollapsed = !areTerminalsCollapsed"
+        :collapsed="isTerminalSidebarCollapsed"
+        @toggle="areTerminalsCollapsed = hasTerminalSidebarContent ? !areTerminalsCollapsed : false"
         @stop="stopTerminal"
         @restart="restartTerminal"
         @open="openTerminal"

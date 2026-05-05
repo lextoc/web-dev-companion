@@ -167,14 +167,11 @@ button.secondary.active {
 }
 
 .app-dropdown-menu {
-  position: absolute;
+  position: fixed;
   z-index: 60;
-  top: calc(100% + 5px);
-  left: 0;
   display: grid;
   width: max-content;
-  min-width: 100%;
-  max-width: min(560px, calc(100vw - 32px));
+  max-width: min(720px, calc(100vw - 32px));
   max-height: min(280px, 48vh);
   overflow-x: hidden;
   overflow-y: auto;

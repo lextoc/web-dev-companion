@@ -576,7 +576,7 @@ pre {
   text-transform: uppercase;
 }
 
-.remote-branch-checkout div {
+.remote-branch-create-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 6px;
@@ -592,13 +592,13 @@ pre {
   font-size: 0.78rem;
 }
 
-.remote-branch-checkout .app-dropdown-menu {
+.remote-branch-dropdown-menu {
   max-height: min(260px, 42vh);
   overflow-x: hidden;
   overflow-y: auto;
 }
 
-.remote-branch-checkout .app-dropdown-option {
+.remote-branch-dropdown-menu .app-dropdown-option {
   min-height: 34px;
   overflow: hidden;
   padding: 0 10px;

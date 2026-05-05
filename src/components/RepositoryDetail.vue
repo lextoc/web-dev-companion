@@ -843,10 +843,11 @@ function checkoutSelectedRemoteBranch() {
                 <label for="remote-branch-select">
                   Create from remote
                 </label>
-                <div>
+                <div class="remote-branch-create-row">
                   <AppDropdown
                     id="remote-branch-select"
                     v-model="selectedRemoteBranchName"
+                    menu-class="remote-branch-dropdown-menu"
                     :options="remoteBranchOptions"
                     :disabled="
                       Boolean(checkingOutBranchName) ||

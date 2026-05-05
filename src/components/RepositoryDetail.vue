@@ -292,6 +292,20 @@ function emitStatusAction(groupKey: string, entries: GitStatusEntry[]) {
   emit("stageFiles", { paths, actionKey });
 }
 
+function stageAllStageableChanges(gitStatus: RepositoryDetails["gitStatus"]) {
+  const entries = [...gitStatus.unstaged, ...gitStatus.untracked];
+  const paths = statusEntryPaths(entries);
+
+  if (paths.length === 0) {
+    return;
+  }
+
+  emit("stageFiles", {
+    paths,
+    actionKey: `stage:${paths.join("\n")}`,
+  });
+}
+
 function commitDisabledReason(
   gitStatus: RepositoryDetails["gitStatus"],
   isDetailLoading: boolean,
@@ -664,10 +678,17 @@ function checkoutSelectedRemoteBranch() {
                   </div>
                   <div class="commit-heading-actions">
                     <span
-                      v-if="stagedFileCount(selectedDetails.gitStatus) > 0"
-                      class="commit-count-chip"
+                      class="commit-step"
+                      :class="{ complete: stagedFileCount(selectedDetails.gitStatus) > 0 }"
                     >
-                      {{ stagedFileLabel(selectedDetails.gitStatus) }}
+                      {{
+                        stagedFileCount(selectedDetails.gitStatus) > 0
+                          ? stagedFileLabel(selectedDetails.gitStatus)
+                          : "No staged files"
+                      }}
+                    </span>
+                    <span class="commit-step" :class="{ complete: commitMessage.trim() }">
+                      {{ commitMessage.trim() ? "Message ready" : "Message needed" }}
                     </span>
                     <button
                       v-if="stagedFileCount(selectedDetails.gitStatus) > 0"
@@ -680,6 +701,19 @@ function checkoutSelectedRemoteBranch() {
                         isStatusActionPending('staged', selectedDetails.gitStatus.staged)
                           ? 'Unstaging...'
                           : 'Unstage all'
+                      }}
+                    </button>
+                    <button
+                      v-else-if="hasStageableChanges(selectedDetails.gitStatus)"
+                      type="button"
+                      class="secondary status-action"
+                      :disabled="Boolean(pendingStatusActionKey)"
+                      @click="stageAllStageableChanges(selectedDetails.gitStatus)"
+                    >
+                      {{
+                        pendingStatusActionKey?.startsWith('stage:')
+                          ? 'Staging...'
+                          : 'Stage all changes'
                       }}
                     </button>
                   </div>
@@ -719,15 +753,24 @@ function checkoutSelectedRemoteBranch() {
                   {{ pendingStatusActionKey === "commit" ? "Committing..." : "Commit" }}
                 </button>
 
-                <ul v-if="stagedPreview.length > 0" class="staged-preview">
-                  <li v-for="entry in stagedPreview" :key="`staged-preview-${entry.path}`">
-                    <code>{{ statusCode(entry) }}</code>
-                    <span :title="entry.path">{{ entry.path }}</span>
-                  </li>
-                  <li v-if="hiddenStagedFileCount > 0" class="staged-preview-more">
-                    {{ hiddenStagedFileCount }} more staged
-                  </li>
-                </ul>
+                <div class="commit-queue">
+                  <div class="commit-queue-heading">
+                    <span>Staged queue</span>
+                    <strong>{{ stagedFileLabel(selectedDetails.gitStatus) }}</strong>
+                  </div>
+                  <ul v-if="stagedPreview.length > 0" class="staged-preview">
+                    <li v-for="entry in stagedPreview" :key="`staged-preview-${entry.path}`">
+                      <code>{{ statusCode(entry) }}</code>
+                      <span :title="entry.path">{{ entry.path }}</span>
+                    </li>
+                    <li v-if="hiddenStagedFileCount > 0" class="staged-preview-more">
+                      {{ hiddenStagedFileCount }} more staged
+                    </li>
+                  </ul>
+                  <p v-else>
+                    Stage files from Changes before committing.
+                  </p>
+                </div>
               </form>
             </section>
 

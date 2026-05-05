@@ -667,8 +667,9 @@ pre {
 }
 
 .commit-form-wide {
-  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: stretch;
+  gap: 12px;
   border: 0;
   padding: 0;
   background: transparent;
@@ -679,12 +680,19 @@ pre {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  grid-column: 1 / -1;
   min-width: 0;
-  min-height: 74px;
+  min-height: 64px;
   border: 1px solid var(--border-soft);
   border-radius: 8px;
-  padding: 10px;
-  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  padding: 10px 12px;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--brand) 8%, transparent),
+      transparent 52%
+    ),
+    color-mix(in srgb, var(--surface) 78%, transparent);
 }
 
 .commit-form-heading span {
@@ -710,18 +718,24 @@ pre {
   justify-content: flex-end;
 }
 
-.commit-count-chip {
+.commit-step {
   display: inline-flex;
   min-height: 28px;
   align-items: center;
-  border: 1px solid var(--brand-ring);
+  border: 1px solid var(--border-soft);
   border-radius: 999px;
   padding: 0 10px;
-  background: var(--success-soft);
-  color: var(--success-text);
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
   font-size: 0.74rem;
   font-weight: 900;
   text-transform: none;
+}
+
+.commit-step.complete {
+  border-color: var(--brand-ring);
+  background: var(--success-soft);
+  color: var(--success-text);
 }
 
 .commit-form label {
@@ -739,7 +753,7 @@ pre {
 
 .commit-form textarea {
   width: 100%;
-  min-height: 74px;
+  min-height: 92px;
   resize: vertical;
   border: 1px solid var(--border-control);
   border-radius: 7px;
@@ -763,8 +777,45 @@ pre {
 
 .commit-submit {
   min-width: 112px;
-  min-height: 74px;
+  min-height: 92px;
   align-self: end;
+}
+
+.commit-queue {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 8px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 10px;
+  background: color-mix(in srgb, var(--surface) 64%, transparent);
+}
+
+.commit-queue-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.commit-queue-heading span {
+  color: var(--muted-strong);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.commit-queue-heading strong {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.commit-queue p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
 }
 
 .staged-preview {
@@ -776,10 +827,7 @@ pre {
 }
 
 .commit-form-wide .staged-preview {
-  grid-column: 1 / -1;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  border-top: 1px solid var(--border-soft);
-  padding-top: 10px;
 }
 
 .staged-preview li {

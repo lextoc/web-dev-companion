@@ -827,7 +827,7 @@ pre {
 }
 
 .commit-form-wide .staged-preview {
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .staged-preview li {
@@ -841,6 +841,23 @@ pre {
   background: color-mix(in srgb, var(--success-soft) 38%, var(--surface));
 }
 
+.staged-preview-file {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  justify-items: stretch;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.staged-preview-file:hover:not(:disabled) {
+  background: transparent;
+  color: inherit;
+}
+
 .staged-preview code {
   display: grid;
   min-height: 22px;
@@ -852,7 +869,7 @@ pre {
   font-weight: 900;
 }
 
-.staged-preview span {
+.staged-preview-file span {
   min-width: 0;
   direction: rtl;
   overflow: hidden;
@@ -860,6 +877,16 @@ pre {
   font-size: 0.76rem;
   font-weight: 800;
   text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staged-preview-file small {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

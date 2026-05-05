@@ -761,7 +761,23 @@ function checkoutSelectedRemoteBranch() {
                   <ul v-if="stagedPreview.length > 0" class="staged-preview">
                     <li v-for="entry in stagedPreview" :key="`staged-preview-${entry.path}`">
                       <code>{{ statusCode(entry) }}</code>
-                      <span :title="entry.path">{{ entry.path }}</span>
+                      <button
+                        type="button"
+                        class="staged-preview-file"
+                        :disabled="Boolean(statusDiffLoadingKey)"
+                        :aria-busy="statusDiffLoadingKey === statusDiffKey('staged', entry)"
+                        :title="entry.path"
+                        @click="openStatusDiff('staged', entry)"
+                      >
+                        <span>{{ entry.path }}</span>
+                        <small>
+                          {{
+                            statusDiffLoadingKey === statusDiffKey('staged', entry)
+                              ? "Loading changes..."
+                              : "View changes"
+                          }}
+                        </small>
+                      </button>
                     </li>
                     <li v-if="hiddenStagedFileCount > 0" class="staged-preview-more">
                       {{ hiddenStagedFileCount }} more staged

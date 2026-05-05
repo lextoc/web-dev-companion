@@ -1363,10 +1363,6 @@ function handleGlobalKeydown(event: KeyboardEvent) {
     return
   }
 
-  if (!isEditableTarget(event.target) && selectedPath.value) {
-    event.preventDefault()
-    closeDetails()
-  }
 }
 
 onMounted(() => {

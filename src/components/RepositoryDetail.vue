@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import { parseDiffOutput } from "../output-formatting";
 import type {
   GitStatusEntry,
   RepositoryDetails,
@@ -55,6 +56,7 @@ const activeDetailTab = ref<"git" | "scripts">("git");
 const selectedStatusDiff = ref<StatusFileDiff | null>(null);
 const statusDiffLoadingKey = ref<string | null>(null);
 const statusDiffError = ref<string | null>(null);
+const selectedStatusDiffLines = computed(() => parseDiffOutput(selectedStatusDiff.value?.content ?? ""));
 
 const branchFilters = [
   { key: "all", label: "All" },
@@ -897,7 +899,12 @@ function branchSafetyNotes(
         </header>
 
         <p v-if="statusDiffError" class="status-diff-error">{{ statusDiffError }}</p>
-        <pre v-else class="status-diff-output">{{ selectedStatusDiff?.content }}</pre>
+        <pre v-else class="status-diff-output"><code><span
+          v-for="line in selectedStatusDiffLines"
+          :key="line.key"
+          class="diff-line"
+          :class="line.className"
+        ><span class="diff-line-prefix">{{ line.prefix }}</span><span>{{ line.content }}</span></span></code></pre>
       </section>
     </div>
   </section>

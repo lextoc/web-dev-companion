@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
+import { parseAnsiOutput } from '../output-formatting'
 import type { ScriptTerminal } from '../repositories'
 
 const props = defineProps<{
@@ -14,6 +15,7 @@ defineEmits<{
 }>()
 
 const outputElement = ref<HTMLPreElement | null>(null)
+const outputSegments = computed(() => parseAnsiOutput(props.terminal.output))
 
 function setOutputElement(element: Element | ComponentPublicInstance | null) {
   outputElement.value = element instanceof HTMLPreElement ? element : null
@@ -58,7 +60,10 @@ watch(
         </span>
       </div>
 
-      <pre :ref="setOutputElement">{{ terminal.output }}</pre>
+      <pre :ref="setOutputElement" class="ansi-output"><template
+        v-for="segment in outputSegments"
+        :key="segment.key"
+      ><span :class="segment.className">{{ segment.text }}</span></template></pre>
 
       <div class="terminal-modal-actions">
         <button type="button" class="secondary" @click="$emit('close')">Hide</button>

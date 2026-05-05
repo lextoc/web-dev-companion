@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
+import { parseAnsiOutput } from '../output-formatting'
 import type { ScriptTerminal } from '../repositories'
 
 const props = defineProps<{
@@ -19,6 +20,14 @@ defineEmits<{
 
 const terminalOutputElements = ref<Record<string, HTMLPreElement>>({})
 const pinnedScriptNameSet = computed(() => new Set(props.pinnedScriptNames))
+const terminalOutputSegmentsByScript = computed(() =>
+  Object.fromEntries(
+    Object.entries(props.scriptTerminalsByScript).map(([scriptName, terminal]) => [
+      scriptName,
+      parseAnsiOutput(terminal.output),
+    ]),
+  ),
+)
 
 function scriptCategory(scriptName: string) {
   if (/dev|start|serve|watch/i.test(scriptName)) {
@@ -182,7 +191,10 @@ watch(
                   </button>
                 </div>
               </div>
-              <pre :ref="(element) => setTerminalOutputElement(scriptName, element)">{{ scriptTerminalsByScript[scriptName].output }}</pre>
+              <pre :ref="(element) => setTerminalOutputElement(scriptName, element)" class="ansi-output"><template
+                v-for="segment in terminalOutputSegmentsByScript[scriptName]"
+                :key="`${scriptName}-${segment.key}`"
+              ><span :class="segment.className">{{ segment.text }}</span></template></pre>
             </div>
 
             <div

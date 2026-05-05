@@ -207,3 +207,58 @@ code {
   background: var(--terminal-bg);
   font-size: 0.78rem;
 }
+
+.ansi-output {
+  color: var(--terminal-text);
+}
+
+.ansi-bold {
+  font-weight: 800;
+}
+
+.ansi-dim {
+  opacity: 0.68;
+}
+
+.ansi-fg-black {
+  color: #111820;
+}
+
+.ansi-fg-red,
+.ansi-fg-bright-red {
+  color: #ff8a80;
+}
+
+.ansi-fg-green,
+.ansi-fg-bright-green {
+  color: #8ee6a8;
+}
+
+.ansi-fg-yellow,
+.ansi-fg-bright-yellow {
+  color: #ffd37a;
+}
+
+.ansi-fg-blue,
+.ansi-fg-bright-blue {
+  color: #8fc7ff;
+}
+
+.ansi-fg-magenta,
+.ansi-fg-bright-magenta {
+  color: #e7a0ff;
+}
+
+.ansi-fg-cyan,
+.ansi-fg-bright-cyan {
+  color: #78ddd6;
+}
+
+.ansi-fg-white,
+.ansi-fg-bright-white {
+  color: #ffffff;
+}
+
+.ansi-fg-bright-black {
+  color: #9aa9b5;
+}

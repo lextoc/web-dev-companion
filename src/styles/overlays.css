@@ -209,6 +209,44 @@
   white-space: pre;
 }
 
+.status-diff-output code {
+  display: grid;
+  min-width: max-content;
+  font: inherit;
+}
+
+.diff-line {
+  display: grid;
+  grid-template-columns: 2ch minmax(0, 1fr);
+  min-height: 1.45em;
+  padding: 0 8px;
+  color: var(--terminal-text);
+}
+
+.diff-line-prefix {
+  color: var(--muted);
+  user-select: none;
+}
+
+.diff-line-file {
+  color: var(--info-text);
+}
+
+.diff-line-hunk {
+  background: color-mix(in srgb, var(--info-soft) 28%, transparent);
+  color: var(--info-text);
+}
+
+.diff-line-added {
+  background: color-mix(in srgb, var(--success-soft) 24%, transparent);
+  color: var(--success-text);
+}
+
+.diff-line-removed {
+  background: color-mix(in srgb, var(--danger-soft) 28%, transparent);
+  color: var(--danger-text);
+}
+
 .status-diff-error {
   border-radius: 7px;
   margin: 0;

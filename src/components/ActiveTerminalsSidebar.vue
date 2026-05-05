@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { plainTerminalText } from '../output-formatting'
 import type { PinnedScript, ScriptTerminal } from '../repositories'
 
 interface ActivityItem {
@@ -109,7 +110,7 @@ function scriptKey(repoPath: string, scriptName: string) {
 }
 
 function getTerminalPreview(terminal: ScriptTerminal) {
-  const outputLines = terminal.output
+  const outputLines = plainTerminalText(terminal.output)
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)

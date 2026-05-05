@@ -42,8 +42,8 @@
 }
 
 :root[data-density="compact"] .repo-quick-actions {
-  gap: 6px;
-  padding: 10px 44px 10px 10px;
+  gap: 7px;
+  padding: 10px 46px 10px 12px;
 }
 
 :root[data-density="compact"] .repo-quick-actions button {

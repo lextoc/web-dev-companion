@@ -24,6 +24,7 @@
   padding: 11px;
   background: var(--surface);
   color: var(--text);
+  cursor: pointer;
   font-weight: 400;
   text-align: left;
 }
@@ -41,6 +42,33 @@
 
 .script-row:hover:not(:disabled) span {
   color: var(--muted-strong);
+}
+
+.script-row:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.script-row-heading {
+  display: flex;
+  min-width: 0;
+  align-items: start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.script-pin-button,
+.terminal-pin {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 0.76rem;
+}
+
+.script-pin-button.active,
+.terminal-pin.active {
+  border-color: var(--brand);
+  background: var(--success-soft);
+  color: var(--success-text);
 }
 
 code {
@@ -135,4 +163,3 @@ code {
   background: var(--terminal-bg);
   font-size: 0.78rem;
 }
-

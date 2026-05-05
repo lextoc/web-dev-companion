@@ -117,6 +117,14 @@ export interface ScriptTerminal {
   isRunning: boolean
 }
 
+export interface PinnedScript {
+  repoPath: string
+  repoName: string
+  scriptName: string
+  command: string
+  packageManager?: string
+}
+
 export interface RepositoryApi {
   list: () => Promise<RepositorySummary[]>
   chooseAndAdd: () => Promise<RepositorySummary[]>

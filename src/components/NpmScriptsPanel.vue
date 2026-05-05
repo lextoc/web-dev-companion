@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
 import type { ScriptTerminal } from '../repositories'
 
 const props = defineProps<{
   npmScripts: [string, string][]
+  pinnedScriptNames: string[]
   scriptTerminalsByScript: Record<string, ScriptTerminal>
 }>()
 
@@ -13,9 +14,15 @@ defineEmits<{
   stop: [scriptName: string]
   restart: [scriptName: string]
   open: [scriptName: string]
+  togglePin: [scriptName: string]
 }>()
 
 const terminalOutputElements = ref<Record<string, HTMLPreElement>>({})
+const pinnedScriptNameSet = computed(() => new Set(props.pinnedScriptNames))
+
+function isPinned(scriptName: string) {
+  return pinnedScriptNameSet.value.has(scriptName)
+}
 
 function setTerminalOutputElement(scriptName: string, element: Element | ComponentPublicInstance | null) {
   if (element instanceof HTMLPreElement) {
@@ -72,6 +79,16 @@ watch(
             <div class="terminal-actions">
               <button
                 type="button"
+                class="secondary terminal-pin"
+                :class="{ active: isPinned(scriptName) }"
+                @click.stop="$emit('togglePin', scriptName)"
+                @keydown.enter.stop
+                @keydown.space.stop
+              >
+                {{ isPinned(scriptName) ? 'Unpin' : 'Pin' }}
+              </button>
+              <button
+                type="button"
                 class="secondary terminal-restart"
                 @click.stop="$emit('restart', scriptName)"
                 @keydown.enter.stop
@@ -94,10 +111,30 @@ watch(
           <pre :ref="(element) => setTerminalOutputElement(scriptName, element)">{{ scriptTerminalsByScript[scriptName].output }}</pre>
         </div>
 
-        <button v-else class="script-row" type="button" @click="$emit('run', scriptName)">
-          <code>{{ scriptName }}</code>
+        <div
+          v-else
+          class="script-row"
+          role="button"
+          tabindex="0"
+          @click="$emit('run', scriptName)"
+          @keydown.enter="$emit('run', scriptName)"
+          @keydown.space.prevent="$emit('run', scriptName)"
+        >
+          <div class="script-row-heading">
+            <code>{{ scriptName }}</code>
+            <button
+              type="button"
+              class="secondary script-pin-button"
+              :class="{ active: isPinned(scriptName) }"
+              @click.stop="$emit('togglePin', scriptName)"
+              @keydown.enter.stop
+              @keydown.space.stop
+            >
+              {{ isPinned(scriptName) ? 'Pinned' : 'Pin' }}
+            </button>
+          </div>
           <span>{{ command }}</span>
-        </button>
+        </div>
       </div>
     </div>
     <p v-else class="muted">No scripts found.</p>

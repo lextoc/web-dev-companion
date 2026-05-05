@@ -424,6 +424,12 @@
   cursor: pointer;
 }
 
+.active-terminal-item.pinned {
+  border-color: var(--brand-ring);
+  background: color-mix(in srgb, var(--success-soft) 45%, var(--surface));
+  cursor: default;
+}
+
 .active-terminal-item:hover {
   border-color: var(--brand-ring);
   background: var(--surface-hover);
@@ -495,13 +501,19 @@
   color: var(--success-text);
 }
 
+.active-terminal-status.pinned {
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+}
+
 .active-terminal-actions {
   display: grid;
   gap: 7px;
 }
 
 .active-terminal-item .terminal-stop,
-.active-terminal-item .terminal-restart {
+.active-terminal-item .terminal-restart,
+.active-terminal-item .terminal-pin {
   min-height: 34px;
   padding: 0 11px;
 }

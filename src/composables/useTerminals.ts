@@ -1,5 +1,5 @@
 import { computed, ref, type Ref } from 'vue'
-import type { RepositoryDetails, ScriptOutput, ScriptTerminal } from '../repositories'
+import type { PinnedScript, RepositoryDetails, ScriptOutput, ScriptTerminal } from '../repositories'
 
 interface UseTerminalsOptions {
   clearError: () => void
@@ -58,6 +58,12 @@ export function useTerminals({ clearError, selectedDetails, showError }: UseTerm
   const selectedTerminal = computed(() =>
     selectedTerminalRunId.value ? scriptTerminals.value[selectedTerminalRunId.value] : undefined,
   )
+
+  function terminalForScript(repoPath: string, scriptName: string) {
+    return Object.values(scriptTerminals.value).find((terminal) =>
+      terminal.repoPath === repoPath && terminal.scriptName === scriptName,
+    )
+  }
 
   function handleScriptOutput(output: ScriptOutput) {
     const terminal = scriptTerminals.value[output.runId]
@@ -121,7 +127,7 @@ export function useTerminals({ clearError, selectedDetails, showError }: UseTerm
   }
 
   async function runScript(scriptName: string) {
-    if (!selectedDetails.value || currentRepoScriptTerminals.value[scriptName]) {
+    if (!selectedDetails.value || terminalForScript(selectedDetails.value.path, scriptName)) {
       return
     }
 
@@ -132,6 +138,18 @@ export function useTerminals({ clearError, selectedDetails, showError }: UseTerm
       scriptName,
       selectedDetails.value.packageManager,
     )
+  }
+
+  async function runRepositoryScript(script: PinnedScript) {
+    const existingTerminal = terminalForScript(script.repoPath, script.scriptName)
+
+    if (existingTerminal) {
+      selectedTerminalRunId.value = existingTerminal.runId
+      return
+    }
+
+    clearError()
+    await startTerminal(script.repoPath, script.repoName, script.scriptName, script.packageManager)
   }
 
   async function stopTerminal(runId: string) {
@@ -232,6 +250,7 @@ export function useTerminals({ clearError, selectedDetails, showError }: UseTerm
     openTerminal,
     restartScript,
     restartTerminal,
+    runRepositoryScript,
     runningScriptsByRepositoryPath,
     runScript,
     selectedTerminal,

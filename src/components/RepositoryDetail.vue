@@ -22,6 +22,7 @@ const props = defineProps<{
   branchFeedbackMessages: Record<string, string>;
   commitClearToken: number;
   npmScripts: [string, string][];
+  pinnedScriptNames: string[];
   scriptTerminalsByScript: Record<string, ScriptTerminal>;
 }>();
 
@@ -35,6 +36,7 @@ const emit = defineEmits<{
   commit: [message: string];
   commitDraftChange: [hasDraft: boolean];
   runScript: [scriptName: string];
+  togglePinScript: [scriptName: string];
   stopScript: [scriptName: string];
   restartScript: [scriptName: string];
   openTerminal: [scriptName: string];
@@ -773,8 +775,10 @@ function branchSafetyNotes(
       >
         <NpmScriptsPanel
           :npm-scripts="npmScripts"
+          :pinned-script-names="pinnedScriptNames"
           :script-terminals-by-script="scriptTerminalsByScript"
           @run="$emit('runScript', $event)"
+          @toggle-pin="$emit('togglePinScript', $event)"
           @stop="$emit('stopScript', $event)"
           @restart="$emit('restartScript', $event)"
           @open="$emit('openTerminal', $event)"

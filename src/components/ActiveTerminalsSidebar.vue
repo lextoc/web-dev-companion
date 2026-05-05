@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ScriptTerminal } from '../repositories'
+import type { PinnedScript, ScriptTerminal } from '../repositories'
 
 interface ActivityItem {
   id: string
@@ -13,11 +13,22 @@ interface TerminalGroup {
   repoName: string
   runningCount: number
   doneCount: number
-  terminals: ScriptTerminal[]
+  pinnedCount: number
+  entries: TerminalEntry[]
+}
+
+interface TerminalEntry {
+  key: string
+  repoName: string
+  scriptName: string
+  command: string
+  pinnedScript?: PinnedScript
+  terminal?: ScriptTerminal
 }
 
 const props = defineProps<{
   terminals: ScriptTerminal[]
+  pinnedScripts: PinnedScript[]
   activityItems: ActivityItem[]
   collapsed: boolean
 }>()
@@ -27,26 +38,56 @@ defineEmits<{
   stop: [runId: string]
   restart: [runId: string]
   open: [runId: string]
+  startPinned: [script: PinnedScript]
+  unpinPinned: [script: PinnedScript]
 }>()
 
 const terminalGroups = computed<TerminalGroup[]>(() => {
-  const groups = new Map<string, ScriptTerminal[]>()
+  const entriesByKey = new Map<string, TerminalEntry>()
 
   for (const terminal of props.terminals) {
-    const existingTerminals = groups.get(terminal.repoName) ?? []
-    existingTerminals.push(terminal)
-    groups.set(terminal.repoName, existingTerminals)
+    entriesByKey.set(scriptKey(terminal.repoPath, terminal.scriptName), {
+      key: scriptKey(terminal.repoPath, terminal.scriptName),
+      repoName: terminal.repoName,
+      scriptName: terminal.scriptName,
+      command: terminal.command,
+      terminal,
+    })
+  }
+
+  for (const pinnedScript of props.pinnedScripts) {
+    const key = scriptKey(pinnedScript.repoPath, pinnedScript.scriptName)
+    const existingEntry = entriesByKey.get(key)
+
+    entriesByKey.set(key, {
+      key,
+      repoName: pinnedScript.repoName,
+      scriptName: pinnedScript.scriptName,
+      command: existingEntry?.command ?? pinnedScript.command,
+      terminal: existingEntry?.terminal,
+      pinnedScript,
+    })
+  }
+
+  const groups = new Map<string, TerminalEntry[]>()
+
+  for (const entry of entriesByKey.values()) {
+    const existingEntries = groups.get(entry.repoName) ?? []
+    existingEntries.push(entry)
+    groups.set(entry.repoName, existingEntries)
   }
 
   return [...groups.entries()]
     .sort(([repoNameA], [repoNameB]) => repoNameA.localeCompare(repoNameB))
-    .map(([repoName, terminals]) => ({
+    .map(([repoName, entries]) => ({
       repoName,
-      runningCount: terminals.filter((terminal) => terminal.isRunning).length,
-      doneCount: terminals.filter((terminal) => !terminal.isRunning).length,
-      terminals: [...terminals].sort((terminalA, terminalB) =>
-        Number(terminalB.isRunning) - Number(terminalA.isRunning)
-        || terminalA.scriptName.localeCompare(terminalB.scriptName),
+      runningCount: entries.filter((entry) => entry.terminal?.isRunning).length,
+      doneCount: entries.filter((entry) => entry.terminal && !entry.terminal.isRunning).length,
+      pinnedCount: entries.filter((entry) => entry.pinnedScript).length,
+      entries: [...entries].sort((entryA, entryB) =>
+        Number(Boolean(entryB.terminal?.isRunning)) - Number(Boolean(entryA.terminal?.isRunning))
+        || Number(Boolean(entryB.terminal)) - Number(Boolean(entryA.terminal))
+        || entryA.scriptName.localeCompare(entryB.scriptName),
       ),
     }))
 })
@@ -55,6 +96,18 @@ const runningTerminalCount = computed(() =>
   props.terminals.filter((terminal) => terminal.isRunning).length,
 )
 const doneTerminalCount = computed(() => props.terminals.length - runningTerminalCount.value)
+const pinnedIdleCount = computed(() =>
+  props.pinnedScripts.filter((pinnedScript) =>
+    !props.terminals.some((terminal) =>
+      terminal.repoPath === pinnedScript.repoPath && terminal.scriptName === pinnedScript.scriptName,
+    ),
+  ).length,
+)
+const sidebarScriptCount = computed(() => props.terminals.length + pinnedIdleCount.value)
+
+function scriptKey(repoPath: string, scriptName: string) {
+  return `${repoPath}\n${scriptName}`
+}
 
 function getTerminalPreview(terminal: ScriptTerminal) {
   const outputLines = terminal.output
@@ -82,15 +135,16 @@ function getTerminalPreview(terminal: ScriptTerminal) {
       @click="$emit('toggle')"
     >
       <span class="terminal-mini-dot" :class="{ running: runningTerminalCount > 0 }"></span>
-      <strong>{{ terminals.length }}</strong>
+      <strong>{{ sidebarScriptCount }}</strong>
       <small>{{ runningTerminalCount }} running</small>
       <small v-if="doneTerminalCount">{{ doneTerminalCount }} done</small>
+      <small v-if="pinnedIdleCount">{{ pinnedIdleCount }} pinned</small>
     </button>
 
     <div v-else class="active-terminals-heading">
       <div class="active-terminals-title">
-        <h2>Active terminals</h2>
-        <span>{{ terminals.length }}</span>
+        <h2>Scripts</h2>
+        <span>{{ sidebarScriptCount }}</span>
       </div>
       <button
         type="button"
@@ -110,51 +164,82 @@ function getTerminalPreview(terminal: ScriptTerminal) {
           <span>
             {{ group.runningCount }} running
             <template v-if="group.doneCount"> &middot; {{ group.doneCount }} done</template>
+            <template v-if="group.pinnedCount"> &middot; {{ group.pinnedCount }} pinned</template>
           </span>
         </div>
         <div class="active-terminal-list">
           <article
-            v-for="terminal in group.terminals"
-            :key="terminal.runId"
+            v-for="entry in group.entries"
+            :key="entry.key"
             class="active-terminal-item"
-            role="button"
-            tabindex="0"
-            title="Open full terminal"
-            @click="$emit('open', terminal.runId)"
-            @keydown.enter="$emit('open', terminal.runId)"
-            @keydown.space.prevent="$emit('open', terminal.runId)"
+            :class="{ pinned: entry.pinnedScript && !entry.terminal }"
+            :role="entry.terminal ? 'button' : undefined"
+            :tabindex="entry.terminal ? 0 : undefined"
+            :title="entry.terminal ? 'Open full terminal' : 'Pinned script'"
+            @click="entry.terminal && $emit('open', entry.terminal.runId)"
+            @keydown.enter="entry.terminal && $emit('open', entry.terminal.runId)"
+            @keydown.space.prevent="entry.terminal && $emit('open', entry.terminal.runId)"
           >
             <div class="active-terminal-main">
               <div class="active-terminal-item-heading">
-                <strong>{{ terminal.scriptName }}</strong>
-                <span class="active-terminal-status" :class="{ done: !terminal.isRunning }">
-                  {{ terminal.isRunning ? 'Running' : 'Done' }}
+                <strong>{{ entry.scriptName }}</strong>
+                <span
+                  class="active-terminal-status"
+                  :class="{ done: entry.terminal && !entry.terminal.isRunning, pinned: !entry.terminal }"
+                >
+                  {{
+                    entry.terminal
+                      ? (entry.terminal.isRunning ? 'Running' : 'Done')
+                      : 'Pinned'
+                  }}
                 </span>
               </div>
-              <code>{{ terminal.command }}</code>
-              <p :class="{ empty: !terminal.output.trim() }">
-                {{ getTerminalPreview(terminal) }}
+              <code>{{ entry.command }}</code>
+              <p :class="{ empty: !entry.terminal?.output.trim() }">
+                {{ entry.terminal ? getTerminalPreview(entry.terminal) : 'Ready to start from anywhere.' }}
               </p>
             </div>
             <div class="active-terminal-actions">
               <button
+                v-if="entry.pinnedScript && !entry.terminal"
                 type="button"
                 class="secondary terminal-restart"
-                @click.stop="$emit('restart', terminal.runId)"
+                @click.stop="$emit('startPinned', entry.pinnedScript)"
+                @keydown.enter.stop
+                @keydown.space.stop
+              >
+                Start
+              </button>
+              <button
+                v-if="entry.pinnedScript"
+                type="button"
+                class="secondary terminal-pin"
+                @click.stop="$emit('unpinPinned', entry.pinnedScript)"
+                @keydown.enter.stop
+                @keydown.space.stop
+              >
+                Unpin
+              </button>
+              <button
+                v-if="entry.terminal"
+                type="button"
+                class="secondary terminal-restart"
+                @click.stop="$emit('restart', entry.terminal.runId)"
                 @keydown.enter.stop
                 @keydown.space.stop
               >
                 Restart
               </button>
               <button
+                v-if="entry.terminal"
                 type="button"
                 class="terminal-stop"
-                :class="{ secondary: !terminal.isRunning }"
-                @click.stop="$emit('stop', terminal.runId)"
+                :class="{ secondary: !entry.terminal.isRunning }"
+                @click.stop="$emit('stop', entry.terminal.runId)"
                 @keydown.enter.stop
                 @keydown.space.stop
               >
-                {{ terminal.isRunning ? 'Stop' : 'Close' }}
+                {{ entry.terminal.isRunning ? 'Stop' : 'Close' }}
               </button>
             </div>
           </article>
@@ -162,7 +247,7 @@ function getTerminalPreview(terminal: ScriptTerminal) {
       </section>
     </div>
 
-    <p v-else-if="!collapsed" class="active-terminals-empty">No terminal sessions.</p>
+    <p v-else-if="!collapsed" class="active-terminals-empty">No active or pinned scripts.</p>
 
     <section v-if="activityItems.length && !collapsed" class="activity-log">
       <h3>Recent activity</h3>

@@ -10,11 +10,12 @@ import { useConfirmations } from './composables/useConfirmations'
 import { useSettings } from './composables/useSettings'
 import { useTerminals } from './composables/useTerminals'
 import { useToasts } from './composables/useToasts'
-import type { RepositoryDetails, RepositoryGitLogEntry, RepositorySummary } from './repositories'
+import type { PinnedScript, RepositoryDetails, RepositoryGitLogEntry, RepositorySummary } from './repositories'
 import type { AppSettings } from './settings'
 
 const FOCUS_REFRESH_THROTTLE_MS = 2000
 const PINNED_REPOSITORIES_KEY = 'web-dev-companion:pinned-repositories'
+const PINNED_SCRIPTS_KEY = 'web-dev-companion:pinned-scripts'
 
 type AppHistoryState =
   | { view: 'dashboard' }
@@ -35,6 +36,7 @@ const branchFeedbackMessages = ref<Record<string, string>>({})
 const commitClearToken = ref(0)
 const hasCommitDraft = ref(false)
 const pinnedRepositoryPaths = ref<string[]>([])
+const pinnedScripts = ref<PinnedScript[]>([])
 const lastRepositoryListRefreshAt = ref<Date | null>(null)
 const dashboardGitLogEntries = ref<RepositoryGitLogEntry[]>([])
 const isDashboardGitLogLoading = ref(false)
@@ -64,6 +66,15 @@ const selectedSummary = computed(() =>
 )
 
 const npmScripts = computed(() => Object.entries(selectedDetails.value?.npmScripts ?? {}))
+const pinnedScriptNamesForSelectedRepo = computed(() => {
+  if (!selectedDetails.value) {
+    return []
+  }
+
+  return pinnedScripts.value
+    .filter((script) => script.repoPath === selectedDetails.value?.path)
+    .map((script) => script.scriptName)
+})
 const {
   activeTerminals,
   areTerminalsCollapsed,
@@ -75,6 +86,7 @@ const {
   openTerminal,
   restartScript,
   restartTerminal,
+  runRepositoryScript,
   runningScriptsByRepositoryPath,
   runScript,
   selectedTerminal,
@@ -212,9 +224,36 @@ function loadPinnedRepositories() {
   }
 }
 
+function loadPinnedScripts() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(PINNED_SCRIPTS_KEY) ?? '[]')
+
+    pinnedScripts.value = Array.isArray(parsed)
+      ? parsed.filter((script): script is PinnedScript =>
+        typeof script?.repoPath === 'string' &&
+        typeof script?.repoName === 'string' &&
+        typeof script?.scriptName === 'string' &&
+        typeof script?.command === 'string' &&
+        (script.packageManager === undefined || typeof script.packageManager === 'string'),
+      )
+      : []
+  } catch {
+    pinnedScripts.value = []
+  }
+}
+
 function savePinnedRepositories(repoPaths: string[]) {
   pinnedRepositoryPaths.value = repoPaths
   localStorage.setItem(PINNED_REPOSITORIES_KEY, JSON.stringify(repoPaths))
+}
+
+function savePinnedScripts(scripts: PinnedScript[]) {
+  pinnedScripts.value = scripts
+  localStorage.setItem(PINNED_SCRIPTS_KEY, JSON.stringify(scripts))
+}
+
+function pinnedScriptKey(script: Pick<PinnedScript, 'repoPath' | 'scriptName'>) {
+  return `${script.repoPath}\n${script.scriptName}`
 }
 
 function saveAppSettings(settings: AppSettings) {
@@ -237,6 +276,46 @@ function togglePinnedRepository(repoPath: string) {
       : [repoPath, ...pinnedRepositoryPaths.value],
   )
   showAppFeedback(`${isPinned ? 'Unpinned' : 'Pinned'} ${repositoryName}.`, 'info')
+}
+
+function togglePinnedScript(scriptName: string) {
+  if (!selectedDetails.value) {
+    return
+  }
+
+  const command = selectedDetails.value.npmScripts[scriptName]
+
+  if (!command) {
+    return
+  }
+
+  const pinnedScript: PinnedScript = {
+    repoPath: selectedDetails.value.path,
+    repoName: selectedDetails.value.name,
+    scriptName,
+    command,
+    packageManager: selectedDetails.value.packageManager,
+  }
+  const key = pinnedScriptKey(pinnedScript)
+  const isPinned = pinnedScripts.value.some((script) => pinnedScriptKey(script) === key)
+
+  savePinnedScripts(
+    isPinned
+      ? pinnedScripts.value.filter((script) => pinnedScriptKey(script) !== key)
+      : [pinnedScript, ...pinnedScripts.value],
+  )
+  showAppFeedback(`${isPinned ? 'Unpinned' : 'Pinned'} ${scriptName}.`, 'info')
+}
+
+function unpinScript(scriptToUnpin: PinnedScript) {
+  savePinnedScripts(
+    pinnedScripts.value.filter((script) => pinnedScriptKey(script) !== pinnedScriptKey(scriptToUnpin)),
+  )
+  showAppFeedback(`Unpinned ${scriptToUnpin.scriptName}.`, 'info')
+}
+
+async function startPinnedScript(script: PinnedScript) {
+  await runRepositoryScript(script)
 }
 
 async function loadRepositories() {
@@ -560,6 +639,7 @@ async function removeRepository(repoPath: string) {
 
   try {
     repositories.value = await window.repositories.remove(repoPath)
+    savePinnedScripts(pinnedScripts.value.filter((script) => script.repoPath !== repoPath))
     void loadDashboardGitLog(repositories.value)
 
     if (selectedPath.value === repoPath) {
@@ -696,6 +776,7 @@ onMounted(() => {
   loadAppSettings()
   autoRefreshRemainingMs.value = appSettings.value.autoRefreshIntervalMs
   loadPinnedRepositories()
+  loadPinnedScripts()
   removeScriptOutputListener = window.repositories.onScriptOutput(handleScriptOutput)
   removeWindowFocusListener = window.repositories.onWindowFocus(() => {
     void refreshOnWindowFocus()
@@ -758,6 +839,7 @@ onBeforeUnmount(() => {
           :branch-feedback-messages="branchFeedbackMessages"
           :commit-clear-token="commitClearToken"
           :npm-scripts="npmScripts"
+          :pinned-script-names="pinnedScriptNamesForSelectedRepo"
           :script-terminals-by-script="currentRepoScriptTerminals"
           @back="closeDetails"
           @refresh="refreshSelectedRepository"
@@ -768,6 +850,7 @@ onBeforeUnmount(() => {
           @commit="commitStatus"
           @commit-draft-change="updateCommitDraft"
           @run-script="runScript"
+          @toggle-pin-script="togglePinnedScript"
           @stop-script="stopScript"
           @restart-script="restartScript"
           @open-terminal="openScriptTerminal"
@@ -780,12 +863,15 @@ onBeforeUnmount(() => {
 
       <ActiveTerminalsSidebar
         :terminals="activeTerminals"
+        :pinned-scripts="pinnedScripts"
         :activity-items="activityItems"
         :collapsed="areTerminalsCollapsed"
         @toggle="areTerminalsCollapsed = !areTerminalsCollapsed"
         @stop="stopTerminal"
         @restart="restartTerminal"
         @open="openTerminal"
+        @start-pinned="startPinnedScript"
+        @unpin-pinned="unpinScript"
       />
     </div>
 

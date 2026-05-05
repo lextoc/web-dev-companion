@@ -9,11 +9,16 @@
     grid-template-columns: 1fr;
   }
 
-  .dashboard-git-log {
+  .dashboard-git-log.git-log-sidebar {
     position: static;
   }
 
-  .dashboard-commit-feed {
+  .dashboard-git-log.git-log-sidebar {
+    height: auto;
+    min-height: 0;
+  }
+
+  .dashboard-git-log-rail {
     max-height: 420px;
   }
 
@@ -132,9 +137,7 @@
     min-height: 0;
   }
 
-  .repo-title-row,
-  .dashboard-commit-entry-heading,
-  .dashboard-commit-message {
+  .repo-title-row {
     align-items: stretch;
     flex-direction: column;
   }
@@ -150,15 +153,6 @@
     border-top: 1px solid var(--border-soft);
     border-left: 0;
     padding: 10px;
-  }
-
-  .dashboard-git-log-heading {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .dashboard-git-log-heading > span {
-    width: fit-content;
   }
 
   .commit-form-wide > button {

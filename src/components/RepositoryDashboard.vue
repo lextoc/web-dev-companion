@@ -214,30 +214,33 @@ const repositorySections = computed(() => {
           </div>
         </div>
 
-        <section class="dashboard-git-log" aria-labelledby="dashboard-git-log-title">
-          <div class="dashboard-git-log-heading">
+        <section
+          class="dashboard-git-log git-log-sidebar"
+          aria-labelledby="dashboard-git-log-title"
+        >
+          <div class="panel-heading git-log-heading">
             <div>
-              <h2 id="dashboard-git-log-title">Recent commits</h2>
-              <p>Across saved repositories</p>
+              <h3 id="dashboard-git-log-title">Recent commits</h3>
+              <span>Across saved repositories</span>
             </div>
-            <span>{{ isGitLogLoading ? 'Refreshing...' : `${mixedGitLog.length} commits` }}</span>
+            <span class="panel-count">{{ isGitLogLoading ? '...' : mixedGitLog.length }}</span>
           </div>
 
-          <ol v-if="mixedGitLog.length > 0" class="dashboard-commit-feed">
-            <li v-for="entry in mixedGitLog" :key="`${entry.repoPath}-${entry.hash}`" class="dashboard-commit-entry">
-              <div class="dashboard-commit-entry-heading">
-                <strong class="repo-chip" :title="entry.repoName">{{ entry.repoName }}</strong>
-                <time :datetime="entry.dateTime" :title="entry.dateTime">{{ entry.time }}</time>
+          <ol v-if="mixedGitLog.length > 0" class="git-log-rail dashboard-git-log-rail">
+            <li v-for="entry in mixedGitLog" :key="`${entry.repoPath}-${entry.hash}`">
+              <div class="git-log-rail-author dashboard-commit-source">
+                <strong :title="entry.repoName">{{ entry.repoName }}</strong>
+                <small>
+                  <span :title="entry.authorName">{{ entry.authorName }}</span>
+                  <span aria-hidden="true">/</span>
+                  <span :title="entry.authorEmail">{{ entry.authorEmail }}</span>
+                </small>
               </div>
 
-              <p class="dashboard-commit-message">
-                <code>{{ entry.hash }}</code>
-                <span>{{ entry.message }}</span>
-              </p>
-
-              <div class="dashboard-commit-author">
-                <strong :title="entry.authorName">{{ entry.authorName }}</strong>
-                <small :title="entry.authorEmail">{{ entry.authorEmail }}</small>
+              <p :title="entry.message">{{ entry.message }}</p>
+              <div class="git-log-rail-meta">
+                <code class="git-hash-chip dashboard-hash-chip">{{ entry.hash }}</code>
+                <time :datetime="entry.dateTime" :title="entry.dateTime">{{ entry.time }}</time>
               </div>
             </li>
           </ol>

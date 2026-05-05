@@ -122,143 +122,36 @@
   min-width: 0;
 }
 
-.dashboard-git-log {
+.dashboard-git-log.git-log-sidebar {
   position: sticky;
   top: 92px;
-  display: grid;
-  gap: 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
-  background: var(--surface-soft);
-  box-shadow: var(--shadow);
+  height: min(760px, calc(100vh - 116px));
+  min-height: 440px;
 }
 
-.dashboard-git-log-heading {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: 14px;
+.dashboard-git-log-rail {
+  max-height: none;
 }
 
-.dashboard-git-log-heading h2 {
-  margin-bottom: 2px;
-  font-size: 1rem;
-}
-
-.dashboard-git-log-heading p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.84rem;
-}
-
-.dashboard-git-log-heading > span {
-  flex: 0 0 auto;
-  border-radius: 999px;
-  padding: 4px 9px;
-  background: var(--surface-subtle);
-  color: var(--muted-strong);
-  font-size: 0.74rem;
-  font-weight: 900;
-}
-
-.dashboard-commit-feed {
-  display: grid;
-  max-height: calc(100vh - 238px);
-  overflow: auto;
-  gap: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.dashboard-commit-entry {
-  display: grid;
-  gap: 8px;
-  border-bottom: 1px solid var(--border-soft);
-  padding: 12px 2px;
-}
-
-.dashboard-commit-entry:first-child {
-  padding-top: 2px;
-}
-
-.dashboard-commit-entry:last-child {
-  border-bottom: 0;
-  padding-bottom: 2px;
-}
-
-.dashboard-commit-entry-heading,
-.dashboard-commit-message {
+.dashboard-commit-source small {
   display: flex;
   min-width: 0;
-  align-items: center;
-  gap: 8px;
+  gap: 5px;
 }
 
-.dashboard-commit-entry-heading {
-  justify-content: space-between;
-}
-
-.dashboard-commit-entry-heading time {
-  flex: 0 0 auto;
-  color: var(--muted);
-  font-size: 0.74rem;
-  font-weight: 800;
-}
-
-.repo-chip {
+.dashboard-commit-source small span {
   min-width: 0;
   overflow: hidden;
-  border-radius: 999px;
-  padding: 3px 8px;
-  background: var(--surface-subtle);
-  color: var(--muted-strong);
-  font-size: 0.74rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.dashboard-commit-message {
-  margin: 0;
-  align-items: start;
-  color: var(--text);
-  font-size: 0.84rem;
-  line-height: 1.35;
-}
-
-.dashboard-commit-message code {
-  flex: 0 0 auto;
+.dashboard-hash-chip {
+  display: inline-flex;
+  align-items: center;
   border: 1px solid var(--border-control);
   border-radius: 6px;
-  padding: 3px 7px;
-  color: var(--brand);
-  font-size: 0.72rem;
-  font-weight: 900;
-}
-
-.dashboard-commit-message span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.dashboard-commit-author {
-  display: grid;
-  min-width: 0;
-  color: var(--muted);
-  font-size: 0.76rem;
-}
-
-.dashboard-commit-author strong,
-.dashboard-commit-author small {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dashboard-commit-author strong {
-  color: var(--muted-strong);
+  background: var(--surface);
 }
 
 .dashboard-git-log-empty {

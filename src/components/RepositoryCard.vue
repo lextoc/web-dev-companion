@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { RepositorySummary } from '../repositories'
+import ActionMenu from './ActionMenu.vue'
 import AppIcon from './AppIcon.vue'
 
 defineProps<{
@@ -59,32 +60,29 @@ defineEmits<{
         <AppIcon :name="isPinned ? 'pin-off' : 'pin'" class="button-icon" />
         <span>{{ isPinned ? 'Unpin' : 'Pin' }}</span>
       </button>
-      <button type="button" class="secondary" @click="$emit('openInFileManager', repository.path)">
-        <AppIcon name="folder" class="button-icon" />
-        <span>Files</span>
-      </button>
-      <button type="button" class="secondary" @click="$emit('openInEditor', repository.path)">
-        <AppIcon name="edit" class="button-icon" />
-        <span>Editor</span>
-      </button>
-      <button type="button" class="secondary" @click="$emit('openInTerminal', repository.path)">
-        <AppIcon name="terminal" class="button-icon" />
-        <span>Terminal</span>
-      </button>
-      <button type="button" class="secondary" @click="$emit('copyPath', repository.path)">
-        <AppIcon name="copy" class="button-icon" />
-        <span>Copy path</span>
-      </button>
+      <ActionMenu :label="`More actions for ${repository.name}`">
+        <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInFileManager', repository.path)">
+          <AppIcon name="folder" class="button-icon" />
+          <span>Show in files</span>
+        </button>
+        <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInEditor', repository.path)">
+          <AppIcon name="edit" class="button-icon" />
+          <span>Open in editor</span>
+        </button>
+        <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInTerminal', repository.path)">
+          <AppIcon name="terminal" class="button-icon" />
+          <span>Open terminal</span>
+        </button>
+        <button type="button" class="action-menu-item" role="menuitem" @click="$emit('copyPath', repository.path)">
+          <AppIcon name="copy" class="button-icon" />
+          <span>Copy path</span>
+        </button>
+        <div class="action-menu-separator" role="separator"></div>
+        <button type="button" class="action-menu-item danger" role="menuitem" @click="$emit('remove', repository.path)">
+          <AppIcon name="trash" class="button-icon" />
+          <span>Remove repository</span>
+        </button>
+      </ActionMenu>
     </div>
-
-    <button
-      class="icon-button"
-      type="button"
-      :aria-label="`Remove ${repository.name}`"
-      title="Remove"
-      @click="$emit('remove', repository.path)"
-    >
-      <AppIcon name="trash" class="button-icon" />
-    </button>
   </article>
 </template>

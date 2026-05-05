@@ -10,6 +10,7 @@ import type {
   StatusFileDiff,
   StatusFileDiffType,
 } from "../repositories";
+import ActionMenu from "./ActionMenu.vue";
 import AppDropdown from "./AppDropdown.vue";
 import AppIcon from "./AppIcon.vue";
 import NpmScriptsPanel from "./NpmScriptsPanel.vue";
@@ -657,38 +658,52 @@ onBeforeUnmount(() => {
                         >
                           {{ isCheckingOutBranch(branch.name, checkingOutBranchName) ? "Switching..." : "Switch" }}
                         </button>
-                        <button
-                          v-if="!branch.inSyncWithRemote"
-                          type="button"
-                          class="secondary branch-action"
-                          :class="{ pending: isSyncingBranch(branch.name, syncingBranchName) }"
-                          :disabled="
-                            Boolean(branchSyncDisabledReason(branch, selectedDetails.gitStatus)) ||
-                            Boolean(syncingBranchName) ||
-                            Boolean(deletingBranchName)
-                          "
-                          :title="branchSyncTitle(branch, selectedDetails.gitStatus, syncingBranchName)"
-                          :aria-busy="isSyncingBranch(branch.name, syncingBranchName)"
-                          @click="$emit('syncBranch', branch.name)"
+                        <ActionMenu
+                          v-if="!branch.inSyncWithRemote || !branch.current"
+                          :label="`More actions for ${branch.name}`"
                         >
-                          {{
-                            isSyncingBranch(branch.name, syncingBranchName)
-                              ? `${branchSyncActionLabel(branch)}ing...`
-                              : branchSyncActionLabel(branch)
-                          }}
-                        </button>
-                        <button
-                          type="button"
-                          class="secondary branch-action"
-                          :class="{ pending: isDeletingBranch(branch.name, deletingBranchName) }"
-                          :disabled="
-                            !branch.canDelete || Boolean(syncingBranchName) || Boolean(deletingBranchName)
-                          "
-                          :title="branch.deleteReason ?? 'Delete local branch'"
-                          @click="$emit('deleteBranch', branch.name)"
-                        >
-                          {{ isDeletingBranch(branch.name, deletingBranchName) ? "Removing..." : "Remove" }}
-                        </button>
+                          <button
+                            v-if="!branch.inSyncWithRemote"
+                            type="button"
+                            class="action-menu-item"
+                            role="menuitem"
+                            :class="{ pending: isSyncingBranch(branch.name, syncingBranchName) }"
+                            :disabled="
+                              Boolean(branchSyncDisabledReason(branch, selectedDetails.gitStatus)) ||
+                              Boolean(syncingBranchName) ||
+                              Boolean(deletingBranchName)
+                            "
+                            :title="branchSyncTitle(branch, selectedDetails.gitStatus, syncingBranchName)"
+                            :aria-busy="isSyncingBranch(branch.name, syncingBranchName)"
+                            @click="$emit('syncBranch', branch.name)"
+                          >
+                            <AppIcon name="restart" class="button-icon" />
+                            <span>
+                              {{
+                                isSyncingBranch(branch.name, syncingBranchName)
+                                  ? `${branchSyncActionLabel(branch)}ing...`
+                                  : branchSyncActionLabel(branch)
+                              }}
+                            </span>
+                          </button>
+                          <button
+                            v-if="!branch.current"
+                            type="button"
+                            class="action-menu-item danger"
+                            role="menuitem"
+                            :class="{ pending: isDeletingBranch(branch.name, deletingBranchName) }"
+                            :disabled="
+                              !branch.canDelete || Boolean(syncingBranchName) || Boolean(deletingBranchName)
+                            "
+                            :title="branch.deleteReason ?? 'Delete local branch'"
+                            @click="$emit('deleteBranch', branch.name)"
+                          >
+                            <AppIcon name="trash" class="button-icon" />
+                            <span>
+                              {{ isDeletingBranch(branch.name, deletingBranchName) ? "Removing..." : "Remove branch" }}
+                            </span>
+                          </button>
+                        </ActionMenu>
                       </div>
                     </li>
                   </ul>
@@ -702,18 +717,24 @@ onBeforeUnmount(() => {
       </nav>
 
       <div v-if="selectedDetails" class="detail-quick-actions" aria-label="Repository quick actions">
-        <button type="button" class="secondary" @click="$emit('openInFileManager', selectedDetails.path)">
-          Files
-        </button>
-        <button type="button" class="secondary" @click="$emit('openInEditor', selectedDetails.path)">
-          Editor
-        </button>
-        <button type="button" class="secondary" @click="$emit('openInTerminal', selectedDetails.path)">
-          Terminal
-        </button>
-        <button type="button" class="secondary" @click="$emit('copyPath', selectedDetails.path)">
-          Copy path
-        </button>
+        <ActionMenu :label="`More actions for ${selectedDetails.name}`">
+          <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInFileManager', selectedDetails.path)">
+            <AppIcon name="folder" class="button-icon" />
+            <span>Show in files</span>
+          </button>
+          <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInEditor', selectedDetails.path)">
+            <AppIcon name="edit" class="button-icon" />
+            <span>Open in editor</span>
+          </button>
+          <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInTerminal', selectedDetails.path)">
+            <AppIcon name="terminal" class="button-icon" />
+            <span>Open terminal</span>
+          </button>
+          <button type="button" class="action-menu-item" role="menuitem" @click="$emit('copyPath', selectedDetails.path)">
+            <AppIcon name="copy" class="button-icon" />
+            <span>Copy path</span>
+          </button>
+        </ActionMenu>
       </div>
 
       <div class="detail-refresh-area">

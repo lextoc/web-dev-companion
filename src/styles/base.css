@@ -215,6 +215,73 @@ button.secondary.active {
   font-weight: 900;
 }
 
+.action-menu {
+  position: relative;
+  min-width: 0;
+}
+
+.action-menu-trigger {
+  width: 36px;
+  min-height: 36px;
+}
+
+.action-menu-popover {
+  position: fixed;
+  z-index: 70;
+  display: grid;
+  gap: 3px;
+  max-width: min(260px, calc(100vw - 24px));
+  border: 1px solid var(--border-control);
+  border-radius: 9px;
+  padding: 5px;
+  background: color-mix(in srgb, var(--surface) 96%, var(--app-bg));
+  box-shadow: var(--shadow);
+}
+
+.action-menu-item {
+  display: grid;
+  width: 100%;
+  min-height: 36px;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  border-color: transparent;
+  padding: 0 10px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: left;
+}
+
+.action-menu-item:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.action-menu-item.danger {
+  border-color: transparent;
+  background: transparent;
+  color: var(--danger-text);
+}
+
+.action-menu-item.danger:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
+.action-menu-item .button-icon {
+  justify-self: center;
+}
+
+.action-menu-separator {
+  height: 1px;
+  margin: 4px;
+  background: var(--border-soft);
+}
+
 button.danger {
   border-color: var(--danger);
   background: var(--danger);

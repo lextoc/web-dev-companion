@@ -705,7 +705,7 @@
 .repo-card {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 220px;
+  grid-template-columns: minmax(0, 1fr) 178px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
@@ -836,11 +836,12 @@
   align-content: center;
   align-items: center;
   border-left: 1px solid var(--border-soft);
-  padding: 12px 36px 12px 12px;
+  padding: 12px;
   background: color-mix(in srgb, var(--surface-soft) 36%, transparent);
 }
 
-.repo-quick-actions button {
+.repo-quick-actions > button,
+.repo-quick-actions .action-menu-trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -851,8 +852,12 @@
   white-space: nowrap;
 }
 
-.repo-quick-actions button:last-child {
-  grid-column: 1 / -1;
+.repo-quick-actions .action-menu {
+  min-width: 0;
+}
+
+.repo-quick-actions .action-menu-trigger {
+  width: 100%;
 }
 
 .repo-quick-actions .pin-action.active {

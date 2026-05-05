@@ -8,6 +8,7 @@ defineProps<{
     | "edit"
     | "folder"
     | "hide"
+    | "more-horizontal"
     | "panel-hide"
     | "pin"
     | "pin-off"
@@ -70,6 +71,11 @@ defineProps<{
         d="M10.6 5.2A9.8 9.8 0 0 1 12 5c5 0 8 5 8 7a8.2 8.2 0 0 1-2.1 3.1"
       />
       <path d="M6.2 6.8C4.8 8 4 10.1 4 12c0 2 3 7 8 7 1.1 0 2.1-.2 3-.6" />
+    </g>
+    <g v-else-if="name === 'more-horizontal'">
+      <circle cx="5" cy="12" r="1.25" class="app-icon-fill" />
+      <circle cx="12" cy="12" r="1.25" class="app-icon-fill" />
+      <circle cx="19" cy="12" r="1.25" class="app-icon-fill" />
     </g>
     <g v-else-if="name === 'panel-hide'">
       <path d="M4 5h16v14H4z" />

@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { RepositorySummary } from '../repositories'
+import type { RepositoryGitLogEntry, RepositorySummary } from '../repositories'
 import RepositoryCard from './RepositoryCard.vue'
 
 const props = defineProps<{
   repositories: RepositorySummary[]
   pinnedRepositoryPaths: string[]
   runningScriptsByRepositoryPath: Record<string, number>
+  mixedGitLog: RepositoryGitLogEntry[]
   lastRefreshedLabel: string
   repoPathInput: string
   isLoading: boolean
+  isGitLogLoading: boolean
 }>()
 
 defineEmits<{
@@ -121,6 +123,50 @@ const filteredRepositories = computed(() => {
           </select>
         </label>
       </div>
+
+      <section class="dashboard-git-log" aria-labelledby="dashboard-git-log-title">
+        <div class="dashboard-git-log-heading">
+          <div>
+            <h2 id="dashboard-git-log-title">Recent commits</h2>
+            <p>Latest git log entries across all repositories.</p>
+          </div>
+          <span>{{ isGitLogLoading ? 'Refreshing...' : `${mixedGitLog.length} commits` }}</span>
+        </div>
+
+        <div v-if="mixedGitLog.length > 0" class="dashboard-git-log-table-wrap">
+          <table class="dashboard-git-log-table">
+            <thead>
+              <tr>
+                <th scope="col">Repository</th>
+                <th scope="col">Author</th>
+                <th scope="col">Commit message</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="entry in mixedGitLog" :key="`${entry.repoPath}-${entry.hash}`">
+                <td>
+                  <strong :title="entry.repoName">{{ entry.repoName }}</strong>
+                  <time :datetime="entry.dateTime" :title="entry.dateTime">{{ entry.time }}</time>
+                </td>
+                <td>
+                  <strong :title="entry.authorName">{{ entry.authorName }}</strong>
+                  <small :title="entry.authorEmail">{{ entry.authorEmail }}</small>
+                </td>
+                <td>
+                  <div class="dashboard-git-message-cell">
+                    <code>{{ entry.hash }}</code>
+                    <span :title="entry.message">{{ entry.message }}</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div v-else class="dashboard-git-log-empty">
+          {{ isGitLogLoading ? 'Loading repository git logs...' : 'No git log entries available.' }}
+        </div>
+      </section>
 
       <div v-if="filteredRepositories.length === 0" class="empty-state">
         No repositories match this filter.

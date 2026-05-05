@@ -96,6 +96,22 @@
     grid-template-columns: 1fr;
   }
 
+  .dashboard-git-log-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-git-log-heading > span {
+    width: fit-content;
+  }
+
+  .dashboard-git-log-table th:first-child,
+  .dashboard-git-log-table td:first-child,
+  .dashboard-git-log-table th:nth-child(2),
+  .dashboard-git-log-table td:nth-child(2) {
+    width: 140px;
+  }
+
   .commit-form-wide > button {
     justify-self: start;
   }

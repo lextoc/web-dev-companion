@@ -61,6 +61,135 @@
   color: var(--text);
 }
 
+.dashboard-git-log {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--brand);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface-soft);
+  box-shadow: var(--shadow);
+}
+
+.dashboard-git-log-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dashboard-git-log-heading h2 {
+  margin-bottom: 2px;
+  font-size: 1rem;
+}
+
+.dashboard-git-log-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.dashboard-git-log-heading > span {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.dashboard-git-log-table-wrap {
+  max-height: 360px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.dashboard-git-log-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.dashboard-git-log-table th,
+.dashboard-git-log-table td {
+  border-bottom: 1px solid var(--border-soft);
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.dashboard-git-log-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.dashboard-git-log-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.dashboard-git-log-table th:first-child,
+.dashboard-git-log-table td:first-child {
+  width: 190px;
+}
+
+.dashboard-git-log-table th:nth-child(2),
+.dashboard-git-log-table td:nth-child(2) {
+  width: 190px;
+}
+
+.dashboard-git-log-table strong,
+.dashboard-git-log-table small,
+.dashboard-git-log-table time,
+.dashboard-git-message-cell span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-git-log-table small,
+.dashboard-git-log-table time {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.dashboard-git-message-cell {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.dashboard-git-message-cell code {
+  border: 1px solid var(--border-control);
+  border-radius: 6px;
+  padding: 3px 7px;
+  color: var(--brand);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.dashboard-git-log-empty {
+  border: 1px dashed var(--border-muted);
+  border-radius: 8px;
+  padding: 24px 14px;
+  color: var(--muted);
+  text-align: center;
+}
+
 .empty-state {
   display: grid;
   justify-items: center;
@@ -661,4 +790,3 @@
   background: var(--surface-subtle);
   color: var(--text);
 }
-

@@ -10,7 +10,7 @@ import { useConfirmations } from './composables/useConfirmations'
 import { useSettings } from './composables/useSettings'
 import { useTerminals } from './composables/useTerminals'
 import { useToasts } from './composables/useToasts'
-import type { RepositoryDetails, RepositorySummary } from './repositories'
+import type { RepositoryDetails, RepositoryGitLogEntry, RepositorySummary } from './repositories'
 import type { AppSettings } from './settings'
 
 const FOCUS_REFRESH_THROTTLE_MS = 2000
@@ -32,12 +32,15 @@ const commitClearToken = ref(0)
 const hasCommitDraft = ref(false)
 const pinnedRepositoryPaths = ref<string[]>([])
 const lastRepositoryListRefreshAt = ref<Date | null>(null)
+const dashboardGitLogEntries = ref<RepositoryGitLogEntry[]>([])
+const isDashboardGitLogLoading = ref(false)
 let removeScriptOutputListener: (() => void) | undefined
 let removeWindowFocusListener: (() => void) | undefined
 let autoRefreshTickTimer: number | undefined
 let statusFeedbackTimer: number | undefined
 let nextAutoRefreshAt = 0
 let lastFocusRefreshAt = 0
+let dashboardGitLogRequestId = 0
 
 const {
   activityItems,
@@ -119,6 +122,41 @@ const appActivityLabel = computed(() => {
   return null
 })
 
+async function loadDashboardGitLog(repositoryList = repositories.value) {
+  const requestId = dashboardGitLogRequestId + 1
+  dashboardGitLogRequestId = requestId
+  isDashboardGitLogLoading.value = true
+
+  try {
+    const detailResults = await Promise.allSettled(
+      repositoryList.map((repository) => window.repositories.details(repository.path)),
+    )
+
+    if (dashboardGitLogRequestId !== requestId || selectedPath.value) {
+      return
+    }
+
+    dashboardGitLogEntries.value = detailResults
+      .flatMap((result) => {
+        if (result.status !== 'fulfilled') {
+          return []
+        }
+
+        return result.value.gitLog.slice(0, 6).map((entry) => ({
+          ...entry,
+          repoPath: result.value.path,
+          repoName: result.value.name,
+        }))
+      })
+      .sort((entryA, entryB) => Date.parse(entryB.dateTime) - Date.parse(entryA.dateTime))
+      .slice(0, 18)
+  } finally {
+    if (dashboardGitLogRequestId === requestId) {
+      isDashboardGitLogLoading.value = false
+    }
+  }
+}
+
 function loadPinnedRepositories() {
   try {
     const parsed = JSON.parse(localStorage.getItem(PINNED_REPOSITORIES_KEY) ?? '[]')
@@ -164,6 +202,10 @@ async function loadRepositories() {
   try {
     repositories.value = await window.repositories.list()
     lastRepositoryListRefreshAt.value = new Date()
+
+    if (!selectedPath.value) {
+      void loadDashboardGitLog(repositories.value)
+    }
   } catch (error) {
     showError(error)
   } finally {
@@ -178,6 +220,7 @@ async function chooseAndAddRepository() {
   try {
     repositories.value = await window.repositories.chooseAndAdd()
     lastRepositoryListRefreshAt.value = new Date()
+    void loadDashboardGitLog(repositories.value)
   } catch (error) {
     showError(error)
   } finally {
@@ -193,6 +236,7 @@ async function addRepositoryByPath() {
     repositories.value = await window.repositories.addByPath(repoPathInput.value)
     lastRepositoryListRefreshAt.value = new Date()
     repoPathInput.value = ''
+    void loadDashboardGitLog(repositories.value)
   } catch (error) {
     showError(error)
   } finally {
@@ -466,6 +510,7 @@ async function removeRepository(repoPath: string) {
 
   try {
     repositories.value = await window.repositories.remove(repoPath)
+    void loadDashboardGitLog(repositories.value)
 
     if (selectedPath.value === repoPath) {
       selectedPath.value = null
@@ -530,6 +575,7 @@ function closeDetails() {
   selectedPath.value = null
   selectedDetails.value = null
   hasCommitDraft.value = false
+  void loadDashboardGitLog()
 }
 
 function updateAutoRefreshCountdown() {
@@ -623,8 +669,10 @@ onBeforeUnmount(() => {
           :repositories="repositories"
           :pinned-repository-paths="pinnedRepositoryPaths"
           :running-scripts-by-repository-path="runningScriptsByRepositoryPath"
+          :mixed-git-log="dashboardGitLogEntries"
           :last-refreshed-label="lastRepositoryRefreshLabel"
           :is-loading="isLoading"
+          :is-git-log-loading="isDashboardGitLogLoading"
           @add="addRepositoryByPath"
           @browse="chooseAndAddRepository"
           @open="openRepository"

@@ -18,6 +18,11 @@ export interface GitLogEntry {
   message: string
 }
 
+export interface RepositoryGitLogEntry extends GitLogEntry {
+  repoPath: string
+  repoName: string
+}
+
 export interface GitStatusEntry {
   path: string
   originalPath?: string

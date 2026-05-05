@@ -431,6 +431,90 @@ pre {
   flex: 0 0 auto;
 }
 
+.repo-timeline li {
+  gap: 7px;
+}
+
+.repo-timeline li::before {
+  background: color-mix(in srgb, var(--muted) 52%, transparent);
+}
+
+.repo-timeline li.success::before {
+  background: color-mix(in srgb, var(--success-text) 74%, transparent);
+}
+
+.repo-timeline li.info::before {
+  background: color-mix(in srgb, var(--info-text) 74%, transparent);
+}
+
+.repo-timeline li.warning::before {
+  background: color-mix(in srgb, var(--warning-text) 78%, transparent);
+}
+
+.repo-timeline li.error::before {
+  background: color-mix(in srgb, var(--danger-text) 78%, transparent);
+}
+
+.timeline-entry-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.timeline-entry-heading span,
+.timeline-meta {
+  display: inline-flex;
+  min-height: 22px;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 8px;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.timeline-entry-heading time {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.repo-timeline small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.32;
+}
+
+.repo-timeline .app-commit .timeline-entry-heading span,
+.repo-timeline .branch-sync .timeline-entry-heading span,
+.repo-timeline .script .timeline-entry-heading span,
+.repo-timeline .status .timeline-entry-heading span {
+  background: var(--info-soft);
+  color: var(--info-text);
+}
+
+.repo-timeline .success .timeline-entry-heading span {
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.repo-timeline .warning .timeline-entry-heading span {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.repo-timeline .error .timeline-entry-heading span {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
 .git-hash-chip {
   min-height: 24px;
   padding: 0 7px;

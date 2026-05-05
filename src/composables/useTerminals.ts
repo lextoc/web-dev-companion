@@ -1,13 +1,20 @@
 import { computed, ref, type Ref } from 'vue'
+import type { RepositoryActivityInput } from '../activity-timeline'
 import type { PinnedScript, RepositoryDetails, ScriptOutput, ScriptTerminal } from '../repositories'
 
 interface UseTerminalsOptions {
   clearError: () => void
+  recordRepositoryActivity?: (activity: RepositoryActivityInput) => void
   selectedDetails: Ref<RepositoryDetails | null>
   showError: (error: unknown) => void
 }
 
-export function useTerminals({ clearError, selectedDetails, showError }: UseTerminalsOptions) {
+export function useTerminals({
+  clearError,
+  recordRepositoryActivity,
+  selectedDetails,
+  showError,
+}: UseTerminalsOptions) {
   const areTerminalsCollapsed = ref(false)
   const selectedTerminalRunId = ref<string | null>(null)
   const scriptTerminals = ref<Record<string, ScriptTerminal>>({})
@@ -72,6 +79,27 @@ export function useTerminals({ clearError, selectedDetails, showError }: UseTerm
       return
     }
 
+    if (output.done) {
+      const exitLabel = output.signal
+        ? `signal ${output.signal}`
+        : `exit ${output.exitCode ?? 0}`
+      const didSucceed = output.exitCode === 0
+      const title = didSucceed
+        ? `Script "${terminal.scriptName}" finished`
+        : output.signal
+          ? `Script "${terminal.scriptName}" stopped`
+          : `Script "${terminal.scriptName}" failed`
+
+      recordRepositoryActivity?.({
+        repoPath: terminal.repoPath,
+        kind: 'script',
+        title,
+        description: terminal.command,
+        meta: exitLabel,
+        tone: didSucceed ? 'success' : output.signal ? 'warning' : 'error',
+      })
+    }
+
     scriptTerminals.value[output.runId] = {
       ...terminal,
       output: `${terminal.output}${output.text}`,
@@ -118,9 +146,25 @@ export function useTerminals({ clearError, selectedDetails, showError }: UseTerm
           isRunning: true,
         },
       }
+      recordRepositoryActivity?.({
+        repoPath,
+        kind: 'script',
+        title: `Started script "${scriptName}"`,
+        description: scriptRun.command,
+        meta: repoName,
+        tone: 'info',
+      })
 
       return scriptRun.runId
     } catch (error) {
+      recordRepositoryActivity?.({
+        repoPath,
+        kind: 'error',
+        title: `Could not start script "${scriptName}"`,
+        description: error instanceof Error ? error.message : 'Something went wrong.',
+        meta: repoName,
+        tone: 'error',
+      })
       showError(error)
       return undefined
     }
@@ -161,6 +205,14 @@ export function useTerminals({ clearError, selectedDetails, showError }: UseTerm
 
     if (terminal.isRunning) {
       await window.repositories.stopScript(terminal.runId)
+      recordRepositoryActivity?.({
+        repoPath: terminal.repoPath,
+        kind: 'script',
+        title: `Stopped script "${terminal.scriptName}"`,
+        description: terminal.command,
+        meta: terminal.repoName,
+        tone: 'warning',
+      })
     }
 
     appOwnedRunIds.delete(terminal.runId)

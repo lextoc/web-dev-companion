@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import type { RepositoryActivityInput, RepositoryTimelineItem } from "../activity-timeline";
 import { parseDiffOutput } from "../output-formatting";
 import type {
   GitStatusEntry,
@@ -27,6 +28,7 @@ const props = defineProps<{
   npmScripts: [string, string][];
   pinnedScriptNames: string[];
   scriptTerminalsByScript: Record<string, ScriptTerminal>;
+  activityTimeline: RepositoryTimelineItem[];
 }>();
 
 const emit = defineEmits<{
@@ -47,10 +49,11 @@ const emit = defineEmits<{
   openInEditor: [repoPath: string];
   openInFileManager: [repoPath: string];
   openInTerminal: [repoPath: string];
+  recordActivity: [activity: Omit<RepositoryActivityInput, "repoPath">];
 }>();
 
 const commitMessage = ref("");
-const gitLogLimit = ref(10);
+const timelineLimit = ref(20);
 const branchFilter = ref("all");
 const activeDetailTab = ref<"git" | "scripts">("git");
 const selectedStatusDiff = ref<StatusFileDiff | null>(null);
@@ -66,7 +69,7 @@ const branchFilters = [
   { key: "in-sync", label: "In sync" },
 ];
 
-const visibleGitLog = computed(() => props.selectedDetails?.gitLog.slice(0, gitLogLimit.value) ?? []);
+const visibleActivityTimeline = computed(() => props.activityTimeline.slice(0, timelineLimit.value));
 
 const sortedBranches = computed(() => {
   const branches = props.selectedDetails?.gitBranches ?? [];
@@ -225,7 +228,14 @@ async function openStatusDiff(groupKey: string, entry: GitStatusEntry) {
       diffType: statusDiffType(groupKey),
     });
   } catch (error) {
-    statusDiffError.value = error instanceof Error ? error.message : "Could not load file changes.";
+    const message = error instanceof Error ? error.message : "Could not load file changes.";
+    statusDiffError.value = message;
+    emit("recordActivity", {
+      kind: "error",
+      title: `Could not load changes for ${entry.path}`,
+      description: message,
+      tone: "error",
+    });
   } finally {
     if (statusDiffLoadingKey.value === loadingKey) {
       statusDiffLoadingKey.value = null;
@@ -298,6 +308,22 @@ function submitCommit(
 
 function copyCommitHash(hash: string) {
   void navigator.clipboard?.writeText(hash);
+}
+
+function timelineKindLabel(kind: RepositoryTimelineItem["kind"]) {
+  if (kind === "app-commit") {
+    return "App commit";
+  }
+
+  if (kind === "branch-sync") {
+    return "Branch sync";
+  }
+
+  if (kind === "git-commit") {
+    return "Git commit";
+  }
+
+  return kind.slice(0, 1).toUpperCase() + kind.slice(1);
 }
 
 function branchSyncLabel(branch: RepositoryDetails["gitBranches"][number]) {
@@ -517,35 +543,45 @@ function branchSafetyNotes(
         <aside class="detail-panel git-overview-panel git-log-panel git-log-sidebar">
           <div class="panel-heading git-log-heading">
             <div>
-              <h3>Git log</h3>
-              <span>{{ visibleGitLog.length }} commits</span>
+              <h3>Timeline</h3>
+              <span>Commits and local app activity</span>
             </div>
-            <div class="segmented-control" aria-label="Git log length">
+            <div class="segmented-control" aria-label="Timeline length">
               <button
-                v-for="limit in [10, 30]"
+                v-for="limit in [20, 50]"
                 :key="limit"
                 type="button"
                 class="secondary"
-                :class="{ active: gitLogLimit === limit }"
-                @click="gitLogLimit = limit"
+                :class="{ active: timelineLimit === limit }"
+                @click="timelineLimit = limit"
               >
                 {{ limit }}
               </button>
             </div>
           </div>
           <ol
-            v-if="selectedDetails.gitLog.length > 0"
-            class="git-log-rail"
-            aria-label="Recent commits"
+            v-if="visibleActivityTimeline.length > 0"
+            class="git-log-rail repo-timeline"
+            aria-label="Repository activity timeline"
           >
-            <li v-for="entry in visibleGitLog" :key="entry.hash">
-              <div class="git-log-rail-author">
-                <strong :title="entry.authorName">{{ entry.authorName }}</strong>
-                <small :title="entry.authorEmail">{{ entry.authorEmail }}</small>
+            <li
+              v-for="entry in visibleActivityTimeline"
+              :key="entry.id"
+              :class="[entry.kind, entry.tone]"
+            >
+              <div class="timeline-entry-heading">
+                <span>{{ timelineKindLabel(entry.kind) }}</span>
+                <time :datetime="entry.occurredAt" :title="entry.occurredAt">
+                  {{ entry.timeLabel }}
+                </time>
               </div>
-              <p :title="entry.message">{{ entry.message }}</p>
-              <div class="git-log-rail-meta">
+              <p :title="entry.title">{{ entry.title }}</p>
+              <small v-if="entry.description" :title="entry.description">
+                {{ entry.description }}
+              </small>
+              <div v-if="entry.hash || entry.meta" class="git-log-rail-meta">
                 <button
+                  v-if="entry.hash"
                   type="button"
                   class="secondary git-hash-chip"
                   title="Copy commit hash"
@@ -553,12 +589,12 @@ function branchSafetyNotes(
                 >
                   {{ entry.hash }}
                 </button>
-                <time :datetime="entry.dateTime" :title="entry.dateTime">{{ entry.time }}</time>
+                <span v-else class="timeline-meta">{{ entry.meta }}</span>
               </div>
             </li>
           </ol>
           <div v-else class="empty-state compact-empty">
-            No git log output available.
+            No repository activity available yet.
           </div>
         </aside>
 

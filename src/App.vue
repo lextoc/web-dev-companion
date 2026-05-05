@@ -6,6 +6,13 @@ import RepositoryDashboard from './components/RepositoryDashboard.vue'
 import RepositoryDetail from './components/RepositoryDetail.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import TerminalModal from './components/TerminalModal.vue'
+import {
+  appendRepositoryActivity,
+  buildRepositoryTimeline,
+  createRepositoryActivity,
+  type RepositoryActivityInput,
+  type RepositoryLocalActivity,
+} from './activity-timeline'
 import { useConfirmations } from './composables/useConfirmations'
 import { useSettings } from './composables/useSettings'
 import { useTerminals } from './composables/useTerminals'
@@ -40,6 +47,7 @@ const pinnedScripts = ref<PinnedScript[]>([])
 const lastRepositoryListRefreshAt = ref<Date | null>(null)
 const dashboardGitLogEntries = ref<RepositoryGitLogEntry[]>([])
 const isDashboardGitLogLoading = ref(false)
+const repositoryActivitiesByPath = ref<Record<string, RepositoryLocalActivity[]>>({})
 let removeScriptOutputListener: (() => void) | undefined
 let removeWindowFocusListener: (() => void) | undefined
 let autoRefreshTickTimer: number | undefined
@@ -75,6 +83,14 @@ const pinnedScriptNamesForSelectedRepo = computed(() => {
     .filter((script) => script.repoPath === selectedDetails.value?.path)
     .map((script) => script.scriptName)
 })
+const selectedRepositoryTimeline = computed(() =>
+  buildRepositoryTimeline(
+    selectedDetails.value,
+    selectedDetails.value
+      ? (repositoryActivitiesByPath.value[selectedDetails.value.path] ?? [])
+      : [],
+  ),
+)
 const {
   activeTerminals,
   areTerminalsCollapsed,
@@ -93,7 +109,7 @@ const {
   stopOwnedScripts,
   stopScript,
   stopTerminal,
-} = useTerminals({ clearError, selectedDetails, showError })
+} = useTerminals({ clearError, recordRepositoryActivity, selectedDetails, showError })
 const autoRefreshProgress = computed(() =>
   Math.max(0, Math.min(100, (autoRefreshRemainingMs.value / appSettings.value.autoRefreshIntervalMs) * 100)),
 )
@@ -273,6 +289,39 @@ function saveAppSettings(settings: AppSettings) {
   }
 }
 
+function recordRepositoryActivity(activity: RepositoryActivityInput) {
+  repositoryActivitiesByPath.value = appendRepositoryActivity(
+    repositoryActivitiesByPath.value,
+    createRepositoryActivity(activity),
+  )
+}
+
+function recordSelectedRepositoryActivity(activity: Omit<RepositoryActivityInput, 'repoPath'>) {
+  if (!selectedDetails.value) {
+    return
+  }
+
+  recordRepositoryActivity({
+    ...activity,
+    repoPath: selectedDetails.value.path,
+  })
+}
+
+function repositoryErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Something went wrong.'
+}
+
+function showRepositoryError(repoPath: string, title: string, error: unknown) {
+  recordRepositoryActivity({
+    repoPath,
+    kind: 'error',
+    title,
+    description: repositoryErrorMessage(error),
+    tone: 'error',
+  })
+  showError(error)
+}
+
 function togglePinnedRepository(repoPath: string) {
   const repository = repositories.value.find((savedRepository) => savedRepository.path === repoPath)
   const repositoryName = repository?.name ?? repoPath
@@ -394,7 +443,7 @@ async function loadRepositoryDetails(repoPath: string) {
     selectedDetails.value = await window.repositories.details(repoPath)
   } catch (error) {
     selectedDetails.value = null
-    showError(error)
+    showRepositoryError(repoPath, 'Could not load repository details', error)
   } finally {
     isDetailLoading.value = false
 
@@ -470,7 +519,7 @@ async function deleteBranch(branchName: string) {
     showStatusFeedback(`Removed ${branchName}.`)
     showAppFeedback(`Removed branch ${branchName}.`)
   } catch (error) {
-    showError(error)
+    showRepositoryError(selectedDetails.value.path, `Could not remove branch "${branchName}"`, error)
   } finally {
     deletingBranchName.value = null
     resetAutoRefreshTimer()
@@ -532,17 +581,25 @@ async function syncBranch(branchName: string) {
 
   syncingBranchName.value = branchName
   clearError()
+  const repoPath = selectedDetails.value.path
 
   try {
     selectedDetails.value = await window.repositories.syncBranch({
-      repoPath: selectedDetails.value.path,
+      repoPath,
       branchName,
     })
     await loadRepositories()
     showBranchFeedback(branchName, action.successLabel)
     showAppFeedback(`${action.toastVerb} branch ${branchName}.`)
+    recordRepositoryActivity({
+      repoPath,
+      kind: 'branch-sync',
+      title: `${action.toastVerb} branch "${branchName}"`,
+      description: branch?.upstream ? `Upstream: ${branch.upstream}` : undefined,
+      tone: 'success',
+    })
   } catch (error) {
-    showError(error)
+    showRepositoryError(repoPath, `Could not ${action.confirmLabel.toLowerCase()}`, error)
   } finally {
     syncingBranchName.value = null
     resetAutoRefreshTimer()
@@ -589,15 +646,24 @@ async function runStatusAction(
   pendingStatusActionKey.value = actionKey
   statusFeedbackMessage.value = null
   clearError()
+  const repoPath = selectedDetails.value.path
 
   try {
     selectedDetails.value = await action()
     await loadRepositories()
     showStatusFeedback(successMessage)
     showAppFeedback(successMessage)
+    if (actionKey !== 'commit') {
+      recordRepositoryActivity({
+        repoPath,
+        kind: 'status',
+        title: successMessage,
+        tone: 'success',
+      })
+    }
     return true
   } catch (error) {
-    showError(error)
+    showRepositoryError(repoPath, successMessage.replace(/\.$/, ' failed.'), error)
     return false
   } finally {
     statusActionLabel.value = null
@@ -660,6 +726,13 @@ async function commitStatus(message: string) {
   )
 
   if (didCommit) {
+    recordRepositoryActivity({
+      repoPath,
+      kind: 'app-commit',
+      title: 'Committed staged changes from the app',
+      description: message,
+      tone: 'success',
+    })
     commitClearToken.value += 1
     hasCommitDraft.value = false
   }
@@ -708,7 +781,7 @@ async function openRepositoryInFileManager(repoPath: string) {
     await window.repositories.openInFileManager({ repoPath })
     showAppFeedback('Opened repository folder.', 'info')
   } catch (error) {
-    showError(error)
+    showRepositoryError(repoPath, 'Could not open repository folder', error)
   }
 }
 
@@ -722,7 +795,7 @@ async function openRepositoryInEditor(repoPath: string) {
     })
     showAppFeedback('Opened repository in editor.', 'info')
   } catch (error) {
-    showError(error)
+    showRepositoryError(repoPath, 'Could not open repository in editor', error)
   }
 }
 
@@ -733,7 +806,7 @@ async function openRepositoryInTerminal(repoPath: string) {
     await window.repositories.openInTerminal({ repoPath })
     showAppFeedback('Opened repository terminal.', 'info')
   } catch (error) {
-    showError(error)
+    showRepositoryError(repoPath, 'Could not open repository terminal', error)
   }
 }
 
@@ -742,7 +815,7 @@ async function copyRepositoryPath(repoPath: string) {
     await navigator.clipboard.writeText(repoPath)
     showAppFeedback('Copied repository path.', 'info')
   } catch {
-    showError(new Error('Could not copy repository path.'))
+    showRepositoryError(repoPath, 'Could not copy repository path', new Error('Could not copy repository path.'))
   }
 }
 
@@ -894,6 +967,7 @@ onBeforeUnmount(() => {
           :npm-scripts="npmScripts"
           :pinned-script-names="pinnedScriptNamesForSelectedRepo"
           :script-terminals-by-script="currentRepoScriptTerminals"
+          :activity-timeline="selectedRepositoryTimeline"
           @back="closeDetails"
           @refresh="refreshSelectedRepository"
           @delete-branch="deleteBranch"
@@ -911,6 +985,7 @@ onBeforeUnmount(() => {
           @open-in-editor="openRepositoryInEditor"
           @open-in-file-manager="openRepositoryInFileManager"
           @open-in-terminal="openRepositoryInTerminal"
+          @record-activity="recordSelectedRepositoryActivity"
         />
       </div>
 

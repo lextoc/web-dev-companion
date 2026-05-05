@@ -25,15 +25,15 @@ defineProps<{
     focusable="false"
   >
     <g v-if="name === 'pin'">
-      <path d="M12 17v4" />
-      <path d="M8 4h8" />
-      <path d="M9 4l.8 7L7 15h10l-2.8-4L15 4z" />
+      <path d="M12 16v5" />
+      <path d="M8 5h8" />
+      <path d="M10 5v5l-3 5h10l-3-5V5" />
     </g>
     <g v-else-if="name === 'pin-off'">
-      <path d="M4 4l16 16" />
-      <path d="M8 4h8" />
-      <path d="M9 4l.8 7L7 15h10l-2.8-4L15 4z" />
-      <path d="M12 17v4" />
+      <path d="M12 16v5" />
+      <path d="M8 5h8" />
+      <path d="M10 5v5l-3 5h10l-3-5V5" />
+      <path d="M5 5l14 14" />
     </g>
     <g v-else-if="name === 'play'">
       <path d="M8 5v14l11-7z" />

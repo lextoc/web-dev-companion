@@ -309,12 +309,16 @@ pre {
 
 .git-log-rail-author strong,
 .git-log-rail-author small,
-.git-log-rail p,
 .git-log-rail time {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.git-log-rail p {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .git-log-rail-author strong {

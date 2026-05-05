@@ -150,13 +150,18 @@
 
 .dashboard-git-log-table strong,
 .dashboard-git-log-table small,
-.dashboard-git-log-table time,
-.dashboard-git-message-cell span {
+.dashboard-git-log-table time {
   display: block;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.dashboard-git-message-cell span {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .dashboard-git-log-table small,

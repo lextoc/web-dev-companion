@@ -39,8 +39,8 @@ defineProps<{
       <path d="M8 5v14l11-7z" />
     </g>
     <g v-else-if="name === 'restart'">
-      <path d="M19 7v5h-5" />
-      <path d="M18.2 12A6.2 6.2 0 1 1 16.4 7.6L19 10.1" />
+      <path d="M18 11.7A6 6 0 1 1 15.7 6.9" />
+      <path d="M19 5v5h-5" />
     </g>
     <g v-else-if="name === 'stop'">
       <rect x="7" y="7" width="10" height="10" rx="1.5" class="app-icon-fill" />

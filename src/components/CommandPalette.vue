@@ -14,6 +14,7 @@ const emit = defineEmits<{
 
 const query = ref('')
 const selectedIndex = ref(0)
+const listElement = ref<HTMLElement | null>(null)
 const searchInput = ref<HTMLInputElement | null>(null)
 
 const filteredItems = computed(() => {
@@ -70,9 +71,26 @@ watch(query, () => {
   selectedIndex.value = 0
 })
 
+watch(selectedIndex, () => {
+  scrollSelectedItemIntoView()
+})
+
 nextTick(() => {
   searchInput.value?.focus()
 })
+
+function scrollSelectedItemIntoView() {
+  nextTick(() => {
+    const selectedItem = listElement.value?.querySelector<HTMLElement>(
+      `[data-command-index="${selectedIndex.value}"]`,
+    )
+
+    selectedItem?.scrollIntoView({
+      block: 'nearest',
+      inline: 'nearest',
+    })
+  })
+}
 
 function selectNext() {
   if (filteredItems.value.length === 0) {
@@ -125,7 +143,12 @@ function runSelected() {
         />
       </div>
 
-      <div v-if="filteredItems.length > 0" class="command-palette-list" role="listbox">
+      <div
+        v-if="filteredItems.length > 0"
+        ref="listElement"
+        class="command-palette-list"
+        role="listbox"
+      >
         <section
           v-for="group in groupedItems"
           :key="group.section"
@@ -138,6 +161,7 @@ function runSelected() {
               v-for="{ item, index } in group.entries"
               :id="`command-palette-item-${index}`"
               :key="item.id"
+              :data-command-index="index"
               role="option"
               :aria-selected="index === selectedIndex"
             >

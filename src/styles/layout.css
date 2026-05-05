@@ -13,7 +13,7 @@
 }
 
 .app-layout.terminals-collapsed {
-  grid-template-columns: minmax(0, 1fr) 78px;
+  grid-template-columns: minmax(0, 1fr) 54px;
 }
 
 .main-pane {

@@ -151,15 +151,22 @@
 }
 
 .git-detail-layout {
-  grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
+  grid-template-columns: minmax(280px, 330px) minmax(0, 1fr);
 }
 
 .git-main-grid {
   display: grid;
   min-width: 0;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
   gap: 14px;
-  align-items: start;
+  align-items: stretch;
+}
+
+.git-work-column {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 14px;
 }
 
 .scripts-tab-layout {
@@ -189,6 +196,10 @@
   box-shadow: var(--shadow);
 }
 
+.git-work-column .commit-panel {
+  grid-column: auto;
+}
+
 .commit-panel.ready {
   border-top-color: var(--brand);
   background:
@@ -204,12 +215,9 @@
   grid-column: 1 / -1;
 }
 
-.status-panel {
-  grid-column: span 2;
-}
-
+.status-panel,
 .branches-panel {
-  grid-column: span 1;
+  grid-column: auto;
 }
 
 .git-log-panel {
@@ -220,6 +228,22 @@
   grid-template-rows: auto minmax(0, 1fr);
   height: 620px;
   min-width: 0;
+}
+
+.git-work-column .git-overview-panel {
+  height: auto;
+  min-height: 0;
+}
+
+.git-work-column .git-status-card {
+  height: auto;
+  max-height: min(620px, calc(100vh - 356px));
+}
+
+.branches-panel {
+  align-self: start;
+  height: min(760px, calc(100vh - 136px));
+  min-height: 480px;
 }
 
 .git-log-sidebar {

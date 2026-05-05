@@ -1,7 +1,8 @@
 @media (max-width: 1280px) {
   .detail-layout,
   .git-detail-layout,
-  .git-main-grid {
+  .git-main-grid,
+  .git-work-column {
     grid-template-columns: 1fr;
   }
 
@@ -34,6 +35,11 @@
 
   .git-overview-panel {
     height: auto;
+  }
+
+  .branches-panel {
+    height: auto;
+    min-height: 0;
   }
 
   .git-log-sidebar {

@@ -193,12 +193,12 @@ h2 {
 }
 
 .repo-card-main {
-  min-height: 104px;
+  min-height: 102px;
 }
 
 .repo-quick-actions {
   border-left: 1px solid var(--border-soft);
-  background: color-mix(in srgb, var(--surface-soft) 42%, transparent);
+  background: color-mix(in srgb, var(--surface-soft) 36%, transparent);
 }
 
 .icon-button {

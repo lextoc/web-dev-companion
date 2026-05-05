@@ -763,10 +763,13 @@ pre {
 }
 
 .commit-panel.ready .commit-form-wide {
-  border-color: #0f6658;
+  border-color: transparent;
+  border-top-width: 6px;
   background:
-    radial-gradient(circle at 100% 0%, rgba(78, 161, 129, 0.52), transparent 34%),
-    linear-gradient(135deg, #103d36 0%, #16473f 48%, #0f6658 100%);
+    radial-gradient(circle at 100% 0%, rgba(108, 222, 177, 0.38), transparent 34%) padding-box,
+    radial-gradient(circle at 0% 100%, rgba(11, 74, 65, 0.76), transparent 42%) padding-box,
+    linear-gradient(135deg, #0d342f 0%, #16473f 46%, #0f6658 100%) padding-box,
+    linear-gradient(90deg, #6ee7d8 0%, #2ec27e 42%, #f0b45f 100%) border-box;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     0 18px 38px rgba(16, 83, 72, 0.24);

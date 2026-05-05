@@ -1,20 +1,20 @@
 <script setup lang="ts">
 defineProps<{
   name:
-    | 'copy'
-    | 'close'
-    | 'edit'
-    | 'folder'
-    | 'hide'
-    | 'panel-hide'
-    | 'pin'
-    | 'pin-off'
-    | 'play'
-    | 'restart'
-    | 'stop'
-    | 'terminal'
-    | 'trash'
-}>()
+    | "copy"
+    | "close"
+    | "edit"
+    | "folder"
+    | "hide"
+    | "panel-hide"
+    | "pin"
+    | "pin-off"
+    | "play"
+    | "restart"
+    | "stop"
+    | "terminal"
+    | "trash";
+}>();
 </script>
 
 <template>
@@ -39,8 +39,10 @@ defineProps<{
       <path d="M8 5v14l11-7z" />
     </g>
     <g v-else-if="name === 'restart'">
-      <path d="M18.1 12.5A6.2 6.2 0 1 1 15.2 7.2" />
-      <path d="M18.8 5.1l.8 4.9-5-.8" />
+      <path d="M21 2v6h-6" />
+      <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+      <path d="M3 22v-6h6" />
+      <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
     </g>
     <g v-else-if="name === 'stop'">
       <rect x="7" y="7" width="10" height="10" rx="1.5" class="app-icon-fill" />
@@ -48,7 +50,9 @@ defineProps<{
     <g v-else-if="name === 'hide'">
       <path d="M18 6L6 18" />
       <path d="M9 9a3 3 0 0 0 4 4" />
-      <path d="M10.6 5.2A9.8 9.8 0 0 1 12 5c5 0 8 5 8 7a8.2 8.2 0 0 1-2.1 3.1" />
+      <path
+        d="M10.6 5.2A9.8 9.8 0 0 1 12 5c5 0 8 5 8 7a8.2 8.2 0 0 1-2.1 3.1"
+      />
       <path d="M6.2 6.8C4.8 8 4 10.1 4 12c0 2 3 7 8 7 1.1 0 2.1-.2 3-.6" />
     </g>
     <g v-else-if="name === 'panel-hide'">
@@ -61,7 +65,9 @@ defineProps<{
       <path d="M17 7L7 17" />
     </g>
     <g v-else-if="name === 'folder'">
-      <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5z" />
+      <path
+        d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5z"
+      />
     </g>
     <g v-else-if="name === 'edit'">
       <path d="M4 20h4l11-11-4-4L4 16z" />

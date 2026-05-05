@@ -1055,8 +1055,11 @@ pre {
 .staged-preview {
   display: grid;
   gap: 4px;
+  max-height: min(360px, 42vh);
   margin: 0;
+  overflow: auto;
   padding: 0;
+  padding-right: 3px;
   list-style: none;
 }
 
@@ -1130,13 +1133,6 @@ pre {
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.staged-preview .staged-preview-more {
-  display: block;
-  color: var(--muted);
-  font-size: 0.74rem;
-  font-weight: 800;
 }
 
 .commit-form button {

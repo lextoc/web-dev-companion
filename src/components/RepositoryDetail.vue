@@ -128,10 +128,7 @@ const remoteBranchOptions = computed(() =>
   })),
 );
 
-const stagedPreview = computed(() => props.selectedDetails?.gitStatus.staged.slice(0, 4) ?? []);
-const hiddenStagedFileCount = computed(() =>
-  Math.max(0, (props.selectedDetails?.gitStatus.staged.length ?? 0) - stagedPreview.value.length),
-);
+const stagedPreview = computed(() => props.selectedDetails?.gitStatus.staged ?? []);
 
 watch(
   () => props.commitClearToken,
@@ -971,9 +968,6 @@ onBeforeUnmount(() => {
                             : "Unstage"
                         }}
                       </button>
-                    </li>
-                    <li v-if="hiddenStagedFileCount > 0" class="staged-preview-more">
-                      {{ hiddenStagedFileCount }} more staged
                     </li>
                   </ul>
                   <p v-else>

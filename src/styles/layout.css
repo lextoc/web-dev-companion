@@ -1,5 +1,7 @@
 .app-shell {
   --shell-x: 24px;
+  --top-bar-gap: 18px;
+  --top-bar-height: 76px;
   width: min(2160px, 100%);
   margin: 0 auto;
   padding: 0 var(--shell-x) 24px;
@@ -10,10 +12,12 @@
   grid-template-columns: minmax(0, 1fr) 360px;
   gap: 18px;
   align-items: start;
+  margin-right: calc(var(--shell-x) * -1);
 }
 
 .app-layout.terminals-collapsed {
   grid-template-columns: minmax(0, 1fr) 54px;
+  margin-right: 0;
 }
 
 .main-pane {
@@ -34,16 +38,20 @@
   justify-content: space-between;
   gap: 24px;
   width: calc(100% + (var(--shell-x) * 2));
-  min-height: 76px;
+  min-height: var(--top-bar-height);
   border: 0;
   border-bottom: 1px solid var(--border);
   border-radius: 0;
-  margin: 0 calc(var(--shell-x) * -1) 18px;
+  margin: 0 calc(var(--shell-x) * -1) var(--top-bar-gap);
   padding: 10px var(--shell-x);
   background: color-mix(in srgb, var(--app-bg) 78%, var(--surface));
   box-shadow: 0 8px 24px rgba(23, 32, 42, 0.08);
   -webkit-app-region: drag;
   backdrop-filter: blur(18px);
+}
+
+:root[data-platform="mac"] .app-shell {
+  --top-bar-height: 96px;
 }
 
 :root[data-platform="mac"] .top-bar {

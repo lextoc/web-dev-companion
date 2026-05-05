@@ -231,29 +231,34 @@
 
 .active-terminals {
   position: sticky;
-  top: 92px;
+  top: var(--top-bar-height);
   display: grid;
   gap: 12px;
-  max-height: calc(100vh - 116px);
+  height: calc(100vh - var(--top-bar-height));
+  max-height: none;
+  align-content: start;
   overflow: auto;
-  border: 1px solid var(--border);
-  border-top: 3px solid var(--accent);
-  border-radius: 8px;
-  padding: 14px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+  margin-top: calc(var(--top-bar-gap) * -1);
+  padding: 18px 18px 24px;
   background:
     linear-gradient(
       180deg,
       color-mix(in srgb, var(--accent) 8%, transparent),
-      transparent 28%
+      transparent 22%
     ),
-    var(--surface);
-  box-shadow: var(--shadow);
+    color-mix(in srgb, var(--surface) 92%, var(--app-bg));
+  box-shadow: -16px 0 28px rgba(23, 32, 42, 0.06);
 }
 
 .active-terminals.collapsed {
   gap: 0;
+  height: auto;
   overflow: hidden;
   border: 0;
+  margin-top: 0;
   padding: 14px 0 0;
   background: transparent;
   box-shadow: none;

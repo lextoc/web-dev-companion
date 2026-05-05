@@ -64,6 +64,7 @@
 
   .app-layout {
     grid-template-columns: 1fr;
+    margin-right: 0;
   }
 
   .app-layout.terminals-collapsed {
@@ -72,7 +73,11 @@
 
   .active-terminals {
     position: static;
+    height: auto;
     max-height: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 0;
     order: -1;
   }
 
@@ -237,6 +242,7 @@
 @media (min-width: 761px) and (max-width: 1180px) {
   .app-layout {
     grid-template-columns: 1fr;
+    margin-right: 0;
   }
 
   .app-layout.terminals-collapsed {
@@ -245,7 +251,11 @@
 
   .active-terminals {
     position: static;
+    height: auto;
     max-height: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 0;
   }
 
   .repo-card {

@@ -114,11 +114,19 @@ textarea {
   color: var(--success-text);
 }
 
+.app-shell {
+  --top-bar-gap: 16px;
+  --top-bar-height: 72px;
+}
+
 .top-bar {
   min-height: 72px;
-  margin-bottom: 16px;
   background: color-mix(in srgb, var(--app-bg) 86%, var(--surface));
   box-shadow: none;
+}
+
+:root[data-platform="mac"] .app-shell {
+  --top-bar-height: 88px;
 }
 
 :root[data-platform="mac"] .top-bar {

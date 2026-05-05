@@ -810,6 +810,7 @@ function handleHistoryNavigation(event: PopStateEvent) {
 }
 
 onMounted(() => {
+  document.documentElement.dataset.platform = navigator.platform.toLowerCase().includes('mac') ? 'mac' : 'other'
   replaceHistoryState({ view: 'dashboard' })
   loadAppSettings()
   autoRefreshRemainingMs.value = appSettings.value.autoRefreshIntervalMs

@@ -30,7 +30,8 @@
 
 @media (max-width: 760px) {
   .app-shell {
-    padding: 20px;
+    --shell-x: 20px;
+    padding: 0 var(--shell-x) 20px;
   }
 
   .toast-stack {

@@ -3,7 +3,8 @@
 }
 
 :root[data-density="compact"] .app-shell {
-  padding: 22px;
+  --shell-x: 22px;
+  padding: 0 var(--shell-x) 22px;
 }
 
 :root[data-density="compact"] .top-bar {

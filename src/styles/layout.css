@@ -1,7 +1,8 @@
 .app-shell {
-  width: min(1800px, 100%);
+  --shell-x: 24px;
+  width: min(1840px, 100%);
   margin: 0 auto;
-  padding: 32px;
+  padding: 0 var(--shell-x) 24px;
 }
 
 .app-layout {
@@ -35,18 +36,28 @@
   z-index: 20;
   justify-content: space-between;
   gap: 24px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  margin-bottom: 18px;
-  padding: 12px;
-  background: color-mix(in srgb, var(--app-bg) 82%, var(--surface));
-  box-shadow: var(--shadow);
+  width: calc(100% + (var(--shell-x) * 2));
+  min-height: 76px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  margin: 0 calc(var(--shell-x) * -1) 18px;
+  padding: 10px var(--shell-x);
+  background: color-mix(in srgb, var(--app-bg) 78%, var(--surface));
+  box-shadow: 0 8px 24px rgba(23, 32, 42, 0.08);
+  -webkit-app-region: drag;
+  backdrop-filter: blur(18px);
+}
+
+:root[data-platform="mac"] .top-bar {
+  padding-left: 92px;
 }
 
 .top-actions {
   display: flex;
   align-items: center;
   gap: 12px;
+  -webkit-app-region: no-drag;
 }
 
 .brand-heading {
@@ -62,6 +73,7 @@
   flex: 0 0 auto;
   border-radius: 10px;
   box-shadow: var(--shadow);
+  -webkit-app-region: no-drag;
 }
 
 .eyebrow {

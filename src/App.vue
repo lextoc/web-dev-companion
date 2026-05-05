@@ -1432,7 +1432,6 @@ onBeforeUnmount(() => {
       <ActiveTerminalsSidebar
         :terminals="activeTerminals"
         :pinned-scripts="pinnedScripts"
-        :activity-items="activityItems"
         :collapsed="isTerminalSidebarCollapsed"
         @toggle="areTerminalsCollapsed = hasTerminalSidebarContent ? !areTerminalsCollapsed : false"
         @stop="stopTerminal"

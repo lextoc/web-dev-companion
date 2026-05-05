@@ -4,13 +4,6 @@ import { plainTerminalText } from '../output-formatting'
 import type { PinnedScript, ScriptTerminal } from '../repositories'
 import AppIcon from './AppIcon.vue'
 
-interface ActivityItem {
-  id: string
-  message: string
-  time: string
-  tone: 'success' | 'info'
-}
-
 interface TerminalGroup {
   repoName: string
   runningCount: number
@@ -31,7 +24,6 @@ interface TerminalEntry {
 const props = defineProps<{
   terminals: ScriptTerminal[]
   pinnedScripts: PinnedScript[]
-  activityItems: ActivityItem[]
   collapsed: boolean
 }>()
 
@@ -275,15 +267,5 @@ function getTerminalPreview(terminal: ScriptTerminal) {
     </div>
 
     <p v-else-if="!collapsed" class="active-terminals-empty">No active or pinned scripts.</p>
-
-    <section v-if="activityItems.length && !collapsed" class="activity-log">
-      <h3>Recent activity</h3>
-      <ol>
-        <li v-for="activity in activityItems" :key="activity.id" :class="activity.tone">
-          <span>{{ activity.message }}</span>
-          <time>{{ activity.time }}</time>
-        </li>
-      </ol>
-    </section>
   </aside>
 </template>

@@ -306,60 +306,6 @@
   gap: 12px;
 }
 
-.activity-log {
-  display: grid;
-  gap: 8px;
-  border-top: 1px solid var(--border-soft);
-  padding-top: 12px;
-}
-
-.activity-log h3 {
-  color: var(--brand);
-  font-size: 0.82rem;
-  text-transform: uppercase;
-}
-
-.activity-log ol {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.activity-log li {
-  display: grid;
-  gap: 2px;
-  border-left: 3px solid var(--info-text);
-  border-radius: 7px;
-  padding: 7px 8px;
-  background: var(--surface-soft);
-}
-
-.activity-log li.success {
-  border-left-color: var(--success-text);
-}
-
-.activity-log span,
-.activity-log time {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.activity-log span {
-  color: var(--muted-strong);
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.activity-log time {
-  color: var(--muted);
-  font-size: 0.7rem;
-}
-
 .active-terminal-group {
   display: grid;
   gap: 8px;

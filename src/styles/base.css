@@ -16,6 +16,18 @@ textarea {
   font: inherit;
 }
 
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-feature-settings:
+    "liga" 0,
+    "calt" 0;
+  tab-size: 2;
+}
+
 button {
   min-height: 42px;
   border: 1px solid var(--brand);
@@ -79,4 +91,3 @@ button.danger:hover:not(:disabled) {
 #app {
   min-height: 100vh;
 }
-

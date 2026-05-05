@@ -206,6 +206,7 @@ code {
   padding: 9px;
   background: var(--terminal-bg);
   font-size: 0.78rem;
+  line-height: 1.5;
 }
 
 .ansi-output {
@@ -256,7 +257,7 @@ code {
 
 .ansi-fg-white,
 .ansi-fg-bright-white {
-  color: #ffffff;
+  color: var(--terminal-title);
 }
 
 .ansi-fg-bright-black {

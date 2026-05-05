@@ -205,7 +205,8 @@
   max-height: none;
   border-color: var(--border);
   background: var(--terminal-bg);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
+  line-height: 1.56;
   white-space: pre;
 }
 
@@ -218,7 +219,7 @@
 .diff-line {
   display: grid;
   grid-template-columns: 2ch minmax(0, 1fr);
-  min-height: 1.45em;
+  min-height: 1.56em;
   padding: 0 8px;
   color: var(--terminal-text);
 }
@@ -335,7 +336,7 @@
   background: var(--terminal-bg);
   color: var(--terminal-text);
   font-size: 0.84rem;
-  line-height: 1.45;
+  line-height: 1.55;
 }
 
 .terminal-modal-actions {

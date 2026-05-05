@@ -124,6 +124,28 @@ const filteredRepositories = computed(() => {
         </label>
       </div>
 
+      <div v-if="filteredRepositories.length === 0" class="empty-state">
+        No repositories match this filter.
+      </div>
+
+      <div v-else class="repo-grid">
+        <RepositoryCard
+          v-for="repository in filteredRepositories"
+          :key="repository.path"
+          :repository="repository"
+          :is-pinned="pinnedRepositorySet.has(repository.path)"
+          :running-script-count="runningScriptsByRepositoryPath[repository.path] ?? 0"
+          :last-refreshed-label="lastRefreshedLabel"
+          @open="$emit('open', $event)"
+          @remove="$emit('remove', $event)"
+          @toggle-pin="$emit('togglePin', $event)"
+          @copy-path="$emit('copyPath', $event)"
+          @open-in-editor="$emit('openInEditor', $event)"
+          @open-in-file-manager="$emit('openInFileManager', $event)"
+          @open-in-terminal="$emit('openInTerminal', $event)"
+        />
+      </div>
+
       <section class="dashboard-git-log" aria-labelledby="dashboard-git-log-title">
         <div class="dashboard-git-log-heading">
           <div>
@@ -167,28 +189,6 @@ const filteredRepositories = computed(() => {
           {{ isGitLogLoading ? 'Loading repository git logs...' : 'No git log entries available.' }}
         </div>
       </section>
-
-      <div v-if="filteredRepositories.length === 0" class="empty-state">
-        No repositories match this filter.
-      </div>
-
-      <div v-else class="repo-grid">
-        <RepositoryCard
-          v-for="repository in filteredRepositories"
-          :key="repository.path"
-          :repository="repository"
-          :is-pinned="pinnedRepositorySet.has(repository.path)"
-          :running-script-count="runningScriptsByRepositoryPath[repository.path] ?? 0"
-          :last-refreshed-label="lastRefreshedLabel"
-          @open="$emit('open', $event)"
-          @remove="$emit('remove', $event)"
-          @toggle-pin="$emit('togglePin', $event)"
-          @copy-path="$emit('copyPath', $event)"
-          @open-in-editor="$emit('openInEditor', $event)"
-          @open-in-file-manager="$emit('openInFileManager', $event)"
-          @open-in-terminal="$emit('openInTerminal', $event)"
-        />
-      </div>
     </template>
   </section>
 </template>

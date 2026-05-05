@@ -582,15 +582,13 @@ pre {
   gap: 6px;
 }
 
-.remote-branch-checkout select {
+.remote-branch-checkout .app-dropdown {
   min-width: 0;
+}
+
+.remote-branch-checkout .app-dropdown-button {
   min-height: 32px;
-  border: 1px solid var(--border-control);
-  border-radius: 6px;
   padding: 0 8px;
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
   font-size: 0.78rem;
 }
 

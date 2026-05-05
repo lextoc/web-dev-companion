@@ -70,8 +70,7 @@
   text-transform: uppercase;
 }
 
-.dashboard-toolbar input,
-.dashboard-toolbar select {
+.dashboard-toolbar input {
   width: 100%;
   min-height: 42px;
   border: 1px solid var(--border-control);
@@ -79,6 +78,10 @@
   padding: 0 12px;
   background: var(--surface);
   color: var(--text);
+}
+
+.dashboard-toolbar .app-dropdown {
+  width: 100%;
 }
 
 .dashboard-result-count {

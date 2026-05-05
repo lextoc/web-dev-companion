@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import {
   AUTO_REFRESH_INTERVAL_OPTIONS,
   DEFAULT_APP_SETTINGS,
   type AppSettings,
   type ThemeMode,
 } from '../settings'
+import AppDropdown from './AppDropdown.vue'
 
 const props = defineProps<{
   settings: AppSettings
@@ -17,6 +18,20 @@ const emit = defineEmits<{
 }>()
 
 const draft = reactive<AppSettings>({ ...props.settings })
+const autoRefreshIntervalModel = computed({
+  get: () => draft.autoRefreshIntervalMs,
+  set: (value: string | number) => {
+    draft.autoRefreshIntervalMs = Number(value) || DEFAULT_APP_SETTINGS.autoRefreshIntervalMs
+  },
+})
+const themeModeModel = computed({
+  get: () => draft.themeMode,
+  set: (value: string | number) => {
+    if (value === 'system' || value === 'light' || value === 'dark') {
+      draft.themeMode = value
+    }
+  },
+})
 
 watch(
   () => props.settings,
@@ -38,6 +53,7 @@ const themeOptions: Array<{ label: string; value: ThemeMode }> = [
   { label: 'Light', value: 'light' },
   { label: 'Dark', value: 'dark' },
 ]
+const autoRefreshOptions = AUTO_REFRESH_INTERVAL_OPTIONS.map((option) => ({ ...option }))
 </script>
 
 <template>
@@ -50,24 +66,16 @@ const themeOptions: Array<{ label: string; value: ThemeMode }> = [
 
       <label>
         <span>Auto refresh</span>
-        <select v-model.number="draft.autoRefreshIntervalMs">
-          <option
-            v-for="option in AUTO_REFRESH_INTERVAL_OPTIONS"
-            :key="option.value"
-            :value="option.value"
-          >
-            {{ option.label }}
-          </option>
-        </select>
+        <AppDropdown
+          id="settings-auto-refresh"
+          v-model="autoRefreshIntervalModel"
+          :options="autoRefreshOptions"
+        />
       </label>
 
       <label>
         <span>Theme</span>
-        <select v-model="draft.themeMode">
-          <option v-for="option in themeOptions" :key="option.value" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
+        <AppDropdown id="settings-theme" v-model="themeModeModel" :options="themeOptions" />
       </label>
 
       <label>

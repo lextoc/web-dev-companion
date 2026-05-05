@@ -10,6 +10,7 @@ import type {
   StatusFileDiff,
   StatusFileDiffType,
 } from "../repositories";
+import AppDropdown from "./AppDropdown.vue";
 import AppIcon from "./AppIcon.vue";
 import NpmScriptsPanel from "./NpmScriptsPanel.vue";
 
@@ -113,6 +114,12 @@ const remoteBranchesToCreate = computed(() =>
   [...(props.selectedDetails?.gitRemoteBranches ?? [])]
     .filter((branch) => !branch.hasLocalBranch)
     .sort((branchA, branchB) => branchA.localName.localeCompare(branchB.localName)),
+);
+const remoteBranchOptions = computed(() =>
+  remoteBranchesToCreate.value.map((branch) => ({
+    label: branch.name,
+    value: branch.name,
+  })),
 );
 
 const stagedPreview = computed(() => props.selectedDetails?.gitStatus.staged.slice(0, 4) ?? []);
@@ -837,24 +844,17 @@ function checkoutSelectedRemoteBranch() {
                   Create from remote
                 </label>
                 <div>
-                  <select
+                  <AppDropdown
                     id="remote-branch-select"
                     v-model="selectedRemoteBranchName"
+                    :options="remoteBranchOptions"
                     :disabled="
                       Boolean(checkingOutBranchName) ||
                       Boolean(syncingBranchName) ||
                       Boolean(deletingBranchName) ||
                       Boolean(branchCheckoutDisabledReason(selectedDetails.gitStatus))
                     "
-                  >
-                    <option
-                      v-for="branch in remoteBranchesToCreate"
-                      :key="branch.name"
-                      :value="branch.name"
-                    >
-                      {{ branch.name }}
-                    </option>
-                  </select>
+                  />
                   <button
                     type="submit"
                     class="secondary branch-action"

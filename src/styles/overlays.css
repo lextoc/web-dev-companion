@@ -124,8 +124,7 @@
   text-transform: uppercase;
 }
 
-.settings-dialog input,
-.settings-dialog select {
+.settings-dialog input {
   width: 100%;
   min-height: 42px;
   border: 1px solid var(--border-control);
@@ -133,6 +132,10 @@
   padding: 0 12px;
   background: var(--surface);
   color: var(--text);
+}
+
+.settings-dialog .app-dropdown {
+  width: 100%;
 }
 
 .settings-actions {

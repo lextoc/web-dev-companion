@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { RepositoryGitLogEntry, RepositorySummary } from '../repositories'
+import AppDropdown from './AppDropdown.vue'
 import RepositoryCard from './RepositoryCard.vue'
 
 const props = defineProps<{
@@ -31,6 +32,11 @@ const searchQuery = ref('')
 const sortMode = ref<'dirty' | 'name' | 'scripts'>('dirty')
 const isAddRepositoryOpen = ref(false)
 const pinnedRepositorySet = computed(() => new Set(props.pinnedRepositoryPaths))
+const sortOptions = [
+  { label: 'Changes first', value: 'dirty' },
+  { label: 'Name', value: 'name' },
+  { label: 'Script count', value: 'scripts' },
+]
 
 const filteredRepositories = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
@@ -139,11 +145,11 @@ const repositorySections = computed(() => {
         <div class="dashboard-toolbar-actions">
           <label class="dashboard-sort-control">
             <span>Sort</span>
-            <select v-model="sortMode">
-              <option value="dirty">Changes first</option>
-              <option value="name">Name</option>
-              <option value="scripts">Script count</option>
-            </select>
+            <AppDropdown
+              id="dashboard-sort"
+              v-model="sortMode"
+              :options="sortOptions"
+            />
           </label>
           <div class="dashboard-result-count">
             <strong>{{ filteredRepositories.length }}</strong>

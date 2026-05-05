@@ -16,6 +16,10 @@ import type { AppSettings } from './settings'
 const FOCUS_REFRESH_THROTTLE_MS = 2000
 const PINNED_REPOSITORIES_KEY = 'web-dev-companion:pinned-repositories'
 
+type AppHistoryState =
+  | { view: 'dashboard' }
+  | { view: 'repository'; repoPath: string }
+
 const repositories = ref<RepositorySummary[]>([])
 const selectedPath = ref<string | null>(null)
 const selectedDetails = ref<RepositoryDetails | null>(null)
@@ -121,6 +125,46 @@ const appActivityLabel = computed(() => {
 
   return null
 })
+
+function currentHistoryState() {
+  const state = window.history.state
+
+  if (state?.view === 'repository' && typeof state.repoPath === 'string') {
+    return state as AppHistoryState
+  }
+
+  if (state?.view === 'dashboard') {
+    return state as AppHistoryState
+  }
+
+  return undefined
+}
+
+function replaceHistoryState(state: AppHistoryState) {
+  window.history.replaceState(state, '')
+}
+
+function pushHistoryState(state: AppHistoryState) {
+  window.history.pushState(state, '')
+}
+
+function showDashboard() {
+  stopAutoRefreshTimer()
+  selectedPath.value = null
+  selectedDetails.value = null
+  hasCommitDraft.value = false
+  void loadDashboardGitLog()
+}
+
+async function applyHistoryState(state: AppHistoryState | undefined) {
+  if (!state || state.view === 'dashboard') {
+    showDashboard()
+    return
+  }
+
+  selectedPath.value = state.repoPath
+  await loadRepositoryDetails(state.repoPath)
+}
 
 async function loadDashboardGitLog(repositoryList = repositories.value) {
   const requestId = dashboardGitLogRequestId + 1
@@ -245,6 +289,12 @@ async function addRepositoryByPath() {
 }
 
 async function openRepository(repository: RepositorySummary) {
+  const historyState = currentHistoryState()
+
+  if (historyState?.view !== 'repository' || historyState.repoPath !== repository.path) {
+    pushHistoryState({ view: 'repository', repoPath: repository.path })
+  }
+
   selectedPath.value = repository.path
   await loadRepositoryDetails(repository.path)
 }
@@ -571,11 +621,13 @@ async function copyRepositoryPath(repoPath: string) {
 }
 
 function closeDetails() {
-  stopAutoRefreshTimer()
-  selectedPath.value = null
-  selectedDetails.value = null
-  hasCommitDraft.value = false
-  void loadDashboardGitLog()
+  if (currentHistoryState()?.view === 'repository' && window.history.length > 1) {
+    window.history.back()
+    return
+  }
+
+  replaceHistoryState({ view: 'dashboard' })
+  showDashboard()
 }
 
 function updateAutoRefreshCountdown() {
@@ -635,7 +687,12 @@ function handlePageExit() {
   stopOwnedScripts()
 }
 
+function handleHistoryNavigation(event: PopStateEvent) {
+  void applyHistoryState(event.state as AppHistoryState | undefined)
+}
+
 onMounted(() => {
+  replaceHistoryState({ view: 'dashboard' })
   loadAppSettings()
   autoRefreshRemainingMs.value = appSettings.value.autoRefreshIntervalMs
   loadPinnedRepositories()
@@ -643,12 +700,14 @@ onMounted(() => {
   removeWindowFocusListener = window.repositories.onWindowFocus(() => {
     void refreshOnWindowFocus()
   })
+  window.addEventListener('popstate', handleHistoryNavigation)
   window.addEventListener('pagehide', handlePageExit)
   window.addEventListener('beforeunload', handlePageExit)
   void loadRepositories()
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('popstate', handleHistoryNavigation)
   window.removeEventListener('pagehide', handlePageExit)
   window.removeEventListener('beforeunload', handlePageExit)
   handlePageExit()

@@ -43,6 +43,7 @@ watch(
 function saveSettings() {
   emit('save', {
     autoRefreshIntervalMs: Number(draft.autoRefreshIntervalMs) || DEFAULT_APP_SETTINGS.autoRefreshIntervalMs,
+    commitCelebrations: draft.commitCelebrations,
     editorCommand: draft.editorCommand.trim() || DEFAULT_APP_SETTINGS.editorCommand,
     themeMode: draft.themeMode,
   })
@@ -76,6 +77,14 @@ const autoRefreshOptions = AUTO_REFRESH_INTERVAL_OPTIONS.map((option) => ({ ...o
       <label>
         <span>Theme</span>
         <AppDropdown id="settings-theme" v-model="themeModeModel" :options="themeOptions" />
+      </label>
+
+      <label class="settings-toggle-row">
+        <input v-model="draft.commitCelebrations" type="checkbox" />
+        <span>
+          <strong>Commit celebrations</strong>
+          <small>Rainbow commit button and confetti on successful submit.</small>
+        </span>
       </label>
 
       <label>

@@ -19,6 +19,9 @@ function normalizeSettings(settings: Partial<AppSettings>): AppSettings {
     autoRefreshIntervalMs: autoRefreshIntervalMs > 0
       ? autoRefreshIntervalMs
       : DEFAULT_APP_SETTINGS.autoRefreshIntervalMs,
+    commitCelebrations: typeof settings.commitCelebrations === 'boolean'
+      ? settings.commitCelebrations
+      : DEFAULT_APP_SETTINGS.commitCelebrations,
     editorCommand: typeof settings.editorCommand === 'string'
       ? settings.editorCommand
       : DEFAULT_APP_SETTINGS.editorCommand,

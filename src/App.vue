@@ -1450,6 +1450,7 @@ onBeforeUnmount(() => {
           :status-feedback-message="statusFeedbackMessage"
           :branch-feedback-messages="branchFeedbackMessages"
           :commit-clear-token="commitClearToken"
+          :commit-celebrations="appSettings.commitCelebrations"
           :npm-scripts="npmScripts"
           :pinned-script-names="pinnedScriptNamesForSelectedRepo"
           :script-terminals-by-script="currentRepoScriptTerminals"

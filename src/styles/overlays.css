@@ -117,11 +117,38 @@
   gap: 6px;
 }
 
+.settings-dialog .settings-toggle-row {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--surface-soft);
+}
+
 .settings-dialog label span {
   color: var(--muted-strong);
   font-size: 0.78rem;
   font-weight: 900;
   text-transform: uppercase;
+}
+
+.settings-dialog .settings-toggle-row span {
+  display: grid;
+  gap: 2px;
+  text-transform: none;
+}
+
+.settings-dialog .settings-toggle-row strong {
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.settings-dialog .settings-toggle-row small {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
 }
 
 .settings-dialog input {
@@ -132,6 +159,12 @@
   padding: 0 12px;
   background: var(--surface);
   color: var(--text);
+}
+
+.settings-dialog input[type="checkbox"] {
+  width: 18px;
+  min-height: 18px;
+  accent-color: var(--brand);
 }
 
 .settings-dialog .app-dropdown {

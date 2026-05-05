@@ -29,6 +29,7 @@ const props = defineProps<{
   statusFeedbackMessage: string | null;
   branchFeedbackMessages: Record<string, string>;
   commitClearToken: number;
+  commitCelebrations: boolean;
   npmScripts: [string, string][];
   pinnedScriptNames: string[];
   scriptTerminalsByScript: Record<string, ScriptTerminal>;
@@ -59,6 +60,7 @@ const emit = defineEmits<{
 }>();
 
 const commitMessage = ref("");
+const confettiBursts = ref<Array<{ id: number }>>([]);
 const timelineLimit = ref(20);
 const branchFilter = ref("all");
 const selectedRemoteBranchName = ref("");
@@ -69,6 +71,7 @@ const selectedStatusDiff = ref<StatusFileDiff | null>(null);
 const statusDiffLoadingKey = ref<string | null>(null);
 const statusDiffError = ref<string | null>(null);
 const selectedStatusDiffLines = computed(() => parseDiffOutput(selectedStatusDiff.value?.content ?? ""));
+let nextConfettiBurstId = 0;
 
 const branchFilters = [
   { key: "all", label: "All" },
@@ -318,7 +321,21 @@ function submitCommit(
     return;
   }
 
+  triggerCommitConfetti();
   emit("commit", message);
+}
+
+function triggerCommitConfetti() {
+  if (!props.commitCelebrations) {
+    return;
+  }
+
+  const id = nextConfettiBurstId++;
+  confettiBursts.value = [...confettiBursts.value, { id }];
+
+  window.setTimeout(() => {
+    confettiBursts.value = confettiBursts.value.filter((burst) => burst.id !== id);
+  }, 1200);
 }
 
 function copyCommitHash(hash: string) {
@@ -862,7 +879,10 @@ onBeforeUnmount(() => {
           <div class="git-work-column">
             <section
               class="detail-panel commit-panel"
-              :class="{ ready: stagedFileCount(selectedDetails.gitStatus) > 0 }"
+              :class="{
+                ready: stagedFileCount(selectedDetails.gitStatus) > 0,
+                celebration: commitCelebrations,
+              }"
             >
               <form
                 class="commit-form commit-form-wide"
@@ -903,6 +923,15 @@ onBeforeUnmount(() => {
                 >
                   {{ pendingStatusActionKey === "commit" ? "Committing..." : "Commit" }}
                 </button>
+
+                <div
+                  v-for="burst in confettiBursts"
+                  :key="burst.id"
+                  class="commit-confetti"
+                  aria-hidden="true"
+                >
+                  <span v-for="index in 18" :key="index"></span>
+                </div>
 
                 <div class="commit-queue">
                   <div class="commit-queue-heading">

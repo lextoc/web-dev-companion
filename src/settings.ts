@@ -2,6 +2,7 @@ export type ThemeMode = 'system' | 'light' | 'dark'
 
 export interface AppSettings {
   autoRefreshIntervalMs: number
+  commitCelebrations: boolean
   editorCommand: string
   themeMode: ThemeMode
 }
@@ -14,6 +15,7 @@ export const AUTO_REFRESH_INTERVAL_OPTIONS = [
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   autoRefreshIntervalMs: 60 * 1000,
+  commitCelebrations: true,
   editorCommand: 'code',
   themeMode: 'system',
 }

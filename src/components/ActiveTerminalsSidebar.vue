@@ -153,7 +153,7 @@ function getTerminalPreview(terminal: ScriptTerminal) {
         title="Hide active terminals"
         @click="$emit('toggle')"
       >
-        <AppIcon name="hide" class="button-icon" />
+        <AppIcon name="panel-hide" class="button-icon" />
         <span>Hide</span>
       </button>
     </div>
@@ -250,7 +250,7 @@ function getTerminalPreview(terminal: ScriptTerminal) {
                 @keydown.enter.stop
                 @keydown.space.stop
               >
-                <AppIcon :name="entry.terminal.isRunning ? 'square' : 'hide'" class="button-icon" />
+                <AppIcon :name="entry.terminal.isRunning ? 'square' : 'close'" class="button-icon" />
                 <span>{{ entry.terminal.isRunning ? 'Stop' : 'Close' }}</span>
               </button>
             </div>

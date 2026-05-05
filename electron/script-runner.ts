@@ -21,6 +21,18 @@ export function createScriptRunner({ sendOutput }: ScriptRunnerOptions) {
 
   function terminateScriptProcess(child: ChildProcessWithoutNullStreams) {
     if (process.platform === 'win32') {
+      if (child.pid) {
+        const killer = spawn('taskkill', ['/pid', String(child.pid), '/t', '/f'], {
+          stdio: 'ignore',
+          windowsHide: true,
+        })
+
+        killer.once('error', () => {
+          child.kill('SIGTERM')
+        })
+        return
+      }
+
       child.kill('SIGTERM')
       return
     }

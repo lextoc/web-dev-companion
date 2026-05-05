@@ -51,6 +51,20 @@ function editorCommand(requestedCommand: string | undefined) {
   return command
 }
 
+async function openWindowsTerminal(normalizedPath: string) {
+  try {
+    await launchDetached('wt', ['-d', normalizedPath], normalizedPath)
+    return
+  } catch {
+    const commandPrompt = process.env.ComSpec || 'cmd.exe'
+    await launchDetached(
+      commandPrompt,
+      ['/d', '/c', 'start', '""', commandPrompt, '/k', 'cd', '/d', normalizedPath],
+      normalizedPath,
+    )
+  }
+}
+
 export function createRepositoryService(repositoriesFilePath: () => string, shell: ElectronShell) {
   async function readRepositoryPaths() {
     try {
@@ -181,7 +195,7 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     }
 
     if (process.platform === 'win32') {
-      await launchDetached('wt', ['-d', normalizedPath], normalizedPath)
+      await openWindowsTerminal(normalizedPath)
       return true
     }
 

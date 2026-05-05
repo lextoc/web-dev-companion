@@ -370,7 +370,7 @@ function branchSafetyNotes(
           <h2>{{ selectedDetails.name }}</h2>
           <div class="detail-quick-actions" aria-label="Repository quick actions">
             <button type="button" class="secondary" @click="$emit('openInFileManager', selectedDetails.path)">
-              Finder
+              Files
             </button>
             <button type="button" class="secondary" @click="$emit('openInEditor', selectedDetails.path)">
               Editor

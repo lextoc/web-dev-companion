@@ -58,7 +58,7 @@ defineEmits<{
 
     <div class="repo-quick-actions" aria-label="Repository quick actions">
       <button type="button" class="secondary" @click="$emit('openInFileManager', repository.path)">
-        Finder
+        Files
       </button>
       <button type="button" class="secondary" @click="$emit('openInEditor', repository.path)">
         Editor

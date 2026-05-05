@@ -76,7 +76,7 @@ const filteredRepositories = computed(() => {
           id="repo-path"
           :value="repoPathInput"
           type="text"
-          placeholder="/Users/alexanderclaes/project"
+          placeholder="Path to repository folder"
           autocomplete="off"
           @input="$emit('update:repoPathInput', ($event.target as HTMLInputElement).value)"
         />

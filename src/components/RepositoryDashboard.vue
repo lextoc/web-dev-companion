@@ -65,6 +65,30 @@ const filteredRepositories = computed(() => {
         repositoryA.name.localeCompare(repositoryB.name)
     })
 })
+
+const repositorySections = computed(() => {
+  const pinnedRepositories = filteredRepositories.value.filter((repository) =>
+    pinnedRepositorySet.value.has(repository.path),
+  )
+  const regularRepositories = filteredRepositories.value.filter((repository) =>
+    !pinnedRepositorySet.value.has(repository.path),
+  )
+
+  return [
+    {
+      key: 'pinned',
+      title: 'Pinned repositories',
+      count: pinnedRepositories.length,
+      repositories: pinnedRepositories,
+    },
+    {
+      key: 'all',
+      title: pinnedRepositories.length > 0 ? 'Other repositories' : 'Repositories',
+      count: regularRepositories.length,
+      repositories: regularRepositories,
+    },
+  ].filter((section) => section.repositories.length > 0)
+})
 </script>
 
 <template>
@@ -122,28 +146,45 @@ const filteredRepositories = computed(() => {
             <option value="scripts">Script count</option>
           </select>
         </label>
+        <div class="dashboard-result-count">
+          <strong>{{ filteredRepositories.length }}</strong>
+          <span>{{ filteredRepositories.length === 1 ? 'repository' : 'repositories' }}</span>
+        </div>
       </div>
 
       <div v-if="filteredRepositories.length === 0" class="empty-state">
         No repositories match this filter.
       </div>
 
-      <div v-else class="repo-grid">
-        <RepositoryCard
-          v-for="repository in filteredRepositories"
-          :key="repository.path"
-          :repository="repository"
-          :is-pinned="pinnedRepositorySet.has(repository.path)"
-          :running-script-count="runningScriptsByRepositoryPath[repository.path] ?? 0"
-          :last-refreshed-label="lastRefreshedLabel"
-          @open="$emit('open', $event)"
-          @remove="$emit('remove', $event)"
-          @toggle-pin="$emit('togglePin', $event)"
-          @copy-path="$emit('copyPath', $event)"
-          @open-in-editor="$emit('openInEditor', $event)"
-          @open-in-file-manager="$emit('openInFileManager', $event)"
-          @open-in-terminal="$emit('openInTerminal', $event)"
-        />
+      <div v-else class="repo-sections">
+        <section
+          v-for="section in repositorySections"
+          :key="section.key"
+          class="repo-section"
+        >
+          <div class="repo-section-heading">
+            <h2>{{ section.title }}</h2>
+            <span>{{ section.count }}</span>
+          </div>
+
+          <div class="repo-grid">
+            <RepositoryCard
+              v-for="repository in section.repositories"
+              :key="repository.path"
+              :repository="repository"
+              :is-pinned="pinnedRepositorySet.has(repository.path)"
+              :running-script-count="runningScriptsByRepositoryPath[repository.path] ?? 0"
+              :last-refreshed-label="lastRefreshedLabel"
+              @open="$emit('open', $event)"
+              @remove="$emit('remove', $event)"
+              @toggle-pin="$emit('togglePin', $event)"
+              @copy-path="$emit('copyPath', $event)"
+              @open-in-editor="$emit('openInEditor', $event)"
+              @open-in-file-manager="$emit('openInFileManager', $event)"
+              @open-in-terminal="$emit('openInTerminal', $event)"
+            />
+          </div>
+        </section>
       </div>
 
       <section class="dashboard-git-log" aria-labelledby="dashboard-git-log-title">

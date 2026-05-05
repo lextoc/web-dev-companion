@@ -20,7 +20,7 @@ defineEmits<{
 </script>
 
 <template>
-  <article class="repo-card" :class="{ 'has-error': repository.error }">
+  <article class="repo-card" :class="{ 'has-error': repository.error, pinned: isPinned }">
     <button
       class="pin-button"
       type="button"

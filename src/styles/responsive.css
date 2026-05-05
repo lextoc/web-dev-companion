@@ -97,9 +97,25 @@
   .git-detail-layout,
   .git-main-grid,
   .dashboard-toolbar,
+  .repo-card,
   .commit-form-wide,
   .script-row {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-result-count {
+    min-width: 0;
+  }
+
+  .repo-card-main {
+    min-height: 150px;
+  }
+
+  .repo-quick-actions {
+    width: auto;
+    border-top: 1px solid var(--border-soft);
+    border-left: 0;
+    padding: 10px;
   }
 
   .dashboard-git-log-heading {
@@ -188,6 +204,17 @@
   .active-terminals {
     position: static;
     max-height: none;
+  }
+
+  .repo-card {
+    grid-template-columns: 1fr;
+  }
+
+  .repo-quick-actions {
+    width: auto;
+    border-top: 1px solid var(--border-soft);
+    border-left: 0;
+    padding: 10px;
   }
 
   .script-list {

@@ -783,12 +783,13 @@ function branchSafetyNotes(
             </div>
           </section>
 
-          <section class="detail-panel remotes-panel">
-            <div class="panel-heading">
-              <h3>Remotes</h3>
-            </div>
+          <details class="detail-panel remotes-panel">
+            <summary>
+              <span>Remotes</span>
+              <small>Show configured git remotes</small>
+            </summary>
             <pre>{{ selectedDetails.remotes }}</pre>
-          </section>
+          </details>
         </div>
       </div>
 

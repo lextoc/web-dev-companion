@@ -22,7 +22,10 @@
   gap: 10px;
 }
 
-:root[data-density="compact"] .repo-grid,
+:root[data-density="compact"] .repo-grid {
+  grid-template-columns: 1fr;
+}
+
 :root[data-density="compact"] .repo-skeleton-grid {
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 }
@@ -32,9 +35,9 @@
 }
 
 :root[data-density="compact"] .repo-card-main {
-  min-height: 180px;
+  min-height: 118px;
   gap: 7px;
-  padding: 38px 42px 12px 14px;
+  padding: 34px 42px 10px 14px;
 }
 
 :root[data-density="compact"] .repo-quick-actions {

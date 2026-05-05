@@ -30,9 +30,17 @@
 }
 
 .top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 18px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--app-bg) 82%, var(--surface));
+  box-shadow: var(--shadow);
 }
 
 .top-actions {
@@ -45,14 +53,14 @@
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .brand-heading img {
-  width: 52px;
-  height: 52px;
+  width: 42px;
+  height: 42px;
   flex: 0 0 auto;
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: var(--shadow);
 }
 
@@ -74,7 +82,7 @@ p {
 
 h1 {
   margin-bottom: 0;
-  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-size: clamp(1.45rem, 2vw, 2rem);
   line-height: 1.05;
 }
 
@@ -90,9 +98,9 @@ h3 {
 }
 
 .repo-count {
-  min-width: 82px;
-  border-left: 4px solid var(--accent);
-  padding-left: 16px;
+  min-width: 70px;
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
   text-align: right;
 }
 
@@ -102,7 +110,7 @@ h3 {
 }
 
 .repo-count span {
-  font-size: 2rem;
+  font-size: 1.45rem;
   font-weight: 800;
   line-height: 1;
 }
@@ -112,3 +120,45 @@ h3 {
   color: var(--muted);
 }
 
+.app-context-line {
+  max-width: min(680px, 58vw);
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.state-chip {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 10px;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+  font-size: 0.74rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.state-chip.success {
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.state-chip.warning {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.state-chip.danger {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
+.state-chip.info {
+  background: var(--info-soft);
+  color: var(--info-text);
+}

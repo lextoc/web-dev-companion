@@ -246,10 +246,10 @@
 
 .active-terminals {
   position: sticky;
-  top: 24px;
+  top: 92px;
   display: grid;
   gap: 12px;
-  max-height: calc(100vh - 48px);
+  max-height: calc(100vh - 116px);
   overflow: auto;
   border: 1px solid var(--border);
   border-top: 3px solid var(--accent);
@@ -638,6 +638,7 @@
   display: grid;
   gap: 12px;
   min-height: 196px;
+  overflow: hidden;
   padding: 18px;
 }
 
@@ -651,6 +652,8 @@
     var(--surface-soft),
     var(--surface-subtle)
   );
+  background-size: 220% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
 
 .skeleton-card span:first-child {
@@ -663,6 +666,16 @@
 
 .skeleton-card span:nth-child(3) {
   width: 66%;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 120% 0;
+  }
+
+  100% {
+    background-position: -120% 0;
+  }
 }
 
 .repo-card {
@@ -764,6 +777,9 @@
 }
 
 .health-pill {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
   border-radius: 999px;
   padding: 3px 8px;
   font-size: 0.72rem;
@@ -809,6 +825,9 @@
 }
 
 .status-pill {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
   flex: 0 0 auto;
   border-radius: 999px;
   padding: 4px 9px;
@@ -819,6 +838,9 @@
 }
 
 .branch-pill {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
   min-width: 0;
   overflow: hidden;
   border-radius: 999px;

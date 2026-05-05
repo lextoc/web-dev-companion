@@ -837,7 +837,14 @@ onBeforeUnmount(() => {
 
 <template>
   <main class="app-shell">
-    <AppHeader :repository-count="repositories.length" @settings="isSettingsOpen = true" />
+    <AppHeader
+      :repository-count="repositories.length"
+      :active-repository-name="selectedDetails?.name ?? selectedSummary?.name"
+      :active-repository-path="selectedDetails?.path ?? selectedSummary?.path"
+      :activity-label="appActivityLabel"
+      :active-script-count="activeTerminals.length"
+      @settings="isSettingsOpen = true"
+    />
 
     <div class="app-layout" :class="{ 'terminals-collapsed': areTerminalsCollapsed }">
       <div class="main-pane">

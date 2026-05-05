@@ -6,7 +6,7 @@
 
 .detail-sticky-bar {
   position: sticky;
-  top: 0;
+  top: 92px;
   z-index: 5;
   display: grid;
   gap: 14px;
@@ -276,6 +276,18 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.panel-heading > div {
+  min-width: 0;
+}
+
+.panel-subtitle {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .panel-count {

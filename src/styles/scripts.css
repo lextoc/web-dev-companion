@@ -1,3 +1,47 @@
+.script-command-center {
+  display: grid;
+  gap: 16px;
+}
+
+.script-group {
+  display: grid;
+  gap: 9px;
+}
+
+.script-group-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.script-group-heading h4 {
+  margin-bottom: 0;
+  color: var(--muted-strong);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.script-group-heading span {
+  display: block;
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.script-group-heading strong {
+  display: grid;
+  min-width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+  font-size: 0.74rem;
+}
+
 .script-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

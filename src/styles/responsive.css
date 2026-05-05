@@ -85,6 +85,14 @@
     flex-direction: column;
   }
 
+  .top-actions {
+    flex-wrap: wrap;
+  }
+
+  .app-context-line {
+    max-width: 100%;
+  }
+
   .repo-count {
     border-left: 0;
     border-top: 4px solid var(--accent);
@@ -154,6 +162,15 @@
 
   .script-list {
     grid-template-columns: 1fr;
+  }
+
+  .script-group-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .script-group-heading strong {
+    width: fit-content;
   }
 
   .terminal-toolbar {

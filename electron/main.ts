@@ -12,8 +12,9 @@ import type {
 import { createRepositoryService } from './repository-service'
 import { createScriptRunner } from './script-runner'
 
-const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron') as typeof import('electron')
+const { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } = require('electron') as typeof import('electron')
 const currentDirectory = __dirname
+const appName = 'Web Dev Companion'
 const repositoriesFileName = 'repositories.json'
 
 // The built directory structure
@@ -38,6 +39,26 @@ let win: BrowserWindowType | null
 
 function repositoriesFilePath() {
   return path.join(app.getPath('userData'), repositoriesFileName)
+}
+
+function appIconPath() {
+  return path.join(process.env.VITE_PUBLIC, 'web-dev-companion.png')
+}
+
+function configureAppIdentity() {
+  app.setName(appName)
+
+  if (process.platform === 'darwin') {
+    const appIcon = nativeImage.createFromPath(appIconPath())
+
+    if (!appIcon.isEmpty()) {
+      app.dock.setIcon(appIcon)
+      app.setAboutPanelOptions({
+        applicationName: appName,
+        iconPath: appIconPath(),
+      })
+    }
+  }
 }
 
 function sendScriptOutput(output: ScriptOutput) {
@@ -112,8 +133,8 @@ function createWindow() {
     height: 1000,
     minWidth: 1180,
     minHeight: 720,
-    title: 'Web Dev Companion',
-    icon: path.join(process.env.VITE_PUBLIC, 'web-dev-companion.png'),
+    title: appName,
+    icon: appIconPath(),
     webPreferences: {
       preload: path.join(currentDirectory, 'preload.js'),
     },
@@ -152,6 +173,7 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(() => {
+  configureAppIdentity()
   registerRepositoryHandlers()
   createWindow()
 })

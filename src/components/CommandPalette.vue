@@ -81,14 +81,27 @@ nextTick(() => {
 
 function scrollSelectedItemIntoView() {
   nextTick(() => {
-    const selectedItem = listElement.value?.querySelector<HTMLElement>(
+    const list = listElement.value
+    const selectedItem = list?.querySelector<HTMLElement>(
       `[data-command-index="${selectedIndex.value}"]`,
     )
 
-    selectedItem?.scrollIntoView({
-      block: 'nearest',
-      inline: 'nearest',
-    })
+    if (!list || !selectedItem) {
+      return
+    }
+
+    const listRect = list.getBoundingClientRect()
+    const itemRect = selectedItem.getBoundingClientRect()
+    const scrollPadding = 10
+
+    if (itemRect.top < listRect.top + scrollPadding) {
+      list.scrollTop -= listRect.top + scrollPadding - itemRect.top
+      return
+    }
+
+    if (itemRect.bottom > listRect.bottom - scrollPadding) {
+      list.scrollTop += itemRect.bottom - (listRect.bottom - scrollPadding)
+    }
   })
 }
 

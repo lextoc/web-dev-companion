@@ -162,10 +162,13 @@ watch(commitMessage, (message) => {
 function statusGroups(gitStatus: RepositoryDetails["gitStatus"]) {
   return [
     { key: "conflicted", label: "Conflicts", entries: gitStatus.conflicted },
-    { key: "staged", label: "Staged", entries: gitStatus.staged },
     { key: "unstaged", label: "Unstaged", entries: gitStatus.unstaged },
     { key: "untracked", label: "Untracked", entries: gitStatus.untracked },
   ];
+}
+
+function visibleStatusGroups(gitStatus: RepositoryDetails["gitStatus"]) {
+  return statusGroups(gitStatus).filter((group) => group.entries.length > 0);
 }
 
 function statusCode(entry: GitStatusEntry) {
@@ -193,26 +196,6 @@ function stagedFileLabel(gitStatus: RepositoryDetails["gitStatus"]) {
   const count = stagedFileCount(gitStatus);
 
   return count === 1 ? "1 staged file" : `${count} staged files`;
-}
-
-function hasStageableChanges(gitStatus: RepositoryDetails["gitStatus"]) {
-  return gitStatus.unstaged.length > 0 || gitStatus.untracked.length > 0;
-}
-
-function commitSummaryLabel(gitStatus: RepositoryDetails["gitStatus"]) {
-  if (stagedFileCount(gitStatus) > 0) {
-    return "Ready to commit";
-  }
-
-  if (gitStatus.conflicted.length > 0) {
-    return "Resolve conflicts";
-  }
-
-  if (hasStageableChanges(gitStatus)) {
-    return "Stage files first";
-  }
-
-  return "Working tree clean";
 }
 
 function isStagedGroup(groupKey: string) {
@@ -293,20 +276,6 @@ function emitStatusAction(groupKey: string, entries: GitStatusEntry[]) {
   }
 
   emit("stageFiles", { paths, actionKey });
-}
-
-function stageAllStageableChanges(gitStatus: RepositoryDetails["gitStatus"]) {
-  const entries = [...gitStatus.unstaged, ...gitStatus.untracked];
-  const paths = statusEntryPaths(entries);
-
-  if (paths.length === 0) {
-    return;
-  }
-
-  emit("stageFiles", {
-    paths,
-    actionKey: `stage:${paths.join("\n")}`,
-  });
 }
 
 function commitDisabledReason(
@@ -880,56 +849,6 @@ onBeforeUnmount(() => {
                   submitCommit(selectedDetails.gitStatus, isDetailLoading, pendingStatusActionKey)
                 "
               >
-                <div class="commit-form-heading">
-                  <div>
-                    <span>Commit</span>
-                    <strong>
-                      {{ commitSummaryLabel(selectedDetails.gitStatus) }}
-                    </strong>
-                  </div>
-                  <div class="commit-heading-actions">
-                    <span
-                      class="commit-step"
-                      :class="{ complete: stagedFileCount(selectedDetails.gitStatus) > 0 }"
-                    >
-                      {{
-                        stagedFileCount(selectedDetails.gitStatus) > 0
-                          ? stagedFileLabel(selectedDetails.gitStatus)
-                          : "No staged files"
-                      }}
-                    </span>
-                    <span class="commit-step" :class="{ complete: commitMessage.trim() }">
-                      {{ commitMessage.trim() ? "Message ready" : "Message needed" }}
-                    </span>
-                    <button
-                      v-if="stagedFileCount(selectedDetails.gitStatus) > 0"
-                      type="button"
-                      class="secondary status-action"
-                      :disabled="Boolean(pendingStatusActionKey)"
-                      @click="emitStatusAction('staged', selectedDetails.gitStatus.staged)"
-                    >
-                      {{
-                        isStatusActionPending('staged', selectedDetails.gitStatus.staged)
-                          ? 'Unstaging...'
-                          : 'Unstage all'
-                      }}
-                    </button>
-                    <button
-                      v-else-if="hasStageableChanges(selectedDetails.gitStatus)"
-                      type="button"
-                      class="secondary status-action"
-                      :disabled="Boolean(pendingStatusActionKey)"
-                      @click="stageAllStageableChanges(selectedDetails.gitStatus)"
-                    >
-                      {{
-                        pendingStatusActionKey?.startsWith('stage:')
-                          ? 'Staging...'
-                          : 'Stage all changes'
-                      }}
-                    </button>
-                  </div>
-                </div>
-
                 <div class="commit-message-row">
                   <label for="commit-message">Message</label>
                   <textarea
@@ -989,6 +908,19 @@ onBeforeUnmount(() => {
                           }}
                         </small>
                       </button>
+                      <button
+                        type="button"
+                        class="secondary status-action staged-preview-action"
+                        :class="{ pending: isStatusActionPending('staged', [entry]) }"
+                        :disabled="Boolean(pendingStatusActionKey)"
+                        @click="emitStatusAction('staged', [entry])"
+                      >
+                        {{
+                          isStatusActionPending('staged', [entry])
+                            ? "Unstaging..."
+                            : "Unstage"
+                        }}
+                      </button>
                     </li>
                     <li v-if="hiddenStagedFileCount > 0" class="staged-preview-more">
                       {{ hiddenStagedFileCount }} more staged
@@ -999,106 +931,107 @@ onBeforeUnmount(() => {
                   </p>
                 </div>
               </form>
-            </section>
 
-            <section class="detail-panel git-overview-panel status-panel">
-              <div class="panel-heading">
-                <div>
-                  <h3>Changes</h3>
-                  <span class="panel-subtitle">Stage, unstage, and inspect files</span>
-                </div>
-              </div>
-              <div class="git-status-card">
-                <div class="status-counts" aria-label="Working tree summary">
-                  <div
-                    v-for="item in statusCounts(selectedDetails.gitStatus)"
-                    :key="item.key"
-                    :class="[item.key, { active: item.count > 0 }]"
-                  >
-                    <strong>{{ item.count }}</strong>
-                    <span>{{ item.label }}</span>
+              <div class="commit-changes-section">
+                <div class="panel-heading commit-changes-heading">
+                  <div>
+                    <h3>Changes</h3>
+                    <span class="panel-subtitle">Stage, unstage, and inspect files</span>
                   </div>
                 </div>
-
-                <p v-if="statusActionLabel" class="status-pending">
-                  {{ statusActionLabel }}
-                </p>
-                <p v-else-if="statusFeedbackMessage" class="status-feedback">
-                  {{ statusFeedbackMessage }}
-                </p>
-
-                <div v-if="selectedDetails.gitStatus.clean" class="clean-state">
-                  Working tree clean.
-                </div>
-
-                <div v-else class="git-status-groups">
-                  <section
-                    v-for="group in statusGroups(selectedDetails.gitStatus)"
-                    :key="group.key"
-                    class="git-status-group"
-                    :class="[group.key, { empty: group.entries.length === 0 }]"
-                  >
-                    <div class="git-status-group-heading">
-                      <div class="git-status-group-title">
-                        <h4>{{ group.label }}</h4>
-                        <span>{{ group.entries.length }}</span>
-                      </div>
-                      <button
-                        v-if="group.entries.length > 0"
-                        type="button"
-                        class="secondary status-action"
-                        :class="{ pending: isStatusActionPending(group.key, group.entries) }"
-                        :disabled="Boolean(pendingStatusActionKey)"
-                        @click="emitStatusAction(group.key, group.entries)"
-                      >
-                        {{
-                          isStatusActionPending(group.key, group.entries)
-                            ? `${statusActionLabelForGroup(group.key)}...`
-                            : statusActionLabelForGroup(group.key)
-                        }}
-                      </button>
+                <div class="git-status-card">
+                  <div class="status-counts" aria-label="Working tree summary">
+                    <div
+                      v-for="item in statusCounts(selectedDetails.gitStatus)"
+                      :key="item.key"
+                      :class="[item.key, { active: item.count > 0 }]"
+                    >
+                      <strong>{{ item.count }}</strong>
+                      <span>{{ item.label }}</span>
                     </div>
+                  </div>
 
-                    <ul v-if="group.entries.length > 0" class="git-status-list">
-                      <li v-for="entry in group.entries" :key="`${group.key}-${entry.path}`">
-                        <code class="status-code" :class="group.key">{{ statusCode(entry) }}</code>
+                  <p v-if="statusActionLabel" class="status-pending">
+                    {{ statusActionLabel }}
+                  </p>
+                  <p v-else-if="statusFeedbackMessage" class="status-feedback">
+                    {{ statusFeedbackMessage }}
+                  </p>
+
+                  <div v-if="selectedDetails.gitStatus.clean" class="clean-state">
+                    Working tree clean.
+                  </div>
+
+                  <div v-else-if="visibleStatusGroups(selectedDetails.gitStatus).length > 0" class="git-status-groups">
+                    <section
+                      v-for="group in visibleStatusGroups(selectedDetails.gitStatus)"
+                      :key="group.key"
+                      class="git-status-group"
+                      :class="group.key"
+                    >
+                      <div class="git-status-group-heading">
+                        <div class="git-status-group-title">
+                          <h4>{{ group.label }}</h4>
+                          <span>{{ group.entries.length }}</span>
+                        </div>
                         <button
-                          type="button"
-                          class="status-file-button"
-                          :disabled="Boolean(statusDiffLoadingKey)"
-                          :aria-busy="statusDiffLoadingKey === statusDiffKey(group.key, entry)"
-                          @click="openStatusDiff(group.key, entry)"
-                        >
-                          <strong>{{ entry.path }}</strong>
-                          <small v-if="entry.originalPath">
-                            from {{ entry.originalPath }}
-                          </small>
-                          <small>
-                            {{
-                              statusDiffLoadingKey === statusDiffKey(group.key, entry)
-                                ? "Loading changes..."
-                                : `${entry.label} · View changes`
-                            }}
-                          </small>
-                        </button>
-                        <button
+                          v-if="group.entries.length > 0"
                           type="button"
                           class="secondary status-action"
-                          :class="{ pending: isStatusActionPending(group.key, [entry]) }"
+                          :class="{ pending: isStatusActionPending(group.key, group.entries) }"
                           :disabled="Boolean(pendingStatusActionKey)"
-                          @click="emitStatusAction(group.key, [entry])"
+                          @click="emitStatusAction(group.key, group.entries)"
                         >
                           {{
-                            isStatusActionPending(group.key, [entry])
-                              ? `${statusActionLabelForEntry(group.key)}...`
-                              : statusActionLabelForEntry(group.key)
+                            isStatusActionPending(group.key, group.entries)
+                              ? `${statusActionLabelForGroup(group.key)}...`
+                              : statusActionLabelForGroup(group.key)
                           }}
                         </button>
-                      </li>
-                    </ul>
+                      </div>
 
-                    <p v-else>No {{ group.label.toLowerCase() }} changes.</p>
-                  </section>
+                      <ul v-if="group.entries.length > 0" class="git-status-list">
+                        <li v-for="entry in group.entries" :key="`${group.key}-${entry.path}`">
+                          <code class="status-code" :class="group.key">{{ statusCode(entry) }}</code>
+                          <button
+                            type="button"
+                            class="status-file-button"
+                            :disabled="Boolean(statusDiffLoadingKey)"
+                            :aria-busy="statusDiffLoadingKey === statusDiffKey(group.key, entry)"
+                            @click="openStatusDiff(group.key, entry)"
+                          >
+                            <strong>{{ entry.path }}</strong>
+                            <small v-if="entry.originalPath">
+                              from {{ entry.originalPath }}
+                            </small>
+                            <small>
+                              {{
+                                statusDiffLoadingKey === statusDiffKey(group.key, entry)
+                                  ? "Loading changes..."
+                                  : `${entry.label} · View changes`
+                              }}
+                            </small>
+                          </button>
+                          <button
+                            type="button"
+                            class="secondary status-action"
+                            :class="{ pending: isStatusActionPending(group.key, [entry]) }"
+                            :disabled="Boolean(pendingStatusActionKey)"
+                            @click="emitStatusAction(group.key, [entry])"
+                          >
+                            {{
+                              isStatusActionPending(group.key, [entry])
+                                ? `${statusActionLabelForEntry(group.key)}...`
+                                : statusActionLabelForEntry(group.key)
+                            }}
+                          </button>
+                        </li>
+                      </ul>
+                    </section>
+                  </div>
+                  <div v-else class="clean-state">
+                    No unstaged, untracked, or conflicted changes.
+                  </div>
                 </div>
               </div>
             </section>

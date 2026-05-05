@@ -469,15 +469,53 @@ async function deleteBranch(branchName: string) {
   }
 }
 
+function branchSyncAction(branch: RepositoryDetails['gitBranches'][number] | undefined) {
+  if (!branch) {
+    return {
+      confirmLabel: 'Sync branch',
+      message: 'This will fetch first and sync the branch when possible.',
+      successLabel: 'Synced',
+      toastVerb: 'Synced',
+    }
+  }
+
+  if (branch.ahead > 0 && branch.behind === 0) {
+    return {
+      confirmLabel: 'Push branch',
+      message: `Push local commits from "${branch.name}" to ${branch.upstream}? This will fetch first and only push if the remote has no incoming commits.`,
+      successLabel: 'Pushed',
+      toastVerb: 'Pushed',
+    }
+  }
+
+  if (branch.behind > 0 && branch.ahead === 0) {
+    return {
+      confirmLabel: 'Pull branch',
+      message: `Pull commits from ${branch.upstream} into "${branch.name}"? This will only fast-forward the local branch.`,
+      successLabel: 'Pulled',
+      toastVerb: 'Pulled',
+    }
+  }
+
+  return {
+    confirmLabel: 'Sync branch',
+    message: `Sync "${branch.name}" with ${branch.upstream}? This will fetch first and only continue when the branch can be fast-forwarded safely.`,
+    successLabel: 'Synced',
+    toastVerb: 'Synced',
+  }
+}
+
 async function syncBranch(branchName: string) {
   if (!selectedDetails.value) {
     return
   }
 
+  const branch = selectedDetails.value.gitBranches.find((entry) => entry.name === branchName)
+  const action = branchSyncAction(branch)
   const confirmed = await confirmAction({
-    title: 'Sync branch',
-    message: `Sync "${branchName}" in ${selectedDetails.value.name}? This will fetch/pull and fast-forward the local branch when possible.`,
-    confirmLabel: 'Sync branch',
+    title: action.confirmLabel,
+    message: `${action.message} Repository: ${selectedDetails.value.name}.`,
+    confirmLabel: action.confirmLabel,
   })
 
   if (!confirmed) {
@@ -493,8 +531,8 @@ async function syncBranch(branchName: string) {
       branchName,
     })
     await loadRepositories()
-    showBranchFeedback(branchName, 'Synced')
-    showAppFeedback(`Synced branch ${branchName}.`)
+    showBranchFeedback(branchName, action.successLabel)
+    showAppFeedback(`${action.toastVerb} branch ${branchName}.`)
   } catch (error) {
     showError(error)
   } finally {

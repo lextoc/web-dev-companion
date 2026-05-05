@@ -300,6 +300,10 @@ function branchSyncDisabledReason(
     return "Upstream remote branch is gone.";
   }
 
+  if (branch.ahead > 0 && branch.behind > 0) {
+    return "Branch has both local and remote commits. Resolve it manually before syncing.";
+  }
+
   return undefined;
 }
 
@@ -320,7 +324,31 @@ function branchSyncTitle(
     return `Syncing ${branch.name}`;
   }
 
-  return branchSyncDisabledReason(branch, gitStatus) ?? "Run git pull --ff-only";
+  return branchSyncDisabledReason(branch, gitStatus) ?? branchSyncActionTitle(branch);
+}
+
+function branchSyncActionLabel(branch: RepositoryDetails["gitBranches"][number]) {
+  if (branch.ahead > 0 && branch.behind === 0) {
+    return "Push";
+  }
+
+  if (branch.behind > 0 && branch.ahead === 0) {
+    return "Pull";
+  }
+
+  return "Sync";
+}
+
+function branchSyncActionTitle(branch: RepositoryDetails["gitBranches"][number]) {
+  if (branch.ahead > 0 && branch.behind === 0) {
+    return "Push local commits to the upstream branch";
+  }
+
+  if (branch.behind > 0 && branch.ahead === 0) {
+    return "Fast-forward the local branch from upstream";
+  }
+
+  return "Sync branch with upstream";
 }
 
 function branchSafetyNotes(
@@ -680,7 +708,11 @@ function branchSafetyNotes(
                     :aria-busy="isSyncingBranch(branch.name, syncingBranchName)"
                     @click="$emit('syncBranch', branch.name)"
                   >
-                    {{ isSyncingBranch(branch.name, syncingBranchName) ? "Syncing..." : "Sync" }}
+                    {{
+                      isSyncingBranch(branch.name, syncingBranchName)
+                        ? `${branchSyncActionLabel(branch)}ing...`
+                        : branchSyncActionLabel(branch)
+                    }}
                   </button>
                   <button
                     type="button"

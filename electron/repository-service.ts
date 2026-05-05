@@ -254,34 +254,54 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
       throw new Error(`Branch "${branchName}" tracks a remote branch that is gone.`)
     }
 
-    if (branch.current) {
-      await runGit(normalizedPath, ['pull', '--ff-only'], 120000)
-      return readRepositoryDetails(normalizedPath)
-    }
-
     const remoteName = await runGit(normalizedPath, ['config', '--get', `branch.${branchName}.remote`])
 
     if (!remoteName || remoteName === '.') {
       throw new Error(`Branch "${branchName}" does not track a remote branch.`)
     }
 
+    const upstreamMergeRef = await runGit(normalizedPath, ['config', '--get', `branch.${branchName}.merge`])
+
+    if (!upstreamMergeRef) {
+      throw new Error(`Branch "${branchName}" does not track a remote branch.`)
+    }
+
     await runGit(normalizedPath, ['fetch', remoteName], 120000)
+
+    const refreshedBranch = (await readGitBranches(normalizedPath)).find((entry) => entry.name === branchName)
+
+    if (!refreshedBranch) {
+      throw new Error(`Branch "${branchName}" was not found.`)
+    }
+
+    if (refreshedBranch.remoteGone) {
+      throw new Error(`Branch "${branchName}" tracks a remote branch that is gone.`)
+    }
 
     const branchRef = `refs/heads/${branchName}`
     const localCommit = await runGit(normalizedPath, ['rev-parse', '--verify', branchRef])
     const upstreamCommit = await runGit(normalizedPath, ['rev-parse', '--verify', `${branchName}@{upstream}`])
 
-    if (localCommit === upstreamCommit || (await isGitAncestor(normalizedPath, upstreamCommit, localCommit))) {
+    if (localCommit === upstreamCommit) {
       return readRepositoryDetails(normalizedPath)
     }
 
-    if (!(await isGitAncestor(normalizedPath, localCommit, upstreamCommit))) {
-      throw new Error(`Branch "${branchName}" cannot be fast-forwarded from ${branch.upstream}.`)
+    if (await isGitAncestor(normalizedPath, localCommit, upstreamCommit)) {
+      if (refreshedBranch.current) {
+        await runGit(normalizedPath, ['merge', '--ff-only', `${branchName}@{upstream}`], 120000)
+        return readRepositoryDetails(normalizedPath)
+      }
+
+      await runGit(normalizedPath, ['update-ref', branchRef, upstreamCommit, localCommit], 120000)
+      return readRepositoryDetails(normalizedPath)
     }
 
-    await runGit(normalizedPath, ['update-ref', branchRef, upstreamCommit, localCommit], 120000)
+    if (await isGitAncestor(normalizedPath, upstreamCommit, localCommit)) {
+      await runGit(normalizedPath, ['push', remoteName, `${branchRef}:${upstreamMergeRef}`], 120000)
+      return readRepositoryDetails(normalizedPath)
+    }
 
-    return readRepositoryDetails(normalizedPath)
+    throw new Error(`Branch "${branchName}" has both local and remote commits. Resolve it manually before syncing.`)
   }
 
   function normalizeStatusPaths(paths: string[]) {

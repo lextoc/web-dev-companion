@@ -30,6 +30,14 @@ const {
 const currentDirectory = __dirname
 const appName = 'Web Dev Companion'
 const repositoriesFileName = 'repositories.json'
+const windowBounds = {
+  width: 1360,
+  height: 820,
+  minWidth: 1360,
+  minHeight: 820,
+  maxWidth: 1800,
+  maxHeight: 1100,
+}
 
 app.setName(appName)
 
@@ -103,6 +111,14 @@ function isRepositoryRefreshShortcut(input: Electron.Input) {
     !input.alt &&
     !input.shift
   )
+}
+
+function isZoomShortcut(input: Electron.Input) {
+  if (input.type !== 'keyDown' || (!input.meta && !input.control) || input.alt) {
+    return false
+  }
+
+  return ['+', '=', '-', '_', '0'].includes(input.key)
 }
 
 function configureApplicationMenu() {
@@ -200,10 +216,6 @@ function configureApplicationMenu() {
       submenu: [
         { role: 'forceReload' },
         { role: 'toggleDevTools' },
-        { type: 'separator' },
-        { role: 'resetZoom' },
-        { role: 'zoomIn' },
-        { role: 'zoomOut' },
         { type: 'separator' },
         { role: 'togglefullscreen' },
       ],
@@ -304,10 +316,7 @@ async function chooseAndAddRepository() {
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 1360,
-    height: 820,
-    minWidth: 1360,
-    minHeight: 820,
+    ...windowBounds,
     title: appName,
     icon: appIconPath(),
     ...(process.platform === 'darwin'
@@ -323,6 +332,9 @@ function createWindow() {
     },
   })
 
+  win.webContents.setZoomFactor(1)
+  win.webContents.setVisualZoomLevelLimits(1, 1)
+
   win.on('focus', () => {
     win?.webContents.send('repositories:window-focus')
   })
@@ -332,6 +344,12 @@ function createWindow() {
   })
 
   win.webContents.on('before-input-event', (event, input) => {
+    if (isZoomShortcut(input)) {
+      event.preventDefault()
+      win?.webContents.setZoomFactor(1)
+      return
+    }
+
     if (!isRepositoryRefreshShortcut(input)) {
       return
     }

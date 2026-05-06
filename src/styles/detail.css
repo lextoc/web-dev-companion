@@ -385,25 +385,6 @@
   background: var(--surface);
 }
 
-.tab-count {
-  display: grid;
-  min-width: 22px;
-  height: 22px;
-  place-items: center;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--border-control) 62%, transparent);
-  background: color-mix(in srgb, var(--surface) 72%, transparent);
-  color: var(--muted-strong);
-  font-size: var(--font-size-compact);
-  font-weight: 900;
-}
-
-.detail-tabs button.active .tab-count {
-  border-color: color-mix(in srgb, var(--success-text) 32%, transparent);
-  background: color-mix(in srgb, var(--success-soft) 82%, var(--surface));
-  color: var(--success-text);
-}
-
 .detail-layout {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

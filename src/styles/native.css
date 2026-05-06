@@ -284,8 +284,7 @@ h2 {
 .health-pill,
 .health-running,
 .active-terminal-status,
-.panel-count,
-.tab-count {
+.panel-count {
   min-height: 22px;
   padding-top: 2px;
   padding-bottom: 2px;

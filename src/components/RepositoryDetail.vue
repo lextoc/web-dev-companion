@@ -365,8 +365,7 @@ function triggerCommitConfetti() {
           aria-controls="git-log-panel"
           @click="activeDetailTab = 'log'"
         >
-          <span>Git log</span>
-          <span class="tab-count">{{ selectedDetails.gitLog.length }}</span>
+          Git log
         </button>
         <button
           id="npm-scripts-tab"
@@ -378,8 +377,7 @@ function triggerCommitConfetti() {
           aria-controls="npm-scripts-panel"
           @click="activeDetailTab = 'scripts'"
         >
-          <span>NPM scripts</span>
-          <span class="tab-count">{{ npmScripts.length }}</span>
+          NPM scripts
         </button>
       </nav>
 

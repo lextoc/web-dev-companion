@@ -188,7 +188,13 @@
     justify-self: start;
   }
 
+  .commit-form-wide textarea,
   .commit-submit {
+    border-radius: 8px;
+    grid-column: 1;
+    grid-row: auto;
+    margin-left: 0;
+    min-height: 42px;
     width: 100%;
   }
 

@@ -297,8 +297,8 @@ function createWindow() {
   win = new BrowserWindow({
     width: 1600,
     height: 1000,
-    minWidth: 1180,
-    minHeight: 720,
+    minWidth: 1360,
+    minHeight: 820,
     title: appName,
     icon: appIconPath(),
     ...(process.platform === 'darwin'

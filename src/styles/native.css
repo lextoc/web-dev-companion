@@ -158,8 +158,6 @@ h2 {
 .commit-queue,
 .clean-state,
 .empty-state,
-.git-log-sidebar,
-.git-log-rail li,
 .git-branches,
 .git-status-group,
 .remotes-panel,
@@ -343,15 +341,6 @@ h2 {
   background: color-mix(in srgb, var(--surface-soft) 46%, var(--surface));
 }
 
-.git-log-rail li {
-  padding-left: 12px;
-}
-
-.git-log-rail li::before {
-  display: none;
-}
-
-.git-log-rail li:hover,
 .active-terminal-item:hover,
 .repo-card-main:hover:not(:disabled) {
   background: color-mix(in srgb, var(--surface-hover) 68%, transparent);

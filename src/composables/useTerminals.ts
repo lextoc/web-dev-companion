@@ -1,17 +1,14 @@
 import { computed, ref, type Ref } from 'vue'
-import type { RepositoryActivityInput } from '../activity-timeline'
 import type { PinnedScript, RepositoryDetails, ScriptOutput, ScriptTerminal } from '../repositories'
 
 interface UseTerminalsOptions {
   clearError: () => void
-  recordRepositoryActivity?: (activity: RepositoryActivityInput) => void
   selectedDetails: Ref<RepositoryDetails | null>
   showError: (error: unknown) => void
 }
 
 export function useTerminals({
   clearError,
-  recordRepositoryActivity,
   selectedDetails,
   showError,
 }: UseTerminalsOptions) {
@@ -90,15 +87,6 @@ export function useTerminals({
           ? `Script "${terminal.scriptName}" stopped`
           : `Script "${terminal.scriptName}" failed`
 
-      recordRepositoryActivity?.({
-        repoPath: terminal.repoPath,
-        kind: 'script',
-        title,
-        description: terminal.command,
-        meta: exitLabel,
-        tone: didSucceed ? 'success' : output.signal ? 'warning' : 'error',
-      })
-
       if (!output.signal && (!didSucceed || elapsedMs >= 10_000)) {
         void window.desktop.notify({
           title,
@@ -154,25 +142,9 @@ export function useTerminals({
           startedAt: Date.now(),
         },
       }
-      recordRepositoryActivity?.({
-        repoPath,
-        kind: 'script',
-        title: `Started script "${scriptName}"`,
-        description: scriptRun.command,
-        meta: repoName,
-        tone: 'info',
-      })
 
       return scriptRun.runId
     } catch (error) {
-      recordRepositoryActivity?.({
-        repoPath,
-        kind: 'error',
-        title: `Could not start script "${scriptName}"`,
-        description: error instanceof Error ? error.message : 'Something went wrong.',
-        meta: repoName,
-        tone: 'error',
-      })
       showError(error)
       return undefined
     }
@@ -213,14 +185,6 @@ export function useTerminals({
 
     if (terminal.isRunning) {
       await window.repositories.stopScript(terminal.runId)
-      recordRepositoryActivity?.({
-        repoPath: terminal.repoPath,
-        kind: 'script',
-        title: `Stopped script "${terminal.scriptName}"`,
-        description: terminal.command,
-        meta: terminal.repoName,
-        tone: 'warning',
-      })
     }
 
     appOwnedRunIds.delete(terminal.runId)

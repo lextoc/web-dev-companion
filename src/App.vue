@@ -7,13 +7,6 @@ import RepositoryDashboard from './components/RepositoryDashboard.vue'
 import RepositoryDetail from './components/RepositoryDetail.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import TerminalModal from './components/TerminalModal.vue'
-import {
-  appendRepositoryActivity,
-  buildRepositoryTimeline,
-  createRepositoryActivity,
-  type RepositoryActivityInput,
-  type RepositoryLocalActivity,
-} from './activity-timeline'
 import type { CommandPaletteItem } from './command-palette'
 import { useConfirmations } from './composables/useConfirmations'
 import { useSettings } from './composables/useSettings'
@@ -55,7 +48,6 @@ const hasCommitDraft = ref(false)
 const pinnedRepositoryPaths = ref<string[]>([])
 const pinnedScripts = ref<PinnedScript[]>([])
 const lastRepositoryListRefreshAt = ref<Date | null>(null)
-const repositoryActivitiesByPath = ref<Record<string, RepositoryLocalActivity[]>>({})
 const isCommandPaletteOpen = ref(false)
 const isMacPlatform = ref(false)
 const recentCommandIds = ref<string[]>([])
@@ -93,14 +85,6 @@ const pinnedScriptNamesForSelectedRepo = computed(() => {
     .filter((script) => script.repoPath === selectedDetails.value?.path)
     .map((script) => script.scriptName)
 })
-const selectedRepositoryTimeline = computed(() =>
-  buildRepositoryTimeline(
-    selectedDetails.value,
-    selectedDetails.value
-      ? (repositoryActivitiesByPath.value[selectedDetails.value.path] ?? [])
-      : [],
-  ),
-)
 const {
   activeTerminals,
   closeTerminalModal,
@@ -118,7 +102,7 @@ const {
   stopOwnedScripts,
   stopScript,
   stopTerminal,
-} = useTerminals({ clearError, recordRepositoryActivity, selectedDetails, showError })
+} = useTerminals({ clearError, selectedDetails, showError })
 const autoRefreshProgress = computed(() =>
   Math.max(0, Math.min(100, (autoRefreshRemainingMs.value / appSettings.value.autoRefreshIntervalMs) * 100)),
 )
@@ -437,36 +421,7 @@ function saveAppSettings(settings: AppSettings) {
   }
 }
 
-function recordRepositoryActivity(activity: RepositoryActivityInput) {
-  repositoryActivitiesByPath.value = appendRepositoryActivity(
-    repositoryActivitiesByPath.value,
-    createRepositoryActivity(activity),
-  )
-}
-
-function recordSelectedRepositoryActivity(activity: Omit<RepositoryActivityInput, 'repoPath'>) {
-  if (!selectedDetails.value) {
-    return
-  }
-
-  recordRepositoryActivity({
-    ...activity,
-    repoPath: selectedDetails.value.path,
-  })
-}
-
-function repositoryErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : 'Something went wrong.'
-}
-
-function showRepositoryError(repoPath: string, title: string, error: unknown) {
-  recordRepositoryActivity({
-    repoPath,
-    kind: 'error',
-    title,
-    description: repositoryErrorMessage(error),
-    tone: 'error',
-  })
+function showRepositoryError(_repoPath: string, _title: string, error: unknown) {
   showError(error)
 }
 
@@ -689,12 +644,6 @@ async function checkoutBranch(branchName: string) {
     await loadRepositories()
     showBranchFeedback(branchName, 'Checked out')
     showAppFeedback(`Checked out branch ${branchName}.`)
-    recordRepositoryActivity({
-      repoPath,
-      kind: 'branch-sync',
-      title: `Checked out branch "${branchName}"`,
-      tone: 'success',
-    })
   } catch (error) {
     showRepositoryError(repoPath, `Could not check out branch "${branchName}"`, error)
   } finally {
@@ -720,12 +669,6 @@ async function checkoutRemoteBranch(remoteBranchName: string) {
     await loadRepositories()
     showBranchFeedback(remoteBranchName, 'Created local branch')
     showAppFeedback(`Created branch from ${remoteBranchName}.`)
-    recordRepositoryActivity({
-      repoPath,
-      kind: 'branch-sync',
-      title: `Created branch from "${remoteBranchName}"`,
-      tone: 'success',
-    })
   } catch (error) {
     showRepositoryError(repoPath, `Could not create branch from "${remoteBranchName}"`, error)
   } finally {
@@ -799,13 +742,6 @@ async function syncBranch(branchName: string) {
     await loadRepositories()
     showBranchFeedback(branchName, action.successLabel)
     showAppFeedback(`${action.toastVerb} branch ${branchName}.`)
-    recordRepositoryActivity({
-      repoPath,
-      kind: 'branch-sync',
-      title: `${action.toastVerb} branch "${branchName}"`,
-      description: branch?.upstream ? `Upstream: ${branch.upstream}` : undefined,
-      tone: 'success',
-    })
   } catch (error) {
     showRepositoryError(repoPath, `Could not ${action.confirmLabel.toLowerCase()}`, error)
   } finally {
@@ -861,14 +797,6 @@ async function runStatusAction(
     await loadRepositories()
     showStatusFeedback(successMessage)
     showAppFeedback(successMessage)
-    if (actionKey !== 'commit') {
-      recordRepositoryActivity({
-        repoPath,
-        kind: 'status',
-        title: successMessage,
-        tone: 'success',
-      })
-    }
     return true
   } catch (error) {
     showRepositoryError(repoPath, successMessage.replace(/\.$/, ' failed.'), error)
@@ -934,13 +862,6 @@ async function commitStatus(message: string) {
   )
 
   if (didCommit) {
-    recordRepositoryActivity({
-      repoPath,
-      kind: 'app-commit',
-      title: 'Committed staged changes from the app',
-      description: message,
-      tone: 'success',
-    })
     commitClearToken.value += 1
     hasCommitDraft.value = false
   }
@@ -1395,7 +1316,6 @@ onBeforeUnmount(() => {
           :npm-scripts="npmScripts"
           :pinned-script-names="pinnedScriptNamesForSelectedRepo"
           :script-terminals-by-script="currentRepoScriptTerminals"
-          :activity-timeline="selectedRepositoryTimeline"
           @back="closeDetails"
           @refresh="refreshSelectedRepository"
           @delete-branch="deleteBranch"
@@ -1415,7 +1335,6 @@ onBeforeUnmount(() => {
           @open-in-editor="openRepositoryInEditor"
           @open-in-file-manager="openRepositoryInFileManager"
           @open-in-terminal="openRepositoryInTerminal"
-          @record-activity="recordSelectedRepositoryActivity"
         />
       </div>
 

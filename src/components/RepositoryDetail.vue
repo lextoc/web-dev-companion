@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import type { RepositoryActivityInput, RepositoryTimelineItem } from "../activity-timeline";
 import { parseDiffOutput } from "../output-formatting";
 import type {
   GitStatusEntry,
@@ -33,7 +32,6 @@ const props = defineProps<{
   npmScripts: [string, string][];
   pinnedScriptNames: string[];
   scriptTerminalsByScript: Record<string, ScriptTerminal>;
-  activityTimeline: RepositoryTimelineItem[];
 }>();
 
 const emit = defineEmits<{
@@ -56,12 +54,10 @@ const emit = defineEmits<{
   openInEditor: [repoPath: string];
   openInFileManager: [repoPath: string];
   openInTerminal: [repoPath: string];
-  recordActivity: [activity: Omit<RepositoryActivityInput, "repoPath">];
 }>();
 
 const commitMessage = ref("");
 const confettiBursts = ref<Array<{ id: number }>>([]);
-const timelineLimit = ref(20);
 const branchFilter = ref("all");
 const selectedRemoteBranchName = ref("");
 const isBranchMenuOpen = ref(false);
@@ -80,8 +76,6 @@ const branchFilters = [
   { key: "no-upstream", label: "No upstream" },
   { key: "in-sync", label: "In sync" },
 ];
-
-const visibleActivityTimeline = computed(() => props.activityTimeline.slice(0, timelineLimit.value));
 
 const sortedBranches = computed(() => {
   const branches = props.selectedDetails?.gitBranches ?? [];
@@ -245,12 +239,6 @@ async function openStatusDiff(groupKey: string, entry: GitStatusEntry) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not load file changes.";
     statusDiffError.value = message;
-    emit("recordActivity", {
-      kind: "error",
-      title: `Could not load changes for ${entry.path}`,
-      description: message,
-      tone: "error",
-    });
   } finally {
     if (statusDiffLoadingKey.value === loadingKey) {
       statusDiffLoadingKey.value = null;
@@ -333,26 +321,6 @@ function triggerCommitConfetti() {
   window.setTimeout(() => {
     confettiBursts.value = confettiBursts.value.filter((burst) => burst.id !== id);
   }, 1200);
-}
-
-function copyCommitHash(hash: string) {
-  void navigator.clipboard?.writeText(hash);
-}
-
-function timelineKindLabel(kind: RepositoryTimelineItem["kind"]) {
-  if (kind === "app-commit") {
-    return "App commit";
-  }
-
-  if (kind === "branch-sync") {
-    return "Branch sync";
-  }
-
-  if (kind === "git-commit") {
-    return "Git commit";
-  }
-
-  return kind.slice(0, 1).toUpperCase() + kind.slice(1);
 }
 
 function branchSyncLabel(branch: RepositoryDetails["gitBranches"][number]) {
@@ -810,68 +778,10 @@ onBeforeUnmount(() => {
       <div
         v-if="activeDetailTab === 'git'"
         id="git-overview-panel"
-        class="detail-layout git-detail-layout"
+        class="detail-layout scripts-tab-layout"
         role="tabpanel"
         aria-labelledby="git-overview-tab"
       >
-        <aside class="detail-panel git-overview-panel git-log-panel git-log-sidebar">
-          <div class="panel-heading git-log-heading">
-            <div>
-              <h3>Timeline</h3>
-              <span>Commits and local app activity</span>
-            </div>
-            <div class="segmented-control" aria-label="Timeline length">
-              <button
-                v-for="limit in [20, 50]"
-                :key="limit"
-                type="button"
-                class="secondary"
-                :class="{ active: timelineLimit === limit }"
-                @click="timelineLimit = limit"
-              >
-                {{ limit }}
-              </button>
-            </div>
-          </div>
-          <ol
-            v-if="visibleActivityTimeline.length > 0"
-            class="git-log-rail repo-timeline"
-            aria-label="Repository activity timeline"
-          >
-            <li
-              v-for="entry in visibleActivityTimeline"
-              :key="entry.id"
-              :class="[entry.kind, entry.tone]"
-            >
-              <div class="timeline-entry-heading">
-                <span>{{ timelineKindLabel(entry.kind) }}</span>
-                <time :datetime="entry.occurredAt" :title="entry.occurredAt">
-                  {{ entry.timeLabel }}
-                </time>
-              </div>
-              <p :title="entry.title">{{ entry.title }}</p>
-              <small v-if="entry.description" :title="entry.description">
-                {{ entry.description }}
-              </small>
-              <div v-if="entry.hash || entry.meta" class="git-log-rail-meta">
-                <button
-                  v-if="entry.hash"
-                  type="button"
-                  class="secondary git-hash-chip"
-                  title="Copy commit hash"
-                  @click="copyCommitHash(entry.hash)"
-                >
-                  {{ entry.hash }}
-                </button>
-                <span v-else class="timeline-meta">{{ entry.meta }}</span>
-              </div>
-            </li>
-          </ol>
-          <div v-else class="empty-state compact-empty">
-            No repository activity available yet.
-          </div>
-        </aside>
-
         <div class="git-main-grid">
           <div class="git-work-column">
             <section

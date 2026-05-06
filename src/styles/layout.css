@@ -64,7 +64,7 @@
   justify-content: space-between;
   gap: 24px;
   min-width: 0;
-  padding-bottom: 10px;
+  padding-bottom: 6px;
 }
 
 :root[data-platform="mac"] .app-shell {
@@ -78,7 +78,8 @@
 }
 
 :root[data-platform="mac"] .detail-command-bar {
-  margin-left: calc(var(--shell-x) * -1);
+  width: calc(100% + (var(--shell-x) * 3));
+  margin-left: calc(var(--shell-x) * -2);
   padding-left: var(--shell-x);
 }
 

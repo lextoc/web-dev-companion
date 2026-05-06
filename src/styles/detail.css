@@ -11,12 +11,12 @@
   justify-content: space-between;
   gap: 10px;
   width: calc(100% + (var(--shell-x) * 2));
-  min-height: 50px;
+  min-height: 44px;
   margin: 0;
   margin-left: calc(var(--shell-x) * -1);
   border: 0;
   border-radius: 0;
-  padding: 8px var(--shell-x);
+  padding: 6px var(--shell-x);
   background:
     linear-gradient(
       180deg,

@@ -104,17 +104,20 @@
   }
 
   .detail-nav,
+  .detail-repository-tools,
   .detail-quick-actions,
   .detail-refresh-area {
     justify-content: stretch;
   }
 
   .detail-nav,
+  .detail-repository-tools,
   .detail-quick-actions {
     align-items: stretch;
   }
 
-  .detail-nav {
+  .detail-nav,
+  .detail-repository-tools {
     flex-direction: column;
   }
 

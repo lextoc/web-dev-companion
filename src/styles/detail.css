@@ -53,10 +53,19 @@
   display: flex;
   position: relative;
   min-width: 0;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+}
+
+.detail-repository-tools {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .branch-menu {
@@ -66,13 +75,13 @@
 
 .branch-menu-trigger {
   display: grid;
-  min-height: 40px;
-  max-width: min(520px, 44vw);
-  grid-template-columns: 28px minmax(0, 1fr) auto;
+  min-height: 34px;
+  max-width: min(320px, 28vw);
+  grid-template-columns: 22px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 9px;
+  gap: 7px;
   border-color: transparent;
-  padding: 4px 8px;
+  padding: 0 8px;
   background: color-mix(in srgb, var(--surface) 58%, transparent);
   font-size: 0.76rem;
   text-align: left;
@@ -84,26 +93,26 @@
 }
 
 .branch-menu-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  padding: 6px;
-  background: color-mix(in srgb, var(--brand) 11%, var(--surface));
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  padding: 4px;
+  background: color-mix(in srgb, var(--brand) 8%, var(--surface));
   color: var(--brand-text-hover);
 }
 
 .branch-menu-summary {
   display: flex;
   min-width: 0;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  gap: 7px;
 }
 
 .branch-menu-summary strong {
   min-width: 0;
   overflow: hidden;
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -124,24 +133,17 @@
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 7px;
-}
-
-.branch-menu-title-row .status-pill {
-  min-height: 20px;
-  padding: 2px 7px;
-  font-size: 0.68rem;
+  gap: 0;
+  overflow: hidden;
 }
 
 .branch-menu-meta {
-  max-width: 100%;
-  color: var(--muted-strong);
-  text-transform: none;
-}
-
-.branch-menu-trigger .panel-count {
-  min-width: 22px;
-  height: 22px;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .detail-state-summary {
@@ -176,7 +178,7 @@
   position: absolute;
   z-index: 55;
   top: calc(100% + 10px);
-  left: 0;
+  right: 0;
   width: min(560px, calc(100vw - 48px));
 }
 

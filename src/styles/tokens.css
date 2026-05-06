@@ -30,6 +30,9 @@
   --warning-text: #8d551b;
   --info-soft: #e8f1fb;
   --info-text: #2d5b87;
+  --scrollbar-track: #dde6ec;
+  --scrollbar-thumb: #9aabb8;
+  --scrollbar-thumb-hover: #6f818e;
   --terminal-panel: #f8fbfd;
   --terminal-bg: #ffffff;
   --terminal-border: #bfccd6;
@@ -93,6 +96,9 @@
     --warning-text: #f1c47d;
     --info-soft: #172b3d;
     --info-text: #8ebde8;
+    --scrollbar-track: #151d23;
+    --scrollbar-thumb: #40515e;
+    --scrollbar-thumb-hover: #647583;
     --terminal-panel: #0c1116;
     --terminal-bg: #05080c;
     --terminal-border: #2a3946;
@@ -144,6 +150,9 @@
   --warning-text: #f1c47d;
   --info-soft: #172b3d;
   --info-text: #8ebde8;
+  --scrollbar-track: #151d23;
+  --scrollbar-thumb: #40515e;
+  --scrollbar-thumb-hover: #647583;
   --terminal-panel: #0c1116;
   --terminal-bg: #05080c;
   --terminal-border: #2a3946;

@@ -30,6 +30,7 @@ const {
 const currentDirectory = __dirname
 const appName = 'Web Dev Companion'
 const repositoriesFileName = 'repositories.json'
+const refreshCommandThrottleMs = 1000
 const windowBounds = {
   width: 1360,
   height: 820,
@@ -60,6 +61,7 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
 let win: BrowserWindowType | null
+let lastRefreshCommandAt = 0
 
 function repositoriesFilePath() {
   return path.join(app.getPath('userData'), repositoriesFileName)
@@ -101,6 +103,17 @@ function sendMenuCommand(command: DesktopMenuCommand) {
   }
 
   win.webContents.send('desktop:menu-command', command)
+}
+
+function sendThrottledRefreshCommand() {
+  const now = Date.now()
+
+  if (now - lastRefreshCommandAt < refreshCommandThrottleMs) {
+    return
+  }
+
+  lastRefreshCommandAt = now
+  sendMenuCommand('refresh')
 }
 
 function isRepositoryRefreshShortcut(input: Electron.Input) {
@@ -196,7 +209,7 @@ function configureApplicationMenu() {
         {
           label: 'Refresh',
           accelerator: isMac ? 'Command+R' : 'Ctrl+R',
-          click: () => sendMenuCommand('refresh'),
+          click: () => sendThrottledRefreshCommand(),
         },
         { type: 'separator' },
         {
@@ -370,7 +383,7 @@ function createWindow() {
     }
 
     event.preventDefault()
-    sendMenuCommand('refresh')
+    sendThrottledRefreshCommand()
   })
 
   if (VITE_DEV_SERVER_URL) {

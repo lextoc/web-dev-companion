@@ -20,11 +20,6 @@
   margin-right: calc(var(--shell-x) * -1);
 }
 
-.app-layout.terminals-collapsed {
-  grid-template-columns: minmax(0, 1fr) 54px;
-  margin-right: 0;
-}
-
 .main-pane {
   min-width: 0;
   min-height: calc(100vh - var(--top-bar-height));

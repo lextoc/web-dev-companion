@@ -104,8 +104,7 @@ button:disabled {
   color: var(--success-text);
 }
 
-.terminal-action-button,
-.terminal-collapse {
+.terminal-action-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;

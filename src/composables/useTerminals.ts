@@ -15,7 +15,6 @@ export function useTerminals({
   selectedDetails,
   showError,
 }: UseTerminalsOptions) {
-  const areTerminalsCollapsed = ref(false)
   const selectedTerminalRunId = ref<string | null>(null)
   const scriptTerminals = ref<Record<string, ScriptTerminal>>({})
   const appOwnedRunIds = new Set<string>()
@@ -302,7 +301,6 @@ export function useTerminals({
 
   return {
     activeTerminals,
-    areTerminalsCollapsed,
     closeTerminalModal,
     currentRepoScriptTerminals,
     handleScriptOutput,

@@ -349,20 +349,18 @@ h2 {
   border-left-color: var(--danger-text);
 }
 
-.active-terminals:not(.collapsed) {
-  border-top-width: 1px;
-  background: color-mix(in srgb, var(--surface) 88%, var(--app-bg));
+.active-terminals {
+  background: color-mix(in srgb, var(--surface) 86%, var(--app-bg));
 }
 
-.active-terminals:not(.collapsed) .active-terminals-heading {
-  background: color-mix(in srgb, var(--surface) 90%, var(--app-bg));
-}
-
-.active-terminals:not(.collapsed) .active-terminal-item {
+.active-terminals .active-terminals-heading {
   background: transparent;
 }
 
-.active-terminal-item,
+.active-terminals .active-terminal-item {
+  background: transparent;
+}
+
 .clean-state,
 .status-counts div,
 .staged-preview li {

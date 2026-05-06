@@ -68,7 +68,6 @@ let nextAutoRefreshAt = 0
 let lastFocusRefreshAt = 0
 
 const {
-  activityItems,
   appFeedback,
   clearError,
   cleanupToasts,
@@ -104,7 +103,6 @@ const selectedRepositoryTimeline = computed(() =>
 )
 const {
   activeTerminals,
-  areTerminalsCollapsed,
   closeTerminalModal,
   currentRepoScriptTerminals,
   handleScriptOutput,
@@ -168,14 +166,6 @@ const appActivityLabel = computed(() => {
 
   return null
 })
-const hasTerminalSidebarContent = computed(() =>
-  activeTerminals.value.length > 0 ||
-  pinnedScripts.value.length > 0 ||
-  activityItems.value.length > 0,
-)
-const isTerminalSidebarCollapsed = computed(() =>
-  areTerminalsCollapsed.value || !hasTerminalSidebarContent.value,
-)
 const commandShortcutLabel = computed(() =>
   isMacPlatform.value ? '⌘K' : 'Ctrl K',
 )
@@ -1365,7 +1355,7 @@ onBeforeUnmount(() => {
       @settings="isSettingsOpen = true"
     />
 
-    <div class="app-layout" :class="{ 'terminals-collapsed': isTerminalSidebarCollapsed }">
+    <div class="app-layout">
       <div class="main-pane">
         <RepositoryDashboard
           v-if="!selectedPath"
@@ -1432,8 +1422,6 @@ onBeforeUnmount(() => {
       <ActiveTerminalsSidebar
         :terminals="activeTerminals"
         :pinned-scripts="pinnedScripts"
-        :collapsed="isTerminalSidebarCollapsed"
-        @toggle="areTerminalsCollapsed = hasTerminalSidebarContent ? !areTerminalsCollapsed : false"
         @stop="stopTerminal"
         @restart="restartTerminal"
         @open="openTerminal"

@@ -55,10 +55,6 @@
     padding-right: 0;
   }
 
-  .app-layout.terminals-collapsed {
-    grid-template-columns: 1fr;
-  }
-
   .active-terminals {
     position: static;
     right: auto;
@@ -244,10 +240,6 @@
   .main-pane {
     min-height: 0;
     padding-right: 0;
-  }
-
-  .app-layout.terminals-collapsed {
-    grid-template-columns: 1fr;
   }
 
   .active-terminals {

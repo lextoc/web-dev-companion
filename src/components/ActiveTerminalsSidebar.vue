@@ -24,11 +24,9 @@ interface TerminalEntry {
 const props = defineProps<{
   terminals: ScriptTerminal[]
   pinnedScripts: PinnedScript[]
-  collapsed: boolean
 }>()
 
 defineEmits<{
-  toggle: []
   stop: [runId: string]
   restart: [runId: string]
   open: [runId: string]
@@ -86,9 +84,6 @@ const terminalGroups = computed<TerminalGroup[]>(() => {
     }))
 })
 
-const runningTerminalCount = computed(() =>
-  props.terminals.filter((terminal) => terminal.isRunning).length,
-)
 const pinnedIdleCount = computed(() =>
   props.pinnedScripts.filter((pinnedScript) =>
     !props.terminals.some((terminal) =>
@@ -118,39 +113,15 @@ function getTerminalPreview(terminal: ScriptTerminal) {
 </script>
 
 <template>
-  <aside class="active-terminals" :class="{ collapsed }" aria-label="Active terminal scripts">
-    <button
-      v-if="collapsed"
-      type="button"
-      class="secondary active-terminals-rail"
-      aria-label="Show active terminals"
-      title="Show active terminals"
-      @click="$emit('toggle')"
-    >
-      <span class="terminal-mini-dot" :class="{ running: runningTerminalCount > 0 }"></span>
-      <span class="terminal-rail-label">Scripts</span>
-      <strong>{{ sidebarScriptCount }}</strong>
-      <small>{{ runningTerminalCount }} run</small>
-    </button>
-
-    <div v-else class="active-terminals-heading">
+  <aside class="active-terminals" aria-label="Active terminal scripts">
+    <div class="active-terminals-heading">
       <div class="active-terminals-title">
         <h2>Scripts</h2>
         <span>{{ sidebarScriptCount }}</span>
       </div>
-      <button
-        type="button"
-        class="secondary terminal-collapse"
-        aria-label="Hide active terminals"
-        title="Hide active terminals"
-        @click="$emit('toggle')"
-      >
-        <AppIcon name="panel-hide" class="button-icon" />
-        <span>Hide</span>
-      </button>
     </div>
 
-    <div v-if="terminalGroups.length && !collapsed" class="active-terminal-groups">
+    <div v-if="terminalGroups.length" class="active-terminal-groups">
       <section v-for="group in terminalGroups" :key="group.repoName" class="active-terminal-group">
         <div class="active-terminal-group-heading">
           <h3>{{ group.repoName }}</h3>
@@ -266,6 +237,6 @@ function getTerminalPreview(terminal: ScriptTerminal) {
       </section>
     </div>
 
-    <p v-else-if="!collapsed" class="active-terminals-empty">No active or pinned scripts.</p>
+    <p v-else class="active-terminals-empty">No active or pinned scripts.</p>
   </aside>
 </template>

@@ -29,6 +29,15 @@ const terminalOutputSegmentsByScript = computed(() =>
     ]),
   ),
 )
+const runningScriptCount = computed(() => Object.keys(props.scriptTerminalsByScript).length)
+const pinnedScriptCount = computed(() =>
+  props.npmScripts.filter(([scriptName]) => isPinned(scriptName)).length,
+)
+const scriptOverviewStats = computed(() => [
+  { key: 'available', label: 'Available', value: props.npmScripts.length },
+  { key: 'pinned', label: 'Pinned', value: pinnedScriptCount.value },
+  { key: 'running', label: 'Running', value: runningScriptCount.value },
+])
 
 function scriptCategory(scriptName: string) {
   if (/dev|start|serve|watch/i.test(scriptName)) {
@@ -131,12 +140,19 @@ watch(
         <h3>NPM scripts</h3>
         <span class="panel-subtitle">{{ npmScripts.length }} available commands</span>
       </div>
+      <div v-if="npmScripts.length" class="script-overview-stats" aria-label="Script overview">
+        <div v-for="stat in scriptOverviewStats" :key="stat.key" class="script-overview-stat">
+          <strong>{{ stat.value }}</strong>
+          <span>{{ stat.label }}</span>
+        </div>
+      </div>
     </div>
     <div v-if="npmScripts.length" class="script-command-center">
       <section
         v-for="group in scriptGroups"
         :key="group.key"
         class="script-group"
+        :class="`script-group-${group.key}`"
       >
         <div class="script-group-heading">
           <div>
@@ -147,7 +163,15 @@ watch(
         </div>
 
         <div class="script-list">
-          <div v-for="[scriptName, command] in group.scripts" :key="scriptName" class="script-item">
+          <div
+            v-for="[scriptName, command] in group.scripts"
+            :key="scriptName"
+            class="script-item"
+            :class="{
+              'is-running': Boolean(scriptTerminalsByScript[scriptName]),
+              'is-pinned': isPinned(scriptName),
+            }"
+          >
             <div
               v-if="scriptTerminalsByScript[scriptName]"
               class="script-terminal"
@@ -159,7 +183,12 @@ watch(
               @keydown.space.prevent="$emit('open', scriptName)"
             >
               <div class="terminal-toolbar">
-                <code>{{ scriptTerminalsByScript[scriptName].command }}</code>
+                <div class="terminal-title">
+                  <span class="terminal-title-icon">
+                    <AppIcon name="terminal" />
+                  </span>
+                  <code>{{ scriptTerminalsByScript[scriptName].command }}</code>
+                </div>
                 <div class="terminal-actions">
                   <button
                     type="button"
@@ -219,7 +248,12 @@ watch(
               @keydown.space.prevent="$emit('run', scriptName)"
             >
               <div class="script-row-heading">
-                <code>{{ scriptName }}</code>
+                <div class="script-row-title">
+                  <span class="script-run-icon">
+                    <AppIcon name="play" />
+                  </span>
+                  <code>{{ scriptName }}</code>
+                </div>
                 <button
                   type="button"
                   class="secondary script-pin-button subtle-icon-button"
@@ -234,7 +268,7 @@ watch(
                   <span class="visually-hidden">{{ isPinned(scriptName) ? 'Unpin' : 'Pin' }}</span>
                 </button>
               </div>
-              <span>{{ command }}</span>
+              <span class="script-command">{{ command }}</span>
             </div>
           </div>
         </div>

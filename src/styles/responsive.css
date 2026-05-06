@@ -218,7 +218,18 @@
     grid-template-columns: 1fr;
   }
 
+  .script-overview-stats {
+    width: 100%;
+    grid-auto-flow: initial;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .script-overview-stat {
+    min-width: 0;
+  }
+
   .script-group-heading {
+    grid-template-columns: 1fr;
     align-items: stretch;
     flex-direction: column;
   }

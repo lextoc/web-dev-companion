@@ -513,9 +513,6 @@ function triggerCommitConfetti() {
                   <p v-if="statusActionLabel" class="status-pending">
                     {{ statusActionLabel }}
                   </p>
-                  <p v-else-if="statusFeedbackMessage" class="status-feedback">
-                    {{ statusFeedbackMessage }}
-                  </p>
 
                   <div v-if="selectedDetails.gitStatus.clean" class="clean-state">
                     Working tree clean.

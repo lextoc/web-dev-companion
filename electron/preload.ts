@@ -16,6 +16,7 @@ const repositories: RepositoryApi = {
   stageFiles: (request) => ipcRenderer.invoke('repositories:stage-files', request),
   unstageFiles: (request) => ipcRenderer.invoke('repositories:unstage-files', request),
   diffFile: (request) => ipcRenderer.invoke('repositories:diff-file', request),
+  commitDetails: (request) => ipcRenderer.invoke('repositories:commit-details', request),
   commit: (request) => ipcRenderer.invoke('repositories:commit', request),
   openInFileManager: (request) => ipcRenderer.invoke('repositories:open-in-file-manager', request),
   openInEditor: (request) => ipcRenderer.invoke('repositories:open-in-editor', request),

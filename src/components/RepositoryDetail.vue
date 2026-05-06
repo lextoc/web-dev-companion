@@ -2,6 +2,8 @@
 import { computed, ref, watch } from "vue";
 import { parseDiffOutput } from "../output-formatting";
 import type {
+  CommitChangedFile,
+  CommitDetails,
   GitStatusEntry,
   RepositoryDetails,
   RepositorySummary,
@@ -40,12 +42,24 @@ const emit = defineEmits<{
 
 const commitMessage = ref("");
 const confettiBursts = ref<Array<{ id: number }>>([]);
-const activeDetailTab = ref<"git" | "scripts">("git");
+const activeDetailTab = ref<"git" | "log" | "scripts">("git");
 const selectedStatusDiff = ref<StatusFileDiff | null>(null);
 const statusDiffLoadingKey = ref<string | null>(null);
 const statusDiffError = ref<string | null>(null);
+const selectedCommitDetails = ref<CommitDetails | null>(null);
+const commitDetailsLoadingHash = ref<string | null>(null);
+const commitDetailsError = ref<string | null>(null);
 const selectedStatusDiffLines = computed(() => parseDiffOutput(selectedStatusDiff.value?.content ?? ""));
+const selectedCommitDiffLines = computed(() => parseDiffOutput(selectedCommitDetails.value?.diff ?? ""));
 let nextConfettiBurstId = 0;
+let nextCommitDetailsRequestId = 0;
+let activeCommitDetailsRequestId = 0;
+const logDateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 const stagedPreview = computed(() => props.selectedDetails?.gitStatus.staged ?? []);
 
@@ -59,7 +73,11 @@ watch(
 watch(
   () => props.selectedDetails?.path,
   () => {
+    activeCommitDetailsRequestId = ++nextCommitDetailsRequestId;
     activeDetailTab.value = "git";
+    selectedCommitDetails.value = null;
+    commitDetailsLoadingHash.value = null;
+    commitDetailsError.value = null;
   },
 );
 
@@ -85,6 +103,81 @@ function statusCode(entry: GitStatusEntry) {
 
 function statusEntryPaths(entries: GitStatusEntry[]) {
   return [...new Set(entries.map((entry) => entry.path))];
+}
+
+function formatLogDate(dateTime: string) {
+  const date = new Date(dateTime);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown";
+  }
+
+  return logDateFormatter.format(date);
+}
+
+function fullLogDate(dateTime: string) {
+  const date = new Date(dateTime);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleString();
+}
+
+function isSelectedCommit(hash: string) {
+  return (
+    commitDetailsLoadingHash.value === hash ||
+    selectedCommitDetails.value?.hash === hash ||
+    selectedCommitDetails.value?.fullHash === hash
+  );
+}
+
+function fileChangeSummary(file: CommitChangedFile) {
+  const additions = file.additions === undefined ? "" : `+${file.additions}`;
+  const deletions = file.deletions === undefined ? "" : `-${file.deletions}`;
+
+  return [additions, deletions].filter(Boolean).join(" ");
+}
+
+async function openCommitDetails(entry: RepositoryDetails["gitLog"][number]) {
+  if (!props.selectedDetails || commitDetailsLoadingHash.value === entry.hash) {
+    return;
+  }
+
+  const repoPath = props.selectedDetails.path;
+  const requestId = ++nextCommitDetailsRequestId;
+  activeCommitDetailsRequestId = requestId;
+  selectedCommitDetails.value = null;
+  commitDetailsLoadingHash.value = entry.hash;
+  commitDetailsError.value = null;
+
+  try {
+    const details = await window.repositories.commitDetails({
+      repoPath,
+      hash: entry.hash,
+    });
+
+    if (activeCommitDetailsRequestId === requestId && props.selectedDetails?.path === repoPath) {
+      selectedCommitDetails.value = details;
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not load commit details.";
+    if (activeCommitDetailsRequestId === requestId) {
+      commitDetailsError.value = message;
+    }
+  } finally {
+    if (activeCommitDetailsRequestId === requestId && commitDetailsLoadingHash.value === entry.hash) {
+      commitDetailsLoadingHash.value = null;
+    }
+  }
+}
+
+function closeCommitDetails() {
+  activeCommitDetailsRequestId = ++nextCommitDetailsRequestId;
+  selectedCommitDetails.value = null;
+  commitDetailsLoadingHash.value = null;
+  commitDetailsError.value = null;
 }
 
 function statusCounts(gitStatus: RepositoryDetails["gitStatus"]) {
@@ -261,6 +354,19 @@ function triggerCommitConfetti() {
           @click="activeDetailTab = 'git'"
         >
           Git overview
+        </button>
+        <button
+          id="git-log-tab"
+          type="button"
+          class="secondary"
+          role="tab"
+          :class="{ active: activeDetailTab === 'log' }"
+          :aria-selected="activeDetailTab === 'log'"
+          aria-controls="git-log-panel"
+          @click="activeDetailTab = 'log'"
+        >
+          <span>Git log</span>
+          <span class="tab-count">{{ selectedDetails.gitLog.length }}</span>
         </button>
         <button
           id="npm-scripts-tab"
@@ -504,7 +610,65 @@ function triggerCommitConfetti() {
       </div>
 
       <div
-        v-else
+        v-else-if="activeDetailTab === 'log'"
+        id="git-log-panel"
+        class="detail-layout scripts-tab-layout"
+        role="tabpanel"
+        aria-labelledby="git-log-tab"
+      >
+        <section class="detail-panel git-log-panel">
+          <div v-if="selectedDetails.gitLog.length > 0" class="git-log-table-wrap">
+            <table class="git-log-table">
+              <thead>
+                <tr>
+                  <th scope="col">Commit</th>
+                  <th scope="col">Message</th>
+                  <th scope="col">Author</th>
+                  <th scope="col">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="entry in selectedDetails.gitLog"
+                  :key="entry.hash"
+                  :class="{ active: isSelectedCommit(entry.hash) }"
+                  tabindex="0"
+                  role="button"
+                  :aria-busy="commitDetailsLoadingHash === entry.hash"
+                  :aria-label="`View details for commit ${entry.hash}: ${entry.message}`"
+                  :title="`View details for ${entry.hash}`"
+                  @click="openCommitDetails(entry)"
+                  @keydown.enter.prevent="openCommitDetails(entry)"
+                  @keydown.space.prevent="openCommitDetails(entry)"
+                >
+                  <td>
+                    <code>{{ entry.hash }}</code>
+                    <small v-if="commitDetailsLoadingHash === entry.hash">Loading...</small>
+                  </td>
+                  <td>
+                    <strong>{{ entry.message }}</strong>
+                  </td>
+                  <td>
+                    <span :title="entry.authorEmail">{{ entry.authorName }}</span>
+                  </td>
+                  <td>
+                    <time :datetime="entry.dateTime" :title="fullLogDate(entry.dateTime)">
+                      {{ formatLogDate(entry.dateTime) }}
+                    </time>
+                    <small>{{ entry.time }}</small>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else class="clean-state">
+            No commits found.
+          </div>
+        </section>
+      </div>
+
+      <div
+        v-else-if="activeDetailTab === 'scripts'"
         id="npm-scripts-panel"
         class="detail-layout scripts-tab-layout"
         role="tabpanel"
@@ -529,6 +693,122 @@ function triggerCommitConfetti() {
       <button type="button" class="secondary" :disabled="isDetailLoading" @click="$emit('refresh')">
         Retry
       </button>
+    </div>
+
+    <div
+      v-if="selectedCommitDetails || commitDetailsLoadingHash || commitDetailsError"
+      class="modal-backdrop commit-detail-backdrop"
+      role="presentation"
+      @click.self="closeCommitDetails"
+    >
+      <section
+        class="commit-detail-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="commit-detail-title"
+        aria-live="polite"
+      >
+        <header class="commit-detail-header">
+          <div class="commit-detail-title-row">
+            <div>
+              <span>Commit details</span>
+              <h2 id="commit-detail-title">
+                {{
+                  commitDetailsError
+                    ? "Could not load commit details"
+                    : selectedCommitDetails?.message ?? "Loading commit details..."
+                }}
+              </h2>
+            </div>
+            <button type="button" class="secondary" @click="closeCommitDetails">Close</button>
+          </div>
+          <code v-if="selectedCommitDetails" :title="selectedCommitDetails.fullHash">
+            {{ selectedCommitDetails.fullHash }}
+          </code>
+        </header>
+
+        <div v-if="commitDetailsError" class="commit-detail-empty error">
+          {{ commitDetailsError }}
+        </div>
+
+        <div
+          v-else-if="commitDetailsLoadingHash && !selectedCommitDetails"
+          class="commit-detail-empty"
+        >
+          Loading commit details...
+        </div>
+
+        <template v-else-if="selectedCommitDetails">
+          <div class="commit-detail-scroll">
+            <p v-if="selectedCommitDetails.body" class="commit-detail-body">
+              {{ selectedCommitDetails.body }}
+            </p>
+
+            <dl class="commit-detail-meta">
+              <div>
+                <dt>Author</dt>
+                <dd>
+                  <span>{{ selectedCommitDetails.authorName }}</span>
+                  <small>{{ selectedCommitDetails.authorEmail }}</small>
+                </dd>
+              </div>
+              <div>
+                <dt>Date</dt>
+                <dd>
+                  <time
+                    :datetime="selectedCommitDetails.dateTime"
+                    :title="fullLogDate(selectedCommitDetails.dateTime)"
+                  >
+                    {{ formatLogDate(selectedCommitDetails.dateTime) }}
+                  </time>
+                  <small>{{ selectedCommitDetails.time }}</small>
+                </dd>
+              </div>
+              <div>
+                <dt>Files</dt>
+                <dd>
+                  <span>{{ selectedCommitDetails.files.length }}</span>
+                  <small>changed</small>
+                </dd>
+              </div>
+            </dl>
+
+            <div class="commit-detail-content">
+              <section class="commit-files-section">
+                <div class="commit-detail-section-heading">
+                  <h4>Changed files</h4>
+                  <span>{{ selectedCommitDetails.files.length }}</span>
+                </div>
+                <ul v-if="selectedCommitDetails.files.length > 0" class="commit-file-list">
+                  <li v-for="file in selectedCommitDetails.files" :key="`${file.status}-${file.path}`">
+                    <span class="commit-file-status">{{ file.status }}</span>
+                    <span class="commit-file-path">
+                      <strong>{{ file.path }}</strong>
+                      <small v-if="file.originalPath">from {{ file.originalPath }}</small>
+                    </span>
+                    <code v-if="fileChangeSummary(file)">{{ fileChangeSummary(file) }}</code>
+                  </li>
+                </ul>
+                <p v-else class="commit-detail-empty compact">
+                  No changed files found for this commit.
+                </p>
+              </section>
+
+              <section class="commit-diff-section">
+                <div class="commit-detail-section-heading">
+                  <h4>Patch</h4>
+                </div>
+                <pre class="status-diff-output commit-diff-output"><code><span
+                  v-for="line in selectedCommitDiffLines"
+                  :key="line.key"
+                  class="diff-line"
+                  :class="line.className"
+                ><span class="diff-line-prefix">{{ line.prefix }}</span><span>{{ line.content }}</span></span></code></pre>
+              </section>
+            </div>
+          </div>
+        </template>
+      </section>
     </div>
 
     <div

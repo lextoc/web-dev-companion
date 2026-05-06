@@ -23,6 +23,14 @@ export interface RepositoryGitLogEntry extends GitLogEntry {
   repoName: string
 }
 
+export interface CommitChangedFile {
+  path: string
+  originalPath?: string
+  status: string
+  additions?: number
+  deletions?: number
+}
+
 export interface GitStatusEntry {
   path: string
   originalPath?: string
@@ -115,6 +123,18 @@ export interface CommitRequest {
   message: string
 }
 
+export interface CommitDetailsRequest {
+  repoPath: string
+  hash: string
+}
+
+export interface CommitDetails extends GitLogEntry {
+  fullHash: string
+  body: string
+  files: CommitChangedFile[]
+  diff: string
+}
+
 export interface RepositoryActionRequest {
   repoPath: string
   editorCommand?: string
@@ -172,6 +192,7 @@ export interface RepositoryApi {
   stageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
   unstageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
   diffFile: (request: StatusFileDiffRequest) => Promise<StatusFileDiff>
+  commitDetails: (request: CommitDetailsRequest) => Promise<CommitDetails>
   commit: (request: CommitRequest) => Promise<RepositoryDetails>
   openInFileManager: (request: RepositoryActionRequest) => Promise<boolean>
   openInEditor: (request: RepositoryActionRequest) => Promise<boolean>

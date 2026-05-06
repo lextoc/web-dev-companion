@@ -3,6 +3,8 @@ import path from 'node:path'
 import { spawn } from 'node:child_process'
 import type {
   CheckoutBranchRequest,
+  CommitDetails,
+  CommitDetailsRequest,
   CheckoutRemoteBranchRequest,
   CommitRequest,
   DeleteBranchRequest,
@@ -19,6 +21,7 @@ import {
   hasStagedOrUnstagedChanges,
   isGitAncestor,
   normalizeRepositoryPath,
+  readCommitChangedFiles,
   readGitBranches,
   readGitLogEntries,
   readGitRemoteBranches,
@@ -435,6 +438,51 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     }
   }
 
+  async function readCommitDetails(request: CommitDetailsRequest): Promise<CommitDetails> {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+    const commitHash = request.hash.trim()
+
+    if (!commitHash) {
+      throw new Error('Commit hash is required.')
+    }
+
+    const fullHash = await runGit(normalizedPath, ['rev-parse', '--verify', `${commitHash}^{commit}`])
+    const fieldSeparator = '\x1f'
+    const detailsOutput = await runGit(normalizedPath, [
+      'show',
+      '--no-patch',
+      `--format=%H%x1f%h%x1f%cr%x1f%cI%x1f%an%x1f%ae%x1f%s%x1f%b`,
+      fullHash,
+    ])
+    const [resolvedHash = fullHash, shortHash = commitHash, time = '', dateTime = '', authorName = '', authorEmail = '', message = '', ...bodyParts] =
+      detailsOutput.split(fieldSeparator)
+    const [files, diff] = await Promise.all([
+      readCommitChangedFiles(normalizedPath, resolvedHash),
+      tryRunGit(normalizedPath, [
+        'show',
+        '--format=',
+        '--patch',
+        '--no-ext-diff',
+        '--find-renames',
+        '--find-copies',
+        resolvedHash,
+      ]),
+    ])
+
+    return {
+      fullHash: resolvedHash,
+      hash: shortHash,
+      time,
+      dateTime,
+      authorName,
+      authorEmail,
+      message,
+      body: bodyParts.join(fieldSeparator).trim(),
+      files,
+      diff: diff || 'No diff output available for this commit.',
+    }
+  }
+
   async function stageFiles(request: StatusFileRequest): Promise<RepositoryDetails> {
     const normalizedPath = await normalizeRepositoryPath(request.repoPath)
     const statusPaths = normalizeStatusPaths(request.paths)
@@ -483,6 +531,7 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     commit,
     deleteBranch,
     diffFile,
+    readCommitDetails,
     listRepositories,
     openInEditor,
     openInFileManager,

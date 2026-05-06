@@ -4,6 +4,7 @@ import path from 'node:path'
 import { promisify } from 'node:util'
 import type {
   GitBranchEntry,
+  CommitChangedFile,
   GitLogEntry,
   GitRemoteBranchEntry,
   GitStatusEntry,
@@ -127,6 +128,86 @@ export async function readGitLogEntries(repoPath: string): Promise<GitLogEntry[]
         authorName,
         authorEmail,
         message,
+      }
+    })
+}
+
+function parseNumberStat(value: string) {
+  if (value === '-') {
+    return undefined
+  }
+
+  const parsed = Number(value)
+
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+function commitFileStatusLabel(status: string) {
+  const statusCode = status[0] || ''
+
+  if (statusCode === 'M') {
+    return 'Modified'
+  }
+
+  if (statusCode === 'A') {
+    return 'Added'
+  }
+
+  if (statusCode === 'D') {
+    return 'Deleted'
+  }
+
+  if (statusCode === 'R') {
+    return 'Renamed'
+  }
+
+  if (statusCode === 'C') {
+    return 'Copied'
+  }
+
+  return 'Changed'
+}
+
+export async function readCommitChangedFiles(repoPath: string, commitHash: string): Promise<CommitChangedFile[]> {
+  const [nameStatusOutput, numstatOutput] = await Promise.all([
+    tryRunGit(repoPath, ['diff-tree', '--no-commit-id', '--name-status', '-r', '--root', '-M', '-C', commitHash]),
+    tryRunGit(repoPath, ['diff-tree', '--no-commit-id', '--numstat', '-r', '--root', '-M', '-C', commitHash]),
+  ])
+  const statsByPath = new Map<string, Pick<CommitChangedFile, 'additions' | 'deletions'>>()
+  const statsList: Array<Pick<CommitChangedFile, 'additions' | 'deletions'>> = []
+
+  for (const line of numstatOutput.split('\n').filter(Boolean)) {
+    const [additions = '', deletions = '', ...pathParts] = line.split('\t')
+    const changedPath = pathParts[pathParts.length - 1]
+    const stats = {
+      additions: parseNumberStat(additions),
+      deletions: parseNumberStat(deletions),
+    }
+
+    if (!changedPath) {
+      continue
+    }
+
+    statsByPath.set(changedPath, stats)
+    statsList.push(stats)
+  }
+
+  return nameStatusOutput
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, index) => {
+      const [rawStatus = '', firstPath = '', secondPath = ''] = line.split('\t')
+      const path = secondPath || firstPath
+      const originalPath = secondPath ? firstPath : undefined
+      const stats = statsByPath.get(path) ?? statsList[index]
+
+      return {
+        path,
+        originalPath,
+        status: commitFileStatusLabel(rawStatus),
+        additions: stats?.additions,
+        deletions: stats?.deletions,
       }
     })
 }

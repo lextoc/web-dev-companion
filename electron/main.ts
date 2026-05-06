@@ -3,6 +3,7 @@ import type { BrowserWindow as BrowserWindowType, OpenDialogOptions } from 'elec
 import type {
   CheckoutBranchRequest,
   CheckoutRemoteBranchRequest,
+  CommitDetailsRequest,
   CommitRequest,
   DeleteBranchRequest,
   DesktopMenuCommand,
@@ -294,6 +295,9 @@ function registerRepositoryHandlers() {
   )
   ipcMain.handle('repositories:diff-file', (_event, request: StatusFileDiffRequest) =>
     repositoryService.diffFile(request),
+  )
+  ipcMain.handle('repositories:commit-details', (_event, request: CommitDetailsRequest) =>
+    repositoryService.readCommitDetails(request),
   )
   ipcMain.handle('repositories:commit', (_event, request: CommitRequest) => repositoryService.commit(request))
   ipcMain.handle('repositories:open-in-file-manager', (_event, request: RepositoryActionRequest) =>

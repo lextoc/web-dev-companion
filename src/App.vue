@@ -859,6 +859,28 @@ async function stageFiles(request: { paths: string[]; actionKey: string }) {
   )
 }
 
+async function stageAllChanges() {
+  if (!selectedDetails.value || pendingStatusActionKey.value || isLoading.value || isDetailLoading.value) {
+    return
+  }
+
+  const paths = [
+    ...selectedDetails.value.gitStatus.unstaged,
+    ...selectedDetails.value.gitStatus.untracked,
+    ...selectedDetails.value.gitStatus.conflicted,
+  ].map((entry) => entry.path)
+  const uniquePaths = [...new Set(paths)]
+
+  if (uniquePaths.length === 0) {
+    return
+  }
+
+  await stageFiles({
+    paths: uniquePaths,
+    actionKey: `stage:${uniquePaths.join('\n')}`,
+  })
+}
+
 async function unstageFiles(request: { paths: string[]; actionKey: string }) {
   if (!selectedDetails.value) {
     return
@@ -1222,6 +1244,27 @@ function handleHistoryNavigation(event: PopStateEvent) {
 
 function handleGlobalKeydown(event: KeyboardEvent) {
   const key = event.key.toLowerCase()
+
+  if (
+    (event.metaKey || event.ctrlKey) &&
+    key === 'a' &&
+    !event.altKey &&
+    !event.shiftKey &&
+    !isEditableTarget(event.target)
+  ) {
+    if (
+      selectedDetails.value &&
+      !isCommandPaletteOpen.value &&
+      !selectedTerminal.value &&
+      !confirmationDialog.value &&
+      !isSettingsOpen.value
+    ) {
+      event.preventDefault()
+      void stageAllChanges()
+    }
+
+    return
+  }
 
   if ((event.metaKey || event.ctrlKey) && key === 'k') {
     event.preventDefault()

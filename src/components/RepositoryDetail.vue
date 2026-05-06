@@ -307,6 +307,9 @@ function triggerCommitConfetti() {
                     rows="3"
                     placeholder="Describe this change"
                     :disabled="pendingStatusActionKey === 'commit'"
+                    @keydown.meta.enter.prevent="
+                      submitCommit(selectedDetails.gitStatus, isDetailLoading, pendingStatusActionKey)
+                    "
                   ></textarea>
                 </div>
 

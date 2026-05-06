@@ -45,6 +45,7 @@ function saveSettings() {
     autoRefreshIntervalMs: Number(draft.autoRefreshIntervalMs) || DEFAULT_APP_SETTINGS.autoRefreshIntervalMs,
     commitCelebrations: draft.commitCelebrations,
     editorCommand: draft.editorCommand.trim() || DEFAULT_APP_SETTINGS.editorCommand,
+    skipBranchSyncConfirmation: draft.skipBranchSyncConfirmation,
     themeMode: draft.themeMode,
   })
 }
@@ -84,6 +85,14 @@ const autoRefreshOptions = AUTO_REFRESH_INTERVAL_OPTIONS.map((option) => ({ ...o
         <span>
           <strong>Commit celebrations</strong>
           <small>Rainbow commit and sync buttons, plus confetti on successful submit.</small>
+        </span>
+      </label>
+
+      <label class="settings-toggle-row">
+        <input v-model="draft.skipBranchSyncConfirmation" type="checkbox" />
+        <span>
+          <strong>Skip sync confirmation</strong>
+          <small>Run branch push and pull actions without asking first.</small>
         </span>
       </label>
 

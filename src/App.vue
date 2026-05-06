@@ -730,11 +730,11 @@ async function syncBranch(branchName: string) {
 
   const branch = selectedDetails.value.gitBranches.find((entry) => entry.name === branchName)
   const action = branchSyncAction(branch)
-  const confirmed = await confirmAction({
+  const confirmed = appSettings.value.skipBranchSyncConfirmation || (await confirmAction({
     title: action.confirmLabel,
     message: `${action.message} Repository: ${selectedDetails.value.name}.`,
     confirmLabel: action.confirmLabel,
-  })
+  }))
 
   if (!confirmed) {
     return

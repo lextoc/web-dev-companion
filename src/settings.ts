@@ -4,6 +4,7 @@ export interface AppSettings {
   autoRefreshIntervalMs: number
   commitCelebrations: boolean
   editorCommand: string
+  skipBranchSyncConfirmation: boolean
   themeMode: ThemeMode
 }
 
@@ -17,5 +18,6 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   autoRefreshIntervalMs: 60 * 1000,
   commitCelebrations: true,
   editorCommand: 'code',
+  skipBranchSyncConfirmation: false,
   themeMode: 'system',
 }

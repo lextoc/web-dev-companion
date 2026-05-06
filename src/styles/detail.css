@@ -445,7 +445,8 @@
 }
 
 .refresh-button.settling .button-icon {
-  animation: refresh-settle var(--refresh-settle-duration, 220ms) linear forwards;
+  animation: refresh-settle var(--refresh-settle-duration, 220ms) linear
+    forwards;
 }
 
 @keyframes refresh-spin {
@@ -493,21 +494,24 @@
 
 .detail-tabs {
   display: flex;
-  position: relative;
-  z-index: 2;
+  position: sticky;
+  z-index: 12;
+  top: calc(var(--main-pane-top-padding, 0px) * -1);
   align-self: start;
-  width: fit-content;
-  max-width: 100%;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  margin-right: calc(var(--main-pane-right-padding, 0px) * -1);
   margin-bottom: -1px;
-  padding: 0 0 0 16px;
+  padding: var(--main-pane-top-padding, 0px)
+    calc(16px + var(--main-pane-right-padding, 0px)) 0 16px;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--border-soft) 72%, transparent);
+  background: var(--app-bg);
 }
 
 .detail-view:has(> .detail-tabs) {
   gap: 0;
-}
-
-.detail-tabs:has(#git-overview-tab.active) {
-  /* padding-left: 0; */
 }
 
 .detail-tabs button {
@@ -599,7 +603,8 @@
   position: relative;
   gap: 16px;
   border: 1px solid color-mix(in srgb, var(--border-control) 82%, transparent);
-  border-radius: 8px;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
   padding: 18px 16px 16px;
   background: linear-gradient(
     180deg,
@@ -681,8 +686,8 @@
 }
 
 .git-log-table-wrap {
-  max-height: min(680px, calc(100vh - 246px));
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 .git-log-table {
@@ -695,7 +700,8 @@
 
 .git-log-table th,
 .git-log-table td {
-  border-bottom: 1px solid color-mix(in srgb, var(--border-soft) 72%, transparent);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--border-soft) 72%, transparent);
   padding: 10px 12px;
   text-align: left;
   vertical-align: top;
@@ -1685,8 +1691,10 @@ pre {
   bottom: 8px;
   width: 14px;
   height: 14px;
-  border-right: 2px solid color-mix(in srgb, var(--border-muted) 58%, transparent);
-  border-bottom: 2px solid color-mix(in srgb, var(--border-muted) 58%, transparent);
+  border-right: 2px solid
+    color-mix(in srgb, var(--border-muted) 58%, transparent);
+  border-bottom: 2px solid
+    color-mix(in srgb, var(--border-muted) 58%, transparent);
   border-radius: 0 0 4px;
   pointer-events: none;
 }
@@ -1707,8 +1715,10 @@ pre {
   width: 100%;
   min-height: 96px;
   resize: vertical;
-  border: 1px solid color-mix(in srgb, var(--border-control) 88%, var(--brand-ring));
-  border-left: 3px solid color-mix(in srgb, var(--brand) 58%, var(--border-control));
+  border: 1px solid
+    color-mix(in srgb, var(--border-control) 88%, var(--brand-ring));
+  border-left: 3px solid
+    color-mix(in srgb, var(--brand) 58%, var(--border-control));
   border-radius: 8px;
   padding: 12px 14px 18px;
   background:

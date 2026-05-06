@@ -25,11 +25,13 @@
 }
 
 .main-pane {
+  --main-pane-right-padding: var(--app-layout-gap);
+  --main-pane-top-padding: 12px;
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
   overflow: auto;
-  padding: 12px var(--app-layout-gap) 24px 0;
+  padding: var(--main-pane-top-padding) var(--main-pane-right-padding) 24px 0;
 }
 
 .top-bar,

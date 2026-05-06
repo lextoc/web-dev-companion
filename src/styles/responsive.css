@@ -42,8 +42,8 @@
   }
 
   .main-pane {
+    --main-pane-right-padding: 0px;
     min-height: 0;
-    padding-right: 0;
   }
 
   .active-terminals {
@@ -300,8 +300,8 @@
   }
 
   .main-pane {
+    --main-pane-right-padding: 0px;
     min-height: 0;
-    padding-right: 0;
   }
 
   .active-terminals {

@@ -811,6 +811,15 @@ const {
 const currentDirectory = __dirname;
 const appName = "Web Dev Companion";
 const repositoriesFileName = "repositories.json";
+const refreshCommandThrottleMs = 1e3;
+const windowBounds = {
+  width: 1360,
+  height: 820,
+  minWidth: 1360,
+  minHeight: 820,
+  maxWidth: 1800,
+  maxHeight: 1100
+};
 app.setName(appName);
 process.env.APP_ROOT = path.join(currentDirectory, "..");
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
@@ -818,6 +827,7 @@ const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
 const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
 let win;
+let lastRefreshCommandAt = 0;
 function repositoriesFilePath() {
   return path.join(app.getPath("userData"), repositoriesFileName);
 }
@@ -850,6 +860,23 @@ function sendMenuCommand(command) {
     return;
   }
   win.webContents.send("desktop:menu-command", command);
+}
+function sendThrottledRefreshCommand() {
+  const now = Date.now();
+  if (now - lastRefreshCommandAt < refreshCommandThrottleMs) {
+    return;
+  }
+  lastRefreshCommandAt = now;
+  sendMenuCommand("refresh");
+}
+function isRepositoryRefreshShortcut(input) {
+  return input.type === "keyDown" && input.key.toLowerCase() === "r" && (input.meta || input.control) && !input.alt && !input.shift;
+}
+function isZoomShortcut(input) {
+  if (input.type !== "keyDown" || !input.meta && !input.control || input.alt) {
+    return false;
+  }
+  return ["+", "=", "-", "_", "0"].includes(input.key);
 }
 function configureApplicationMenu() {
   const isMac = process.platform === "darwin";
@@ -902,12 +929,27 @@ function configureApplicationMenu() {
       ]
     },
     {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        { role: "pasteAndMatchStyle" },
+        { role: "delete" },
+        { type: "separator" },
+        { role: "selectAll" }
+      ]
+    },
+    {
       label: "Repository",
       submenu: [
         {
           label: "Refresh",
           accelerator: isMac ? "Command+R" : "Ctrl+R",
-          click: () => sendMenuCommand("refresh")
+          click: () => sendThrottledRefreshCommand()
         },
         { type: "separator" },
         {
@@ -940,13 +982,8 @@ function configureApplicationMenu() {
     {
       label: "View",
       submenu: [
-        { role: "reload" },
         { role: "forceReload" },
         { role: "toggleDevTools" },
-        { type: "separator" },
-        { role: "resetZoom" },
-        { role: "zoomIn" },
-        { role: "zoomOut" },
         { type: "separator" },
         { role: "togglefullscreen" }
       ]
@@ -1046,10 +1083,7 @@ async function chooseAndAddRepository() {
 }
 function createWindow() {
   win = new BrowserWindow({
-    width: 1360,
-    height: 820,
-    minWidth: 1360,
-    minHeight: 820,
+    ...windowBounds,
     title: appName,
     icon: appIconPath(),
     ...process.platform === "darwin" ? {
@@ -1062,11 +1096,25 @@ function createWindow() {
       preload: path.join(currentDirectory, "preload.js")
     }
   });
+  win.webContents.setZoomFactor(1);
+  win.webContents.setVisualZoomLevelLimits(1, 1);
   win.on("focus", () => {
     win == null ? void 0 : win.webContents.send("repositories:window-focus");
   });
   win.webContents.on("did-finish-load", () => {
     win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
+  });
+  win.webContents.on("before-input-event", (event, input) => {
+    if (isZoomShortcut(input)) {
+      event.preventDefault();
+      win == null ? void 0 : win.webContents.setZoomFactor(1);
+      return;
+    }
+    if (!isRepositoryRefreshShortcut(input)) {
+      return;
+    }
+    event.preventDefault();
+    sendThrottledRefreshCommand();
   });
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);

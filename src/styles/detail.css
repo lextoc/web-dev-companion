@@ -15,7 +15,6 @@
   margin-left: calc(var(--shell-x) * -1);
   margin-top: calc(var(--top-bar-gap) * -1);
   border: 0;
-  border-bottom: 1px solid var(--border);
   border-radius: 0;
   padding: 10px var(--app-layout-gap) 10px var(--shell-x);
   background: color-mix(in srgb, var(--app-bg) 78%, var(--surface));
@@ -106,12 +105,11 @@
   gap: 12px;
   max-height: min(720px, calc(100vh - 150px));
   overflow: auto;
-  border: 1px solid var(--border);
-  border-top: 3px solid var(--accent);
+  border: 0;
   border-radius: 8px;
   padding: 12px;
   background: var(--surface);
-  box-shadow: var(--shadow);
+  box-shadow: none;
 }
 
 .branch-menu-close {
@@ -254,7 +252,7 @@
 .detail-panel {
   display: grid;
   gap: 12px;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 8px;
   padding: 12px;
   background: var(--surface);
@@ -263,8 +261,7 @@
 .commit-panel {
   grid-column: 1 / -1;
   gap: 14px;
-  border-top: 3px solid var(--accent);
-  border-top-color: var(--accent);
+  border-top: 0;
   background:
     linear-gradient(
       90deg,
@@ -272,7 +269,7 @@
       transparent 44%
     ),
     var(--surface-soft);
-  box-shadow: var(--shadow);
+  box-shadow: none;
 }
 
 .git-work-column .commit-panel {
@@ -280,7 +277,6 @@
 }
 
 .commit-panel.ready {
-  border-top-color: var(--brand);
   background:
     linear-gradient(
       90deg,
@@ -321,7 +317,7 @@
 .commit-changes-section {
   display: grid;
   gap: 10px;
-  border-top: 1px solid var(--border-soft);
+  border-top: 0;
   padding-top: 12px;
 }
 
@@ -335,8 +331,7 @@
   align-self: start;
   height: min(760px, calc(100vh - 136px));
   min-height: 480px;
-  border-top: 3px solid var(--accent);
-  border-top-color: var(--accent);
+  border-top: 0;
   background:
     linear-gradient(
       180deg,
@@ -349,7 +344,7 @@
 .remotes-panel {
   grid-column: 1 / -1;
   gap: 10px;
-  border-style: dashed;
+  border: 0;
   background: var(--surface-soft);
 }
 
@@ -435,7 +430,7 @@ pre {
   max-height: 420px;
   margin: 0;
   overflow: auto;
-  border: 1px solid var(--terminal-border);
+  border: 0;
   border-radius: 8px;
   padding: 14px;
   background: var(--terminal-surface);
@@ -481,7 +476,6 @@ pre {
   gap: 8px;
   position: relative;
   border: 0;
-  border-bottom: 1px solid var(--border-soft);
   border-radius: 0;
   padding: 12px 8px 12px 16px;
   background: transparent;
@@ -670,7 +664,7 @@ pre {
 .remote-branch-checkout {
   display: grid;
   gap: 7px;
-  border: 1px solid var(--border-soft);
+  border: 0;
   border-radius: 7px;
   padding: 8px;
   background: var(--surface-soft);
@@ -721,7 +715,7 @@ pre {
 }
 
 .clean-state {
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 8px;
   padding: 10px 12px;
   background: var(--surface);
@@ -743,7 +737,7 @@ pre {
 .commit-form {
   display: grid;
   gap: 10px;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 8px;
   padding: 10px;
   background: var(--surface);
@@ -769,9 +763,7 @@ pre {
 }
 
 .commit-panel.ready .commit-form-wide {
-  border-color: color-mix(in srgb, var(--success-text) 28%, var(--border));
-  border-top-color: transparent;
-  border-top-width: 5px;
+  border: 0;
   background:
     linear-gradient(
       135deg,
@@ -937,7 +929,6 @@ pre {
 }
 
 .commit-panel.ready .commit-queue {
-  border-color: color-mix(in srgb, var(--success-text) 24%, var(--border-soft));
   background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
@@ -946,7 +937,6 @@ pre {
 }
 
 .commit-panel.ready .staged-preview li {
-  border-color: color-mix(in srgb, var(--success-text) 24%, var(--border-soft));
   background: var(--surface);
   box-shadow: none;
 }
@@ -1046,7 +1036,7 @@ pre {
   display: grid;
   grid-column: 1 / -1;
   gap: 8px;
-  border: 1px solid var(--border-soft);
+  border: 0;
   border-radius: 8px;
   padding: 10px;
   background: color-mix(in srgb, var(--surface) 64%, transparent);
@@ -1099,7 +1089,7 @@ pre {
   grid-template-columns: 34px minmax(0, 1fr) auto;
   gap: 7px;
   align-items: center;
-  border: 1px solid color-mix(in srgb, var(--success-text) 16%, var(--border-soft));
+  border: 0;
   border-radius: 6px;
   padding: 6px 8px;
   background: color-mix(in srgb, var(--success-soft) 38%, var(--surface));
@@ -1209,34 +1199,29 @@ pre {
 }
 
 .status-counts div {
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 8px;
   padding: 7px;
   background: var(--surface);
 }
 
 .status-counts div.active {
-  border-color: var(--brand-ring);
   background: var(--surface-hover);
 }
 
 .status-counts div.staged.active {
-  border-color: var(--success-text);
   background: var(--success-soft);
 }
 
 .status-counts div.unstaged.active {
-  border-color: var(--warning-text);
   background: var(--warning-soft);
 }
 
 .status-counts div.untracked.active {
-  border-color: var(--info-text);
   background: var(--info-soft);
 }
 
 .status-counts div.conflicted.active {
-  border-color: var(--danger-text);
   background: var(--danger-soft);
 }
 
@@ -1265,30 +1250,14 @@ pre {
 .git-status-group {
   display: grid;
   gap: 8px;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 8px;
   padding: 10px;
   background: var(--surface-soft);
 }
 
 .git-status-group {
-  border-left-width: 4px;
-}
-
-.git-status-group.staged {
-  border-left-color: var(--success-text);
-}
-
-.git-status-group.unstaged {
-  border-left-color: var(--warning-text);
-}
-
-.git-status-group.untracked {
-  border-left-color: var(--info-text);
-}
-
-.git-status-group.conflicted {
-  border-left-color: var(--danger-text);
+  border-left-width: 0;
 }
 
 .git-branches {
@@ -1325,9 +1294,8 @@ pre {
 }
 
 .git-branch-list li.current {
-  border: 1px solid var(--brand-ring);
   background: var(--surface-hover);
-  box-shadow: inset 3px 0 0 var(--brand);
+  box-shadow: none;
 }
 
 .git-branch-list strong,

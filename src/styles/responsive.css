@@ -64,7 +64,7 @@
     max-height: none;
     grid-template-rows: auto;
     overflow: visible;
-    border: 1px solid var(--border);
+    border: 0;
     border-radius: 8px;
     margin-top: 0;
     order: -1;
@@ -169,7 +169,7 @@
   .repo-quick-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     width: auto;
-    border-top: 1px solid var(--border-soft);
+    border-top: 0;
     border-left: 0;
     padding: 10px;
   }
@@ -251,7 +251,7 @@
     max-height: none;
     grid-template-rows: auto;
     overflow: visible;
-    border: 1px solid var(--border);
+    border: 0;
     border-radius: 8px;
     margin-top: 0;
   }
@@ -268,7 +268,7 @@
 
   .repo-quick-actions {
     width: auto;
-    border-top: 1px solid var(--border-soft);
+    border-top: 0;
     border-left: 0;
     padding: 10px;
   }

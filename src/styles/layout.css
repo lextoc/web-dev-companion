@@ -42,12 +42,11 @@
   width: calc(100% + (var(--shell-x) * 2));
   min-height: var(--top-bar-height);
   border: 0;
-  border-bottom: 1px solid var(--border);
   border-radius: 0;
   margin: 0 calc(var(--shell-x) * -1) var(--top-bar-gap);
   padding: 10px var(--shell-x);
   background: color-mix(in srgb, var(--app-bg) 78%, var(--surface));
-  box-shadow: 0 8px 24px rgba(23, 32, 42, 0.08);
+  box-shadow: none;
   -webkit-app-region: drag;
   backdrop-filter: blur(18px);
 }

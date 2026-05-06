@@ -4,8 +4,10 @@
   "version": "0.1.0-alpha.0",
   "description": "Desktop companion for managing local web development repositories.",
   "author": "Alexander Claes",
+  "packageManager": "pnpm@10.14.0",
   "scripts": {
     "dev": "vite",
+    "test": "vue-tsc --noEmit",
     "build": "vue-tsc && vite build && electron-builder",
     "release:alpha": "vue-tsc && vite build && electron-builder --mac --win --x64",
     "release:alpha:mac": "vue-tsc && vite build && electron-builder --mac",

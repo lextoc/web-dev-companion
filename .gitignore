@@ -9,8 +9,11 @@ lerna-debug.log*
 
 node_modules
 dist
+dist-electron
 dist-ssr
 release
+coverage
+.vite
 *.local
 
 # Editor directories and files

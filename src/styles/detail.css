@@ -506,7 +506,7 @@
   padding: var(--main-pane-top-padding, 0px)
     calc(16px + var(--main-pane-right-padding, 0px)) 0 16px;
   border-bottom: 1px solid
-    color-mix(in srgb, var(--border-soft) 72%, transparent);
+    color-mix(in srgb, var(--border-control) 82%, transparent);
   background: var(--app-bg);
 }
 

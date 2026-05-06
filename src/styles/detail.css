@@ -18,12 +18,11 @@
   border: 0;
   border-radius: 0;
   padding: 7px var(--shell-x);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface-subtle) 72%, var(--app-bg)),
-      color-mix(in srgb, var(--surface-subtle) 54%, var(--app-bg))
-    );
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-subtle) 72%, var(--app-bg)),
+    color-mix(in srgb, var(--surface-subtle) 54%, var(--app-bg))
+  );
   -webkit-app-region: no-drag;
 }
 
@@ -290,30 +289,99 @@
 
 .detail-tabs {
   display: flex;
+  position: relative;
+  z-index: 2;
+  align-self: start;
   width: fit-content;
   max-width: 100%;
-  gap: 4px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 4px;
-  background: var(--surface-subtle);
+  margin-bottom: -1px;
+  padding: 0 0 0 16px;
+}
+
+.detail-view:has(> .detail-tabs) {
+  gap: 0;
+}
+
+.detail-tabs:has(#git-overview-tab.active) {
+  /* padding-left: 0; */
 }
 
 .detail-tabs button {
   display: inline-flex;
-  min-height: 34px;
+  position: relative;
+  min-height: 36px;
   align-items: center;
   gap: 8px;
+  overflow: hidden;
+  border-radius: 7px 7px 0 0;
+  border-bottom: 0;
   border-color: transparent;
-  padding: 0 12px;
-  font-size: 0.82rem;
+  margin-bottom: 1px;
+  margin-left: -1px;
+  padding: 3px 18px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 78%, transparent),
+    color-mix(in srgb, var(--surface-soft) 74%, transparent)
+  );
+  color: var(--muted-strong);
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.detail-tabs button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 10px;
+  left: 10px;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  background: transparent;
+}
+
+.detail-tabs button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--border-control) 82%, transparent);
+  border-bottom-color: var(--border-control);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.detail-tabs button.active:hover:not(:disabled) {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 92%, var(--brand-ring)),
+    var(--surface)
+  );
 }
 
 .detail-tabs button.active {
-  border-color: var(--border-control);
-  background: var(--surface);
+  z-index: 1;
+  overflow: visible;
+  min-height: 36px;
+  margin-left: -1px;
+  border-color: var(--brand);
+  border-bottom-color: var(--surface);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 92%, var(--brand-ring)),
+    var(--surface)
+  );
   color: var(--brand-text-hover);
-  box-shadow: var(--shadow);
+}
+
+.detail-tabs button.active::before {
+  background: linear-gradient(90deg, var(--brand), var(--accent));
+}
+
+.detail-tabs button.active::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -2px;
+  left: 0;
+  height: 2px;
+  background: var(--surface);
 }
 
 .tab-count {
@@ -322,14 +390,16 @@
   height: 22px;
   place-items: center;
   border-radius: 999px;
-  background: var(--surface-subtle);
+  border: 1px solid color-mix(in srgb, var(--border-control) 62%, transparent);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
   color: var(--muted-strong);
   font-size: 0.72rem;
   font-weight: 900;
 }
 
 .detail-tabs button.active .tab-count {
-  background: var(--success-soft);
+  border-color: color-mix(in srgb, var(--success-text) 32%, transparent);
+  background: color-mix(in srgb, var(--success-soft) 82%, var(--surface));
   color: var(--success-text);
 }
 
@@ -340,11 +410,24 @@
   align-items: start;
 }
 
+.detail-tabs + .detail-layout {
+  position: relative;
+  gap: 16px;
+  border: 1px solid var(--border-control);
+  border-radius: 8px;
+  padding: 18px 14px 14px;
+  background: linear-gradient(
+    180deg,
+    var(--surface),
+    color-mix(in srgb, var(--surface-soft) 72%, var(--surface))
+  );
+}
+
 .git-main-grid {
   display: grid;
   min-width: 0;
   grid-template-columns: 1fr;
-  gap: 14px;
+  gap: 16px;
   align-items: stretch;
 }
 
@@ -352,7 +435,7 @@
   display: grid;
   min-width: 0;
   align-content: start;
-  gap: 14px;
+  gap: 16px;
 }
 
 .scripts-tab-layout {
@@ -649,12 +732,11 @@ pre {
   gap: 12px;
   border-color: transparent;
   padding: 12px;
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--surface) 82%, transparent),
-      color-mix(in srgb, var(--surface-soft) 72%, transparent)
-    );
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--surface) 82%, transparent),
+    color-mix(in srgb, var(--surface-soft) 72%, transparent)
+  );
   transition:
     border-color 160ms ease,
     background 160ms ease,
@@ -665,11 +747,13 @@ pre {
   border: 0;
   background:
     linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--success-soft) 84%, var(--surface)),
-      color-mix(in srgb, var(--surface) 82%, var(--success-soft))
-    ) padding-box,
-    linear-gradient(90deg, var(--brand), var(--success-text), var(--accent)) border-box;
+        135deg,
+        color-mix(in srgb, var(--success-soft) 84%, var(--surface)),
+        color-mix(in srgb, var(--surface) 82%, var(--success-soft))
+      )
+      padding-box,
+    linear-gradient(90deg, var(--brand), var(--success-text), var(--accent))
+      border-box;
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--surface) 70%, transparent),
     0 12px 26px color-mix(in srgb, var(--success-text) 12%, transparent);
@@ -685,7 +769,11 @@ pre {
 }
 
 .commit-panel.ready .commit-form textarea {
-  border-color: color-mix(in srgb, var(--success-text) 32%, var(--border-control));
+  border-color: color-mix(
+    in srgb,
+    var(--success-text) 32%,
+    var(--border-control)
+  );
   background: var(--surface);
   color: var(--text);
 }
@@ -697,14 +785,14 @@ pre {
 
 .commit-panel.ready .commit-submit:not(:disabled) {
   border-color: color-mix(in srgb, var(--success-text) 82%, var(--brand));
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--success-text) 84%, var(--brand)),
-      color-mix(in srgb, var(--brand) 82%, var(--success-text))
-    );
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--success-text) 84%, var(--brand)),
+    color-mix(in srgb, var(--brand) 82%, var(--success-text))
+  );
   color: var(--brand-contrast);
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--success-text) 22%, transparent);
+  box-shadow: 0 8px 18px
+    color-mix(in srgb, var(--success-text) 22%, transparent);
 }
 
 .commit-panel.ready .commit-submit:not(:disabled):hover {
@@ -717,20 +805,19 @@ pre {
   position: relative;
   overflow: hidden;
   border-color: rgba(255, 255, 255, 0.42);
-  background:
-    linear-gradient(
-      90deg,
-      #ff4f8b 0%,
-      #ff4f8b 10%,
-      #ff8f3d 18%,
-      #ffdd4d 28%,
-      #59d66f 40%,
-      #43d9ff 54%,
-      #8b67ff 68%,
-      #d85dff 80%,
-      #ff4f8b 92%,
-      #ff4f8b 100%
-    );
+  background: linear-gradient(
+    90deg,
+    #ff4f8b 0%,
+    #ff4f8b 10%,
+    #ff8f3d 18%,
+    #ffdd4d 28%,
+    #59d66f 40%,
+    #43d9ff 54%,
+    #8b67ff 68%,
+    #d85dff 80%,
+    #ff4f8b 92%,
+    #ff4f8b 100%
+  );
   background-position: 0% 50%;
   background-size: 520% 100%;
   color: #ffffff;
@@ -746,13 +833,12 @@ pre {
   content: "";
   position: absolute;
   inset: -80% -30%;
-  background:
-    linear-gradient(
-      115deg,
-      transparent 30%,
-      rgba(255, 255, 255, 0.5) 46%,
-      transparent 62%
-    );
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.5) 46%,
+    transparent 62%
+  );
   pointer-events: none;
   transform: translateX(-52%);
   animation: rainbow-button-sheen 2.8s ease-in-out infinite;
@@ -760,20 +846,19 @@ pre {
 
 .commit-panel.ready.celebration .commit-submit:not(:disabled):hover {
   border-color: rgba(255, 255, 255, 0.58);
-  background:
-    linear-gradient(
-      90deg,
-      #ff347b 0%,
-      #ff347b 10%,
-      #ff7b35 18%,
-      #ffd63d 28%,
-      #43cb67 40%,
-      #2fcdf5 54%,
-      #7656f2 68%,
-      #cf55ff 80%,
-      #ff347b 92%,
-      #ff347b 100%
-    );
+  background: linear-gradient(
+    90deg,
+    #ff347b 0%,
+    #ff347b 10%,
+    #ff7b35 18%,
+    #ffd63d 28%,
+    #43cb67 40%,
+    #2fcdf5 54%,
+    #7656f2 68%,
+    #cf55ff 80%,
+    #ff347b 92%,
+    #ff347b 100%
+  );
   background-size: 520% 100%;
   color: #ffffff;
   animation-duration: 4.5s;
@@ -798,30 +883,131 @@ pre {
   background: var(--confetti-color, #ffbe3d);
   opacity: 0;
   transform: translate(-50%, -50%) rotate(0deg);
-  animation: commit-confetti-pop 900ms cubic-bezier(0.16, 0.92, 0.32, 1) forwards;
+  animation: commit-confetti-pop 900ms cubic-bezier(0.16, 0.92, 0.32, 1)
+    forwards;
 }
 
-.commit-confetti span:nth-child(1) { --confetti-color: #ff4f8b; --confetti-x: -86px; --confetti-y: -64px; --confetti-rotate: -140deg; }
-.commit-confetti span:nth-child(2) { --confetti-color: #ffbe3d; --confetti-x: -58px; --confetti-y: -88px; --confetti-rotate: 90deg; }
-.commit-confetti span:nth-child(3) { --confetti-color: #59d66f; --confetti-x: -24px; --confetti-y: -104px; --confetti-rotate: 170deg; }
-.commit-confetti span:nth-child(4) { --confetti-color: #43d9ff; --confetti-x: 14px; --confetti-y: -92px; --confetti-rotate: -80deg; }
-.commit-confetti span:nth-child(5) { --confetti-color: #8b67ff; --confetti-x: 48px; --confetti-y: -70px; --confetti-rotate: 150deg; }
-.commit-confetti span:nth-child(6) { --confetti-color: #ff6b4a; --confetti-x: 82px; --confetti-y: -44px; --confetti-rotate: -120deg; }
-.commit-confetti span:nth-child(7) { --confetti-color: #43d9ff; --confetti-x: -96px; --confetti-y: -18px; --confetti-rotate: 110deg; }
-.commit-confetti span:nth-child(8) { --confetti-color: #59d66f; --confetti-x: -64px; --confetti-y: 12px; --confetti-rotate: -60deg; }
-.commit-confetti span:nth-child(9) { --confetti-color: #ff4f8b; --confetti-x: -26px; --confetti-y: 34px; --confetti-rotate: 220deg; }
-.commit-confetti span:nth-child(10) { --confetti-color: #ffbe3d; --confetti-x: 18px; --confetti-y: 32px; --confetti-rotate: -180deg; }
-.commit-confetti span:nth-child(11) { --confetti-color: #8b67ff; --confetti-x: 58px; --confetti-y: 14px; --confetti-rotate: 70deg; }
-.commit-confetti span:nth-child(12) { --confetti-color: #59d66f; --confetti-x: 96px; --confetti-y: -12px; --confetti-rotate: -210deg; }
-.commit-confetti span:nth-child(13) { --confetti-color: #ffbe3d; --confetti-x: -42px; --confetti-y: -42px; --confetti-rotate: 120deg; animation-delay: 45ms; }
-.commit-confetti span:nth-child(14) { --confetti-color: #43d9ff; --confetti-x: 40px; --confetti-y: -38px; --confetti-rotate: -90deg; animation-delay: 55ms; }
-.commit-confetti span:nth-child(15) { --confetti-color: #ff4f8b; --confetti-x: -12px; --confetti-y: -72px; --confetti-rotate: 260deg; animation-delay: 35ms; }
-.commit-confetti span:nth-child(16) { --confetti-color: #8b67ff; --confetti-x: 4px; --confetti-y: 58px; --confetti-rotate: -240deg; animation-delay: 65ms; }
-.commit-confetti span:nth-child(17) { --confetti-color: #59d66f; --confetti-x: 72px; --confetti-y: 42px; --confetti-rotate: 160deg; animation-delay: 40ms; }
-.commit-confetti span:nth-child(18) { --confetti-color: #ff6b4a; --confetti-x: -78px; --confetti-y: 46px; --confetti-rotate: -160deg; animation-delay: 50ms; }
+.commit-confetti span:nth-child(1) {
+  --confetti-color: #ff4f8b;
+  --confetti-x: -86px;
+  --confetti-y: -64px;
+  --confetti-rotate: -140deg;
+}
+.commit-confetti span:nth-child(2) {
+  --confetti-color: #ffbe3d;
+  --confetti-x: -58px;
+  --confetti-y: -88px;
+  --confetti-rotate: 90deg;
+}
+.commit-confetti span:nth-child(3) {
+  --confetti-color: #59d66f;
+  --confetti-x: -24px;
+  --confetti-y: -104px;
+  --confetti-rotate: 170deg;
+}
+.commit-confetti span:nth-child(4) {
+  --confetti-color: #43d9ff;
+  --confetti-x: 14px;
+  --confetti-y: -92px;
+  --confetti-rotate: -80deg;
+}
+.commit-confetti span:nth-child(5) {
+  --confetti-color: #8b67ff;
+  --confetti-x: 48px;
+  --confetti-y: -70px;
+  --confetti-rotate: 150deg;
+}
+.commit-confetti span:nth-child(6) {
+  --confetti-color: #ff6b4a;
+  --confetti-x: 82px;
+  --confetti-y: -44px;
+  --confetti-rotate: -120deg;
+}
+.commit-confetti span:nth-child(7) {
+  --confetti-color: #43d9ff;
+  --confetti-x: -96px;
+  --confetti-y: -18px;
+  --confetti-rotate: 110deg;
+}
+.commit-confetti span:nth-child(8) {
+  --confetti-color: #59d66f;
+  --confetti-x: -64px;
+  --confetti-y: 12px;
+  --confetti-rotate: -60deg;
+}
+.commit-confetti span:nth-child(9) {
+  --confetti-color: #ff4f8b;
+  --confetti-x: -26px;
+  --confetti-y: 34px;
+  --confetti-rotate: 220deg;
+}
+.commit-confetti span:nth-child(10) {
+  --confetti-color: #ffbe3d;
+  --confetti-x: 18px;
+  --confetti-y: 32px;
+  --confetti-rotate: -180deg;
+}
+.commit-confetti span:nth-child(11) {
+  --confetti-color: #8b67ff;
+  --confetti-x: 58px;
+  --confetti-y: 14px;
+  --confetti-rotate: 70deg;
+}
+.commit-confetti span:nth-child(12) {
+  --confetti-color: #59d66f;
+  --confetti-x: 96px;
+  --confetti-y: -12px;
+  --confetti-rotate: -210deg;
+}
+.commit-confetti span:nth-child(13) {
+  --confetti-color: #ffbe3d;
+  --confetti-x: -42px;
+  --confetti-y: -42px;
+  --confetti-rotate: 120deg;
+  animation-delay: 45ms;
+}
+.commit-confetti span:nth-child(14) {
+  --confetti-color: #43d9ff;
+  --confetti-x: 40px;
+  --confetti-y: -38px;
+  --confetti-rotate: -90deg;
+  animation-delay: 55ms;
+}
+.commit-confetti span:nth-child(15) {
+  --confetti-color: #ff4f8b;
+  --confetti-x: -12px;
+  --confetti-y: -72px;
+  --confetti-rotate: 260deg;
+  animation-delay: 35ms;
+}
+.commit-confetti span:nth-child(16) {
+  --confetti-color: #8b67ff;
+  --confetti-x: 4px;
+  --confetti-y: 58px;
+  --confetti-rotate: -240deg;
+  animation-delay: 65ms;
+}
+.commit-confetti span:nth-child(17) {
+  --confetti-color: #59d66f;
+  --confetti-x: 72px;
+  --confetti-y: 42px;
+  --confetti-rotate: 160deg;
+  animation-delay: 40ms;
+}
+.commit-confetti span:nth-child(18) {
+  --confetti-color: #ff6b4a;
+  --confetti-x: -78px;
+  --confetti-y: 46px;
+  --confetti-rotate: -160deg;
+  animation-delay: 50ms;
+}
 
 .commit-panel.ready .commit-submit:disabled {
-  border-color: color-mix(in srgb, var(--success-text) 20%, var(--border-control));
+  border-color: color-mix(
+    in srgb,
+    var(--success-text) 20%,
+    var(--border-control)
+  );
   background: color-mix(in srgb, var(--surface) 64%, transparent);
   color: var(--muted-strong);
   opacity: 1;
@@ -878,13 +1064,11 @@ pre {
 
   100% {
     opacity: 0;
-    transform:
-      translate(
+    transform: translate(
         calc(-50% + var(--confetti-x)),
         calc(-50% + var(--confetti-y) + 28px)
       )
-      scale(1)
-      rotate(var(--confetti-rotate));
+      scale(1) rotate(var(--confetti-rotate));
   }
 }
 

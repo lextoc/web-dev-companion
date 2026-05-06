@@ -95,6 +95,16 @@ function sendMenuCommand(command: DesktopMenuCommand) {
   win.webContents.send('desktop:menu-command', command)
 }
 
+function isRepositoryRefreshShortcut(input: Electron.Input) {
+  return (
+    input.type === 'keyDown' &&
+    input.key.toLowerCase() === 'r' &&
+    (input.meta || input.control) &&
+    !input.alt &&
+    !input.shift
+  )
+}
+
 function configureApplicationMenu() {
   const isMac = process.platform === 'darwin'
   const template: Electron.MenuItemConstructorOptions[] = [
@@ -188,7 +198,6 @@ function configureApplicationMenu() {
     {
       label: 'View',
       submenu: [
-        { role: 'reload' },
         { role: 'forceReload' },
         { role: 'toggleDevTools' },
         { type: 'separator' },
@@ -320,6 +329,15 @@ function createWindow() {
 
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
+  })
+
+  win.webContents.on('before-input-event', (event, input) => {
+    if (!isRepositoryRefreshShortcut(input)) {
+      return
+    }
+
+    event.preventDefault()
+    sendMenuCommand('refresh')
   })
 
   if (VITE_DEV_SERVER_URL) {

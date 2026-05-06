@@ -183,12 +183,17 @@ h2 {
   box-shadow: none;
 }
 
+.top-bar {
+  border-bottom: 1px solid var(--border-soft);
+}
+
 .active-terminals,
 .active-terminals .active-terminals-heading {
   background: color-mix(in srgb, var(--surface) 72%, var(--app-bg));
 }
 
 .detail-command-bar {
+  border-top: 1px solid var(--border-soft);
   background:
     linear-gradient(
       180deg,
@@ -354,6 +359,7 @@ h2 {
 }
 
 .active-terminals {
+  border-left: 1px solid var(--border-soft);
   background: color-mix(in srgb, var(--surface) 86%, var(--app-bg));
 }
 
@@ -365,6 +371,12 @@ h2 {
 .active-terminal-item p {
   border-left: 0;
   padding-left: 0;
+}
+
+@media (max-width: 1180px) {
+  .active-terminals {
+    border-left: 0;
+  }
 }
 
 .toast-message.success,

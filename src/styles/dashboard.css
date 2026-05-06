@@ -168,6 +168,7 @@
   align-content: start;
   overflow: hidden;
   border: 0;
+  border-left: 1px solid var(--border-soft);
   border-radius: 0;
   margin-top: 0;
   padding: 0;

@@ -49,6 +49,7 @@
   width: calc(100% + (var(--shell-x) * 2));
   min-height: var(--top-bar-height);
   border: 0;
+  border-bottom: 1px solid var(--border-soft);
   border-radius: 0;
   margin: 0 calc(var(--shell-x) * -1);
   padding: 0 var(--shell-x);

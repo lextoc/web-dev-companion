@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import ActiveTerminalsSidebar from './components/ActiveTerminalsSidebar.vue'
 import AppHeader from './components/AppHeader.vue'
 import CommandPalette from './components/CommandPalette.vue'
@@ -843,11 +843,11 @@ async function runStatusAction(
 
 async function stageFiles(request: { paths: string[]; actionKey: string }) {
   if (!selectedDetails.value) {
-    return
+    return false
   }
 
   const repoPath = selectedDetails.value.path
-  await runStatusAction(
+  return runStatusAction(
     'Staging files...',
     request.actionKey,
     `Staged ${request.paths.length} file${request.paths.length === 1 ? '' : 's'}.`,
@@ -857,6 +857,11 @@ async function stageFiles(request: { paths: string[]; actionKey: string }) {
         paths: request.paths,
       }),
   )
+}
+
+async function focusCommitMessageInput() {
+  await nextTick()
+  document.getElementById('commit-message')?.focus()
 }
 
 async function stageAllChanges() {
@@ -875,10 +880,14 @@ async function stageAllChanges() {
     return
   }
 
-  await stageFiles({
+  const staged = await stageFiles({
     paths: uniquePaths,
     actionKey: `stage:${uniquePaths.join('\n')}`,
   })
+
+  if (staged) {
+    await focusCommitMessageInput()
+  }
 }
 
 async function unstageFiles(request: { paths: string[]; actionKey: string }) {

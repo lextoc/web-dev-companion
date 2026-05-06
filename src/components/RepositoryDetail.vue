@@ -441,11 +441,14 @@ function triggerCommitConfetti() {
                           :disabled="Boolean(pendingStatusActionKey)"
                           @click="emitStatusAction(group.key, group.entries)"
                         >
-                          {{
-                            isStatusActionPending(group.key, group.entries)
-                              ? `${statusActionLabelForGroup(group.key)}...`
-                              : statusActionLabelForGroup(group.key)
-                          }}
+                          <span>
+                            {{
+                              isStatusActionPending(group.key, group.entries)
+                                ? `${statusActionLabelForGroup(group.key)}...`
+                                : statusActionLabelForGroup(group.key)
+                            }}
+                          </span>
+                          <kbd v-if="!isStagedGroup(group.key)">⌘A</kbd>
                         </button>
                       </div>
 

@@ -1705,10 +1705,28 @@ pre {
 }
 
 .status-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   min-height: 30px;
   padding: 0 10px;
   font-size: 0.76rem;
   white-space: nowrap;
+}
+
+.status-action kbd {
+  display: inline-grid;
+  min-width: 28px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--border-control) 72%, transparent);
+  border-radius: 5px;
+  padding: 0 5px;
+  background: color-mix(in srgb, var(--surface-subtle) 74%, transparent);
+  color: var(--muted-strong);
+  font-size: 0.66rem;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .status-action.pending,

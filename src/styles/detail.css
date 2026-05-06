@@ -1116,7 +1116,10 @@
 
 .git-work-column .git-status-card {
   height: auto;
-  max-height: min(620px, calc(100vh - 356px));
+  max-height: none;
+  overflow: visible;
+  overscroll-behavior: auto;
+  scrollbar-gutter: auto;
 }
 
 .commit-changes-section {

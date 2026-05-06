@@ -1,13 +1,12 @@
 import { spawn } from 'node:child_process'
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
-import os from 'node:os'
-import path from 'node:path'
 import type { ScriptOutput, ScriptRunRequest } from '../src/repositories'
 import {
   detectPackageManager,
   normalizeRepositoryPath,
   readPackageScripts,
 } from './git'
+import { childProcessEnv } from './process-env'
 
 interface ScriptRunnerOptions {
   sendOutput: (output: ScriptOutput) => void
@@ -23,32 +22,6 @@ function shellQuote(value: string) {
 
 function scriptCommand(packageManager: string, scriptName: string) {
   return `${shellQuote(packageManager)} run ${shellQuote(scriptName)}`
-}
-
-function childProcessEnv() {
-  const homeDirectory = os.homedir()
-  const pathEntries = [
-    process.env.PATH,
-    '/opt/homebrew/bin',
-    '/opt/homebrew/sbin',
-    '/usr/local/bin',
-    '/usr/local/sbin',
-    '/usr/bin',
-    '/bin',
-    '/usr/sbin',
-    '/sbin',
-    path.join(homeDirectory, '.local', 'bin'),
-    path.join(homeDirectory, '.cargo', 'bin'),
-    path.join(homeDirectory, '.volta', 'bin'),
-    path.join(homeDirectory, '.asdf', 'shims'),
-  ].filter((entry): entry is string => Boolean(entry))
-
-  return {
-    ...process.env,
-    PATH: [...new Set(pathEntries.flatMap((entry) => entry.split(path.delimiter).filter(Boolean)))].join(
-      path.delimiter,
-    ),
-  }
 }
 
 function launchCommand(packageManager: string, scriptName: string) {

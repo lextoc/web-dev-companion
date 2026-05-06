@@ -195,21 +195,158 @@ h2 {
   background: color-mix(in srgb, var(--surface) 88%, var(--app-bg));
 }
 
+.dashboard-toolbar {
+  border: 0;
+  border-bottom: 1px solid var(--border-soft);
+  border-radius: 0;
+  padding: 0 0 14px;
+  background: transparent;
+}
+
+.add-repo {
+  border: 0;
+  border-top: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  border-radius: 0;
+}
+
 .repo-card {
+  border: 0;
+  border-bottom: 1px solid var(--border-soft);
+  border-radius: 0;
+  grid-template-columns: minmax(0, 1fr) 132px;
+  background: transparent;
   overflow: hidden;
 }
 
+.repo-card:hover {
+  background: color-mix(in srgb, var(--surface-hover) 50%, transparent);
+}
+
+.repo-card.pinned {
+  border-left: 3px solid var(--brand);
+  border-bottom-color: var(--brand-ring);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--success-soft) 42%, transparent),
+    transparent 28%
+  );
+}
+
+.repo-card.has-error {
+  border-left: 3px solid var(--danger);
+  border-bottom-color: color-mix(in srgb, var(--danger) 42%, var(--border-soft));
+}
+
 .repo-card-main {
-  min-height: 102px;
+  min-height: 82px;
+  border-radius: 0;
+  gap: 6px;
+  padding: 10px 12px 10px 16px;
+}
+
+.repo-card-main:hover:not(:disabled) {
+  background: transparent;
+  box-shadow: none;
 }
 
 .repo-quick-actions {
-  border-left: 1px solid var(--border-soft);
-  background: color-mix(in srgb, var(--surface-soft) 36%, transparent);
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 6px;
+  border-left: 0;
+  padding: 0 12px 0 6px;
+  background: transparent;
+}
+
+.repo-quick-actions > button,
+.repo-quick-actions .action-menu-trigger {
+  min-height: 32px;
+  padding: 0 9px;
+}
+
+.repo-card-badges {
+  gap: 5px;
+  max-width: min(360px, 44%);
+}
+
+.repo-path,
+.last-commit {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.repo-path {
+  font-size: 0.74rem;
+}
+
+.last-commit {
+  font-size: 0.78rem;
+}
+
+.health-pill,
+.health-running,
+.status-pill,
+.branch-pill {
+  min-height: 21px;
+  padding: 2px 7px;
+  font-size: 0.68rem;
 }
 
 .icon-button {
   color: var(--muted-strong);
+}
+
+.detail-panel {
+  border: 0;
+  border-bottom: 1px solid var(--border-soft);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
+}
+
+.commit-panel,
+.git-log-sidebar {
+  border-top-width: 3px;
+  border-top-style: solid;
+  border-top-color: var(--accent);
+}
+
+.commit-panel.ready {
+  border-top-color: var(--brand);
+}
+
+.remotes-panel {
+  border: 1px dashed var(--border-soft);
+  border-radius: 8px;
+}
+
+.commit-form,
+.clean-state,
+.git-branches,
+.status-counts div {
+  border-color: transparent;
+}
+
+.git-status-group {
+  border-top-color: transparent;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+}
+
+.git-status-group.staged {
+  border-left-color: var(--success-text);
+}
+
+.git-status-group.unstaged {
+  border-left-color: var(--warning-text);
+}
+
+.git-status-group.untracked {
+  border-left-color: var(--info-text);
+}
+
+.git-status-group.conflicted {
+  border-left-color: var(--danger-text);
 }
 
 .active-terminals:not(.collapsed) {
@@ -249,4 +386,17 @@ h2 {
   padding-top: 2px;
   padding-bottom: 2px;
   font-size: 0.7rem;
+}
+
+.repo-card .repo-card-main:hover:not(:disabled) {
+  background: transparent;
+}
+
+.repo-card .status-pill,
+.repo-card .branch-pill,
+.repo-card .health-pill,
+.repo-card .health-running {
+  min-height: 21px;
+  padding: 2px 7px;
+  font-size: 0.68rem;
 }

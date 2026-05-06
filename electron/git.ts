@@ -9,6 +9,7 @@ import type {
   GitStatusEntry,
   GitStatusSummary,
 } from '../src/repositories'
+import { childProcessEnv } from './process-env'
 
 const execFileAsync = promisify(execFile)
 
@@ -17,6 +18,7 @@ export async function runGit(repoPath: string, args: string[], timeout = 5000) {
     const { stdout } = await execFileAsync('git', args, {
       cwd: repoPath,
       encoding: 'utf8',
+      env: childProcessEnv(),
       timeout,
     })
 

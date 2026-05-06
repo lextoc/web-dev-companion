@@ -23,9 +23,6 @@ import type {
 import type { AppSettings } from './settings'
 
 const FOCUS_REFRESH_THROTTLE_MS = 2000
-const PINNED_REPOSITORIES_KEY = 'web-dev-companion:pinned-repositories'
-const PINNED_SCRIPTS_KEY = 'web-dev-companion:pinned-scripts'
-const RECENT_COMMANDS_KEY = 'web-dev-companion:recent-commands'
 const MAX_RECENT_COMMANDS = 6
 const FEEDBACK_DISMISS_MS = 4000
 const AUTO_REFRESH_TICK_MS = 1000
@@ -292,42 +289,6 @@ const commandPaletteItems = computed(() => {
   return [...recentItems, ...baseItems]
 })
 
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((entry): entry is string => typeof entry === 'string')
-}
-
-function isPinnedScript(script: unknown): script is PinnedScript {
-  return (
-    typeof script === 'object' &&
-    script !== null &&
-    typeof (script as Pick<PinnedScript, 'repoPath'>).repoPath === 'string' &&
-    typeof (script as Pick<PinnedScript, 'repoName'>).repoName === 'string' &&
-    typeof (script as Pick<PinnedScript, 'scriptName'>).scriptName === 'string' &&
-    typeof (script as Pick<PinnedScript, 'command'>).command === 'string' &&
-    ((script as Pick<PinnedScript, 'packageManager'>).packageManager === undefined ||
-      typeof (script as Pick<PinnedScript, 'packageManager'>).packageManager === 'string')
-  )
-}
-
-function isPinnedScriptList(value: unknown): value is PinnedScript[] {
-  return Array.isArray(value) && value.every(isPinnedScript)
-}
-
-function readStoredValue<T>(key: string, validator: (value: unknown) => value is T, fallback: T) {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(key) ?? 'null')
-    if (validator(parsed)) {
-      return parsed
-    }
-  } catch {}
-
-  return fallback
-}
-
-function writeStoredValue<T>(key: string, value: T) {
-  localStorage.setItem(key, JSON.stringify(value))
-}
-
 function paletteScriptId(repoPath: string, scriptName: string) {
   return `${repoPath}${SCRIPT_ITEM_SEPARATOR}${scriptName}`
 }
@@ -383,31 +344,19 @@ async function applyHistoryState(state: AppHistoryState | undefined) {
   await loadRepositoryDetails(state.repoPath)
 }
 
-function loadPinnedRepositories() {
-  pinnedRepositoryPaths.value = readStoredValue(PINNED_REPOSITORIES_KEY, isStringArray, [])
-}
-
-function loadPinnedScripts() {
-  pinnedScripts.value = readStoredValue(PINNED_SCRIPTS_KEY, isPinnedScriptList, [])
-}
-
-function loadRecentCommands() {
-  recentCommandIds.value = readStoredValue(RECENT_COMMANDS_KEY, isStringArray, [])
-}
-
 function savePinnedRepositories(repoPaths: string[]) {
   pinnedRepositoryPaths.value = repoPaths
-  writeStoredValue(PINNED_REPOSITORIES_KEY, repoPaths)
+  void window.appState.savePinnedRepositoryPaths(repoPaths).catch(showError)
 }
 
 function savePinnedScripts(scripts: PinnedScript[]) {
   pinnedScripts.value = scripts
-  writeStoredValue(PINNED_SCRIPTS_KEY, scripts)
+  void window.appState.savePinnedScripts(scripts).catch(showError)
 }
 
 function saveRecentCommands(commandIds: string[]) {
   recentCommandIds.value = commandIds.slice(0, MAX_RECENT_COMMANDS)
-  writeStoredValue(RECENT_COMMANDS_KEY, recentCommandIds.value)
+  void window.appState.saveRecentCommandIds(recentCommandIds.value).catch(showError)
 }
 
 function rememberCommand(commandId: string) {
@@ -421,12 +370,23 @@ function pinnedScriptKey(script: Pick<PinnedScript, 'repoPath' | 'scriptName'>) 
   return `${script.repoPath}${SCRIPT_ITEM_SEPARATOR}${script.scriptName}`
 }
 
-function saveAppSettings(settings: AppSettings) {
-  persistAppSettings(settings)
-  showAppFeedback('Settings saved.')
+async function loadPersistedAppState() {
+  const persistedState = await window.appState.read()
+  pinnedRepositoryPaths.value = persistedState.pinnedRepositoryPaths
+  pinnedScripts.value = persistedState.pinnedScripts
+  recentCommandIds.value = persistedState.recentCommandIds.slice(0, MAX_RECENT_COMMANDS)
+}
 
-  if (selectedPath.value) {
-    resetAutoRefreshTimer()
+async function saveAppSettings(settings: AppSettings) {
+  try {
+    await persistAppSettings(settings)
+    showAppFeedback('Settings saved.')
+
+    if (selectedPath.value) {
+      resetAutoRefreshTimer()
+    }
+  } catch (error) {
+    showError(error)
   }
 }
 
@@ -1274,15 +1234,17 @@ function handleGlobalKeydown(event: KeyboardEvent) {
 
 }
 
-onMounted(() => {
+onMounted(async () => {
   isMacPlatform.value = navigator.platform.toLowerCase().includes('mac')
   document.documentElement.dataset.platform = isMacPlatform.value ? 'mac' : 'other'
   replaceHistoryState({ view: 'dashboard' })
-  loadAppSettings()
+  await loadAppSettings()
   autoRefreshRemainingMs.value = appSettings.value.autoRefreshIntervalMs
-  loadPinnedRepositories()
-  loadPinnedScripts()
-  loadRecentCommands()
+  try {
+    await loadPersistedAppState()
+  } catch (error) {
+    showError(error)
+  }
   removeScriptOutputListener = window.repositories.onScriptOutput(handleScriptOutput)
   removeWindowFocusListener = window.repositories.onWindowFocus(() => {
     void refreshOnWindowFocus()

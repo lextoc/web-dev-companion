@@ -1,7 +1,5 @@
 import { ref } from 'vue'
-import { DEFAULT_APP_SETTINGS, type AppSettings } from '../settings'
-
-const APP_SETTINGS_KEY = 'web-dev-companion:settings'
+import { DEFAULT_APP_SETTINGS, normalizeAppSettings, type AppSettings } from '../settings'
 
 function applyThemeMode(themeMode: AppSettings['themeMode']) {
   if (themeMode === 'system') {
@@ -10,28 +8,6 @@ function applyThemeMode(themeMode: AppSettings['themeMode']) {
   }
 
   document.documentElement.dataset.theme = themeMode
-}
-
-function normalizeSettings(settings: Partial<AppSettings>): AppSettings {
-  const autoRefreshIntervalMs = Number(settings.autoRefreshIntervalMs)
-
-  return {
-    autoRefreshIntervalMs: autoRefreshIntervalMs > 0
-      ? autoRefreshIntervalMs
-      : DEFAULT_APP_SETTINGS.autoRefreshIntervalMs,
-    commitCelebrations: typeof settings.commitCelebrations === 'boolean'
-      ? settings.commitCelebrations
-      : DEFAULT_APP_SETTINGS.commitCelebrations,
-    editorCommand: typeof settings.editorCommand === 'string'
-      ? settings.editorCommand
-      : DEFAULT_APP_SETTINGS.editorCommand,
-    skipBranchSyncConfirmation: typeof settings.skipBranchSyncConfirmation === 'boolean'
-      ? settings.skipBranchSyncConfirmation
-      : DEFAULT_APP_SETTINGS.skipBranchSyncConfirmation,
-    themeMode: settings.themeMode === 'light' || settings.themeMode === 'dark' || settings.themeMode === 'system'
-      ? settings.themeMode
-      : DEFAULT_APP_SETTINGS.themeMode,
-  }
 }
 
 export function useSettings() {
@@ -43,10 +19,10 @@ export function useSettings() {
     document.documentElement.removeAttribute('data-density')
   }
 
-  function loadAppSettings() {
+  async function loadAppSettings() {
     try {
-      const parsed = JSON.parse(localStorage.getItem(APP_SETTINGS_KEY) ?? '{}') as Partial<AppSettings>
-      appSettings.value = normalizeSettings(parsed)
+      const persistedState = await window.appState.read()
+      appSettings.value = normalizeAppSettings(persistedState.settings)
     } catch {
       appSettings.value = { ...DEFAULT_APP_SETTINGS }
     }
@@ -54,9 +30,8 @@ export function useSettings() {
     applySettings(appSettings.value)
   }
 
-  function saveAppSettings(settings: AppSettings) {
-    appSettings.value = normalizeSettings(settings)
-    localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(appSettings.value))
+  async function saveAppSettings(settings: AppSettings) {
+    appSettings.value = await window.appState.saveSettings(normalizeAppSettings(settings))
     applySettings(appSettings.value)
     isSettingsOpen.value = false
   }

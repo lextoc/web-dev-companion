@@ -15,6 +15,7 @@ import type {
   StatusFileRequest,
   SyncBranchRequest,
 } from '../src/repositories'
+import { createAppStateService } from './app-state-service'
 import { createRepositoryService } from './repository-service'
 import { createScriptRunner } from './script-runner'
 
@@ -30,6 +31,7 @@ const {
 } = require('electron') as typeof import('electron')
 const currentDirectory = __dirname
 const appName = 'Web Dev Companion'
+const appStateFileName = 'app-state.json'
 const repositoriesFileName = 'repositories.json'
 const refreshCommandThrottleMs = 1000
 const windowBounds = {
@@ -63,6 +65,10 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 let win: BrowserWindowType | null
 let lastRefreshCommandAt = 0
+
+function appStateFilePath() {
+  return path.join(app.getPath('userData'), appStateFileName)
+}
 
 function repositoriesFilePath() {
   return path.join(app.getPath('userData'), repositoriesFileName)
@@ -268,7 +274,20 @@ function configureApplicationMenu() {
 }
 
 const repositoryService = createRepositoryService(repositoriesFilePath, shell)
+const appStateService = createAppStateService(appStateFilePath)
 const scriptRunner = createScriptRunner({ sendOutput: sendScriptOutput })
+
+function registerAppStateHandlers() {
+  ipcMain.handle('app-state:read', appStateService.read)
+  ipcMain.handle('app-state:save-settings', (_event, settings) => appStateService.saveSettings(settings))
+  ipcMain.handle('app-state:save-pinned-repository-paths', (_event, repoPaths) =>
+    appStateService.savePinnedRepositoryPaths(repoPaths),
+  )
+  ipcMain.handle('app-state:save-pinned-scripts', (_event, scripts) => appStateService.savePinnedScripts(scripts))
+  ipcMain.handle('app-state:save-recent-command-ids', (_event, commandIds) =>
+    appStateService.saveRecentCommandIds(commandIds),
+  )
+}
 
 function registerRepositoryHandlers() {
   ipcMain.handle('repositories:list', repositoryService.listRepositories)
@@ -415,6 +434,7 @@ app.on('activate', () => {
 app.whenReady().then(() => {
   configureAppIdentity()
   configureApplicationMenu()
+  registerAppStateHandlers()
   registerRepositoryHandlers()
   createWindow()
 })

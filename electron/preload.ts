@@ -1,7 +1,16 @@
 import * as electron from 'electron'
+import type { AppStateApi } from '../src/app-state'
 import type { DesktopApi, RepositoryApi } from '../src/repositories'
 
 const { contextBridge, ipcRenderer } = electron
+
+const appState: AppStateApi = {
+  read: () => ipcRenderer.invoke('app-state:read'),
+  saveSettings: (settings) => ipcRenderer.invoke('app-state:save-settings', settings),
+  savePinnedRepositoryPaths: (repoPaths) => ipcRenderer.invoke('app-state:save-pinned-repository-paths', repoPaths),
+  savePinnedScripts: (scripts) => ipcRenderer.invoke('app-state:save-pinned-scripts', scripts),
+  saveRecentCommandIds: (commandIds) => ipcRenderer.invoke('app-state:save-recent-command-ids', commandIds),
+}
 
 const repositories: RepositoryApi = {
   list: () => ipcRenderer.invoke('repositories:list'),
@@ -86,5 +95,6 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   // ...
 })
 
+contextBridge.exposeInMainWorld('appState', appState)
 contextBridge.exposeInMainWorld('repositories', repositories)
 contextBridge.exposeInMainWorld('desktop', desktop)

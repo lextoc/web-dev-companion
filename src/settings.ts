@@ -21,3 +21,25 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   skipBranchSyncConfirmation: false,
   themeMode: 'system',
 }
+
+export function normalizeAppSettings(settings: Partial<AppSettings>): AppSettings {
+  const autoRefreshIntervalMs = Number(settings.autoRefreshIntervalMs)
+
+  return {
+    autoRefreshIntervalMs: autoRefreshIntervalMs > 0
+      ? autoRefreshIntervalMs
+      : DEFAULT_APP_SETTINGS.autoRefreshIntervalMs,
+    commitCelebrations: typeof settings.commitCelebrations === 'boolean'
+      ? settings.commitCelebrations
+      : DEFAULT_APP_SETTINGS.commitCelebrations,
+    editorCommand: typeof settings.editorCommand === 'string'
+      ? settings.editorCommand
+      : DEFAULT_APP_SETTINGS.editorCommand,
+    skipBranchSyncConfirmation: typeof settings.skipBranchSyncConfirmation === 'boolean'
+      ? settings.skipBranchSyncConfirmation
+      : DEFAULT_APP_SETTINGS.skipBranchSyncConfirmation,
+    themeMode: settings.themeMode === 'light' || settings.themeMode === 'dark' || settings.themeMode === 'system'
+      ? settings.themeMode
+      : DEFAULT_APP_SETTINGS.themeMode,
+  }
+}

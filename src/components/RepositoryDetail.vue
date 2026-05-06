@@ -593,14 +593,6 @@ function triggerCommitConfetti() {
               </div>
             </section>
           </div>
-
-          <details class="detail-panel remotes-panel">
-            <summary>
-              <span>Remotes</span>
-              <small>Show configured git remotes</small>
-            </summary>
-            <pre>{{ selectedDetails.remotes }}</pre>
-          </details>
         </div>
       </div>
 

@@ -923,60 +923,6 @@
   padding-top: 4px;
 }
 
-.remotes-panel {
-  grid-column: 1 / -1;
-  gap: 10px;
-  border: 0;
-  padding: 14px;
-  background: color-mix(in srgb, var(--surface) 46%, transparent);
-}
-
-.remotes-panel summary {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  cursor: pointer;
-  align-items: center;
-  gap: 12px;
-  color: var(--muted-strong);
-  font-weight: 900;
-  list-style: none;
-}
-
-.remotes-panel summary::-webkit-details-marker {
-  display: none;
-}
-
-.remotes-panel summary::after {
-  content: "+";
-  display: grid;
-  grid-row: 1 / span 2;
-  grid-column: 2;
-  width: 26px;
-  height: 26px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-subtle) 78%, transparent);
-  color: var(--muted-strong);
-  font-size: var(--font-size-heading);
-}
-
-.remotes-panel[open] summary::after {
-  content: "-";
-}
-
-.remotes-panel summary span,
-.remotes-panel summary small {
-  display: block;
-  grid-column: 1;
-}
-
-.remotes-panel summary small {
-  color: var(--muted);
-  font-size: var(--font-size-compact);
-  font-weight: 800;
-}
-
 .panel-heading {
   display: flex;
   align-items: center;

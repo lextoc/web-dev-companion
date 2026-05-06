@@ -109,7 +109,7 @@ button:disabled {
 
 .button-icon {
   flex: 0 0 auto;
-  font-size: 1.05rem;
+  font-size: var(--font-size-title);
 }
 
 .subtle-icon-button {
@@ -192,7 +192,7 @@ button.secondary.active {
 
 .app-dropdown-chevron {
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: var(--font-size-heading);
   line-height: 1;
 }
 
@@ -220,7 +220,7 @@ button.secondary.active {
   padding: 0 9px;
   background: transparent;
   color: var(--text);
-  font-size: 0.84rem;
+  font-size: var(--font-size-base);
   text-align: left;
 }
 
@@ -279,7 +279,7 @@ button.secondary.active {
   padding: 0 10px;
   background: transparent;
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   font-weight: 800;
   text-align: left;
 }

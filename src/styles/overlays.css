@@ -18,7 +18,7 @@
   padding: 10px 12px;
   background: var(--surface);
   color: var(--muted-strong);
-  font-size: 0.88rem;
+  font-size: var(--font-size-base);
   font-weight: 800;
   box-shadow: none;
   pointer-events: auto;
@@ -52,7 +52,7 @@
   padding: 0 9px;
   background: transparent;
   color: inherit;
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
 }
 
 .toast-close:hover:not(:disabled) {
@@ -106,7 +106,7 @@
 
 .settings-dialog h2 {
   margin: 0;
-  font-size: 1.22rem;
+  font-size: var(--font-size-title);
 }
 
 .settings-dialog label {
@@ -126,7 +126,7 @@
 
 .settings-dialog label span {
   color: var(--muted-strong);
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -139,12 +139,12 @@
 
 .settings-dialog .settings-toggle-row strong {
   color: var(--text);
-  font-size: 0.88rem;
+  font-size: var(--font-size-base);
 }
 
 .settings-dialog .settings-toggle-row small {
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
   font-weight: 700;
 }
 
@@ -203,7 +203,7 @@
 
 .command-palette-input-row label {
   color: var(--muted-strong);
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -217,7 +217,7 @@
   padding: 0 12px;
   background: var(--surface);
   color: var(--text);
-  font-size: 1rem;
+  font-size: var(--font-size-title);
 }
 
 .command-palette-list {
@@ -237,7 +237,7 @@
   margin: 0;
   padding: 5px 8px 3px;
   color: var(--muted-strong);
-  font-size: 0.7rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -307,7 +307,7 @@
 
 .command-palette-item-main span {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: var(--font-size-base);
   font-weight: 700;
 }
 
@@ -316,7 +316,7 @@
   align-items: center;
   gap: 8px;
   color: var(--muted-strong);
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   white-space: nowrap;
 }
@@ -342,7 +342,7 @@
 
 .confirm-dialog h2 {
   margin: 0;
-  font-size: 1.18rem;
+  font-size: var(--font-size-title);
 }
 
 .confirm-dialog p {
@@ -384,7 +384,7 @@
 
 .status-diff-header span {
   color: var(--brand);
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -393,7 +393,7 @@
   min-width: 0;
   overflow: hidden;
   margin: 0;
-  font-size: 1.1rem;
+  font-size: var(--font-size-title);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -414,7 +414,7 @@
   border-color: var(--diff-border);
   background: var(--diff-bg);
   color: var(--diff-text);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   line-height: 1.56;
   white-space: pre;
 }
@@ -554,7 +554,7 @@
 .terminal-modal-header p {
   overflow: hidden;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -563,7 +563,7 @@
 .terminal-modal-header h2 {
   overflow: hidden;
   color: var(--terminal-title);
-  font-size: 1.18rem;
+  font-size: var(--font-size-title);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -571,7 +571,7 @@
 .terminal-modal-header code {
   overflow: hidden;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -585,7 +585,7 @@
   padding: 12px;
   background: var(--terminal-bg);
   color: var(--terminal-text);
-  font-size: 0.84rem;
+  font-size: var(--font-size-base);
   line-height: 1.55;
 }
 

@@ -21,7 +21,7 @@
 
 .add-repo label {
   color: var(--muted-strong);
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -43,11 +43,11 @@
 .dashboard-toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
+  gap: 12px;
   align-items: end;
   border: 0;
   border-radius: 8px;
-  padding: 12px;
+  padding: 10px;
   background: color-mix(in srgb, var(--surface) 86%, var(--app-bg));
 }
 
@@ -65,19 +65,20 @@
 
 .dashboard-toolbar span {
   color: var(--muted-strong);
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-transform: uppercase;
 }
 
 .dashboard-toolbar input {
   width: 100%;
-  min-height: 42px;
+  min-height: 36px;
   border: 1px solid var(--border-control);
   border-radius: 7px;
   padding: 0 12px;
   background: var(--surface);
   color: var(--text);
+  font-size: var(--font-size-base);
 }
 
 .dashboard-toolbar .app-dropdown {
@@ -87,7 +88,7 @@
 .dashboard-result-count {
   display: flex;
   min-width: 112px;
-  min-height: 42px;
+  min-height: 36px;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
@@ -105,19 +106,19 @@
 
 .dashboard-result-count strong {
   color: var(--text);
-  font-size: 1rem;
+  font-size: var(--font-size-base);
 }
 
 .dashboard-result-count span {
   margin-top: 2px;
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-transform: uppercase;
 }
 
 .dashboard-add-toggle {
-  min-height: 42px;
+  min-height: 36px;
   padding: 0 13px;
   white-space: nowrap;
 }
@@ -197,7 +198,7 @@
 
 .active-terminals-heading h2 {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--font-size-title);
   white-space: nowrap;
 }
 
@@ -209,7 +210,7 @@
   border-radius: 999px;
   background: var(--surface-subtle);
   color: var(--muted-strong);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   font-weight: 900;
 }
 
@@ -239,7 +240,7 @@
   min-width: 0;
   overflow: hidden;
   color: var(--muted-strong);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
@@ -248,7 +249,7 @@
 .active-terminal-group-heading span {
   flex: 0 0 auto;
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -312,13 +313,13 @@
 .active-terminal-item strong {
   display: block;
   color: var(--text);
-  font-size: 0.92rem;
+  font-size: var(--font-size-heading);
 }
 
 .active-terminal-item code {
   display: block;
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
 }
 
 .active-terminal-item p {
@@ -326,7 +327,7 @@
   border-left: 0;
   padding-left: 0;
   color: var(--muted-strong);
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
 }
 
 .active-terminal-item p.empty {
@@ -339,7 +340,7 @@
   padding: 3px 7px;
   background: var(--warning-soft);
   color: var(--warning-text);
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
 }
 
@@ -405,7 +406,7 @@
   margin: 0;
   padding: 16px;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--font-size-heading);
 }
 
 .repo-grid {
@@ -433,7 +434,7 @@
 .repo-section-heading h2 {
   margin: 0;
   color: var(--muted-strong);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -446,7 +447,7 @@
   border-radius: 999px;
   background: var(--surface-subtle);
   color: var(--muted-strong);
-  font-size: 0.74rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
 }
 
@@ -567,7 +568,7 @@
 .repo-title-row strong {
   min-width: 0;
   overflow-wrap: anywhere;
-  font-size: 1rem;
+  font-size: var(--font-size-title);
 }
 
 .repo-path,
@@ -579,7 +580,7 @@
 .repo-path {
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
 }
 
 .repo-card-badges {
@@ -599,13 +600,13 @@
   padding: 3px 8px;
   background: var(--warning-soft);
   color: var(--warning-text);
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
 }
 
 .last-commit {
   color: var(--muted-strong);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
 }
 
 .repo-health-row {
@@ -620,7 +621,7 @@
   align-items: center;
   border-radius: 999px;
   padding: 3px 8px;
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
 }
 
@@ -653,7 +654,7 @@
   gap: 6px;
   min-height: 34px;
   padding: 0 10px;
-  font-size: 0.74rem;
+  font-size: var(--font-size-compact);
   white-space: nowrap;
 }
 
@@ -680,7 +681,7 @@
   padding: 4px 9px;
   background: var(--success-soft);
   color: var(--success-text);
-  font-size: 0.75rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
 }
 
@@ -694,7 +695,7 @@
   padding: 4px 9px;
   background: var(--surface-subtle);
   color: var(--muted-strong);
-  font-size: 0.75rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -712,7 +713,7 @@
   padding: 3px 7px;
   background: var(--surface-subtle);
   color: var(--muted-strong);
-  font-size: 0.7rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
 }
 
@@ -734,7 +735,7 @@
   padding: 0;
   background: transparent;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--font-size-heading);
 }
 
 .icon-button:hover:not(:disabled) {

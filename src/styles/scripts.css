@@ -18,7 +18,7 @@
 .script-group-heading h4 {
   margin-bottom: 0;
   color: var(--muted-strong);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -27,7 +27,7 @@
   display: block;
   margin-top: 1px;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
   font-weight: 800;
 }
 
@@ -39,7 +39,7 @@
   border-radius: 999px;
   background: var(--surface-subtle);
   color: var(--muted-strong);
-  font-size: 0.74rem;
+  font-size: var(--font-size-compact);
 }
 
 .script-list {
@@ -104,7 +104,7 @@
 .terminal-pin {
   min-height: 30px;
   padding: 0 10px;
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
 }
 
 .script-pin-button.active,
@@ -125,7 +125,7 @@ code {
   min-width: 0;
   overflow: hidden;
   color: var(--muted-strong);
-  font-size: 0.86rem;
+  font-size: var(--font-size-base);
   line-height: 1.35;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
@@ -215,7 +215,7 @@ code {
   border-radius: 6px;
   padding: 9px;
   background: var(--terminal-bg);
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
   line-height: 1.5;
 }
 

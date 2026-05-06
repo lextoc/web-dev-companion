@@ -83,7 +83,7 @@
   border-color: transparent;
   padding: 0 8px;
   background: color-mix(in srgb, var(--surface) 58%, transparent);
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
   text-align: left;
 }
 
@@ -112,7 +112,7 @@
   min-width: 0;
   overflow: hidden;
   color: var(--text);
-  font-size: 0.8rem;
+  font-size: var(--font-size-base);
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -122,7 +122,7 @@
 .branch-menu-meta {
   overflow: hidden;
   color: var(--muted);
-  font-size: 0.66rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-overflow: ellipsis;
   text-transform: uppercase;
@@ -163,7 +163,7 @@
   padding: 0 10px;
   background: color-mix(in srgb, var(--surface) 48%, transparent);
   color: var(--muted-strong);
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   white-space: nowrap;
 }
@@ -272,7 +272,7 @@
 .detail-quick-actions button {
   min-height: 32px;
   padding: 0 10px;
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
 }
 
 .detail-quick-actions .action-menu-trigger,
@@ -326,7 +326,7 @@
     color-mix(in srgb, var(--surface-soft) 74%, transparent)
   );
   color: var(--muted-strong);
-  font-size: 0.84rem;
+  font-size: var(--font-size-base);
   font-weight: 900;
 }
 
@@ -394,7 +394,7 @@
   border: 1px solid color-mix(in srgb, var(--border-control) 62%, transparent);
   background: color-mix(in srgb, var(--surface) 72%, transparent);
   color: var(--muted-strong);
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
 }
 
@@ -523,7 +523,7 @@
   top: 0;
   background: color-mix(in srgb, var(--surface) 92%, var(--surface-soft));
   color: var(--muted-strong);
-  font-size: 0.7rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -575,7 +575,7 @@
   padding: 0 7px;
   background: color-mix(in srgb, var(--brand) 10%, var(--surface));
   color: var(--brand-text-hover);
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
 }
 
@@ -590,7 +590,7 @@
 .git-log-table strong {
   overflow-wrap: anywhere;
   color: var(--text);
-  font-size: 0.86rem;
+  font-size: var(--font-size-base);
   line-height: 1.35;
 }
 
@@ -598,7 +598,7 @@
 .git-log-table time {
   overflow: hidden;
   color: var(--muted-strong);
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -608,7 +608,7 @@
   margin-top: 2px;
   overflow: hidden;
   color: var(--muted);
-  font-size: 0.7rem;
+  font-size: var(--font-size-compact);
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -659,7 +659,7 @@
 .commit-detail-section-heading span,
 .commit-file-status {
   color: var(--muted);
-  font-size: 0.7rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -669,7 +669,7 @@
   overflow: hidden;
   margin: 0;
   color: var(--text);
-  font-size: 1.1rem;
+  font-size: var(--font-size-heading);
   line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -678,7 +678,7 @@
 .commit-detail-header code {
   overflow: hidden;
   color: var(--muted-strong);
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -690,7 +690,7 @@
   padding: 10px;
   background: color-mix(in srgb, var(--surface) 72%, transparent);
   color: var(--muted-strong);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   line-height: 1.5;
   white-space: pre-wrap;
 }
@@ -731,7 +731,7 @@
 
 .commit-detail-meta dt {
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -747,7 +747,7 @@
 .commit-detail-meta time {
   overflow: hidden;
   color: var(--text);
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -756,7 +756,7 @@
 .commit-detail-meta small {
   overflow: hidden;
   color: var(--muted);
-  font-size: 0.7rem;
+  font-size: var(--font-size-compact);
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -779,7 +779,7 @@
 .commit-detail-section-heading h4 {
   margin: 0;
   color: var(--text);
-  font-size: 0.84rem;
+  font-size: var(--font-size-base);
 }
 
 .commit-detail-section-heading span {
@@ -833,18 +833,18 @@
 
 .commit-file-path strong {
   color: var(--text);
-  font-size: 0.8rem;
+  font-size: var(--font-size-base);
 }
 
 .commit-file-path small {
   color: var(--muted);
-  font-size: 0.7rem;
+  font-size: var(--font-size-compact);
   font-weight: 800;
 }
 
 .commit-file-list code {
   color: var(--muted-strong);
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   white-space: nowrap;
 }
@@ -900,7 +900,7 @@
   border-radius: 8px;
   padding: 18px;
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: var(--font-size-base);
   font-weight: 800;
   text-align: center;
 }
@@ -976,7 +976,7 @@
   border-radius: 999px;
   background: var(--surface-subtle);
   color: var(--muted-strong);
-  font-size: 0.9rem;
+  font-size: var(--font-size-heading);
 }
 
 .remotes-panel[open] summary::after {
@@ -991,7 +991,7 @@
 
 .remotes-panel summary small {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
   font-weight: 800;
 }
 
@@ -1010,7 +1010,7 @@
   display: block;
   margin-top: 2px;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
   font-weight: 800;
 }
 
@@ -1022,7 +1022,7 @@
   border-radius: 999px;
   background: var(--surface-subtle);
   color: var(--muted-strong);
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
 }
 
@@ -1036,7 +1036,7 @@ pre {
   padding: 14px;
   background: var(--terminal-surface);
   color: var(--terminal-text);
-  font-size: 0.84rem;
+  font-size: var(--font-size-base);
   line-height: 1.55;
   white-space: pre-wrap;
 }
@@ -1054,7 +1054,7 @@ pre {
 .branch-filters button {
   min-height: 28px;
   padding: 0 9px;
-  font-size: 0.74rem;
+  font-size: var(--font-size-compact);
 }
 
 .branch-menu-panel .branch-filters {
@@ -1068,7 +1068,7 @@ pre {
   min-height: 26px;
   flex: 0 0 auto;
   padding: 0 8px;
-  font-size: 0.7rem;
+  font-size: var(--font-size-compact);
 }
 
 .remote-branch-checkout {
@@ -1082,7 +1082,7 @@ pre {
 
 .remote-branch-checkout label {
   color: var(--muted-strong);
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -1100,7 +1100,7 @@ pre {
 .remote-branch-checkout .app-dropdown-button {
   min-height: 30px;
   padding: 0 8px;
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
 }
 
 .remote-branch-dropdown-menu {
@@ -1113,7 +1113,7 @@ pre {
   min-height: 34px;
   overflow: hidden;
   padding: 0 10px;
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
   font-weight: 800;
   line-height: 32px;
   text-overflow: ellipsis;
@@ -1130,7 +1130,7 @@ pre {
   padding: 10px 12px;
   background: var(--surface);
   color: var(--muted);
-  font-size: 0.86rem;
+  font-size: var(--font-size-base);
   text-align: center;
 }
 
@@ -1513,7 +1513,7 @@ pre {
 
 .commit-form label {
   color: var(--muted-strong);
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -1565,7 +1565,7 @@ pre {
     var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 0.84rem;
+  font-size: var(--font-size-base);
   line-height: 1.5;
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--surface) 86%, transparent),
@@ -1621,21 +1621,21 @@ pre {
 
 .commit-queue-heading span {
   color: var(--muted-strong);
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-transform: uppercase;
 }
 
 .commit-queue-heading strong {
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
 }
 
 .commit-queue p {
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
 }
 
 .staged-preview {
@@ -1666,7 +1666,7 @@ pre {
   align-self: center;
   min-height: 30px;
   padding: 0 9px;
-  font-size: 0.74rem;
+  font-size: var(--font-size-compact);
 }
 
 .staged-preview-file {
@@ -1693,7 +1693,7 @@ pre {
   border-radius: 5px;
   background: color-mix(in srgb, var(--success-text) 10%, transparent);
   color: var(--success-text);
-  font-size: 0.7rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
 }
 
@@ -1702,7 +1702,7 @@ pre {
   direction: rtl;
   overflow: hidden;
   color: var(--muted-strong);
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
   font-weight: 800;
   text-align: left;
   text-overflow: ellipsis;
@@ -1713,7 +1713,7 @@ pre {
   min-width: 0;
   overflow: hidden;
   color: var(--muted);
-  font-size: 0.7rem;
+  font-size: var(--font-size-compact);
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1723,7 +1723,7 @@ pre {
   justify-self: start;
   min-height: 34px;
   padding: 0 12px;
-  font-size: 0.8rem;
+  font-size: var(--font-size-base);
 }
 
 .status-pending {
@@ -1732,7 +1732,7 @@ pre {
   padding: 8px 10px;
   background: var(--warning-soft);
   color: var(--warning-text);
-  font-size: 0.8rem;
+  font-size: var(--font-size-base);
   font-weight: 800;
 }
 
@@ -1743,7 +1743,7 @@ pre {
   padding: 8px 10px;
   background: var(--success-soft);
   color: var(--success-text);
-  font-size: 0.8rem;
+  font-size: var(--font-size-base);
   font-weight: 800;
 }
 
@@ -1751,7 +1751,7 @@ pre {
   grid-column: 1 / -1;
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
 }
 
 .git-status-groups {
@@ -1798,7 +1798,7 @@ pre {
 }
 
 .status-counts strong {
-  font-size: 1rem;
+  font-size: var(--font-size-heading);
   line-height: 1;
 }
 
@@ -1806,7 +1806,7 @@ pre {
   margin-top: 3px;
   overflow: hidden;
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   text-overflow: ellipsis;
   text-transform: uppercase;
@@ -1899,23 +1899,23 @@ pre {
 }
 
 .git-branch-list strong {
-  font-size: 0.88rem;
+  font-size: var(--font-size-base);
 }
 
 .branch-menu-panel .git-branch-list strong {
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
 }
 
 .git-branch-list small,
 .git-branches p {
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
 }
 
 .branch-menu-panel .git-branch-list small,
 .branch-menu-panel .git-branches p {
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
 }
 
 .branch-menu-panel .git-branch-list small {
@@ -1934,7 +1934,7 @@ pre {
 
 .branch-menu-panel .branch-health span {
   padding: 2px 6px;
-  font-size: 0.66rem;
+  font-size: var(--font-size-compact);
 }
 
 .branch-pending {
@@ -1952,14 +1952,14 @@ pre {
   padding: 4px 8px;
   background: var(--warning-soft);
   color: var(--warning-text);
-  font-size: 0.74rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   white-space: nowrap;
 }
 
 .branch-menu-panel .branch-sync {
   padding: 3px 7px;
-  font-size: 0.68rem;
+  font-size: var(--font-size-compact);
 }
 
 .branch-controls {
@@ -1985,13 +1985,13 @@ pre {
 .branch-action {
   min-height: 30px;
   padding: 0 10px;
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
 }
 
 .branch-menu-panel .branch-action {
   min-height: 28px;
   padding: 0 8px;
-  font-size: 0.72rem;
+  font-size: var(--font-size-compact);
 }
 
 .branch-action.pending {
@@ -2018,7 +2018,7 @@ pre {
 
 .git-status-group-heading h4 {
   margin-bottom: 0;
-  font-size: 0.86rem;
+  font-size: var(--font-size-base);
 }
 
 .git-status-group-title span {
@@ -2029,7 +2029,7 @@ pre {
   border-radius: 999px;
   background: var(--surface-subtle);
   color: var(--muted-strong);
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
 }
 
@@ -2058,7 +2058,7 @@ pre {
   place-items: center;
   border-radius: 6px;
   color: var(--muted-strong);
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
   white-space: pre;
 }
 
@@ -2093,7 +2093,7 @@ pre {
 
 .git-status-list strong,
 .status-file-button strong {
-  font-size: 0.86rem;
+  font-size: var(--font-size-base);
 }
 
 .git-status-list small,
@@ -2101,7 +2101,7 @@ pre {
 .git-status-group p {
   margin-bottom: 0;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: var(--font-size-compact);
 }
 
 .status-file-button {
@@ -2132,7 +2132,7 @@ pre {
   gap: 7px;
   min-height: 30px;
   padding: 0 10px;
-  font-size: 0.76rem;
+  font-size: var(--font-size-compact);
   white-space: nowrap;
 }
 
@@ -2146,7 +2146,7 @@ pre {
   padding: 0 5px;
   background: color-mix(in srgb, var(--surface-subtle) 74%, transparent);
   color: var(--muted-strong);
-  font-size: 0.66rem;
+  font-size: var(--font-size-compact);
   font-weight: 900;
   line-height: 1;
 }

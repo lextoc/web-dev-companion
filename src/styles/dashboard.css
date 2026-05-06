@@ -154,15 +154,16 @@
 }
 
 .active-terminals {
-  position: fixed;
-  top: var(--top-bar-height);
-  right: max(0px, calc((100vw - 2160px) / 2));
+  position: relative;
+  right: auto;
   z-index: 15;
   display: grid;
+  flex: 0 0 var(--scripts-sidebar-width);
   grid-template-rows: auto minmax(0, 1fr);
   gap: 0;
   width: var(--scripts-sidebar-width);
-  height: calc(100vh - var(--top-bar-height));
+  height: auto;
+  min-height: 0;
   max-height: none;
   align-content: start;
   overflow: hidden;

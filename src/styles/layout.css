@@ -5,24 +5,30 @@
   --scripts-sidebar-width: 360px;
   --top-bar-gap: 18px;
   --top-bar-height: 76px;
-  min-height: 100vh;
+  display: flex;
+  height: 100vh;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
   width: min(2160px, 100%);
   margin: 0 auto;
   padding: 0 var(--shell-x);
 }
 
 .app-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--scripts-sidebar-width);
+  display: flex;
+  flex: 1 1 auto;
   gap: 0;
   align-items: stretch;
-  min-height: calc(100vh - var(--top-bar-height));
+  min-height: 0;
   margin-right: calc(var(--shell-x) * -1);
 }
 
 .main-pane {
+  flex: 1 1 auto;
   min-width: 0;
-  min-height: calc(100vh - var(--top-bar-height));
+  min-height: 0;
+  overflow: auto;
   padding: 0 var(--app-layout-gap) 24px 0;
 }
 
@@ -34,8 +40,8 @@
 }
 
 .top-bar {
-  position: sticky;
-  top: 0;
+  position: relative;
+  flex: 0 0 auto;
   z-index: 20;
   justify-content: space-between;
   gap: 24px;

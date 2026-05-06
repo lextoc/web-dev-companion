@@ -19,7 +19,6 @@ const props = defineProps<{
   isDetailLoading: boolean;
   statusActionLabel: string | null;
   pendingStatusActionKey: string | null;
-  statusFeedbackMessage: string | null;
   commitClearToken: number;
   commitCelebrations: boolean;
   npmScripts: [string, string][];

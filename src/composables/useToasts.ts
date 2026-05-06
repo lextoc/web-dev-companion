@@ -1,17 +1,22 @@
 import { ref } from 'vue'
 
 const MAX_ACTIVITY_ITEMS = 8
+const MAX_TOAST_ITEMS = 4
+const TOAST_DISMISS_MS = 4000
 
-export interface AppFeedback {
+export type AppFeedbackTone = 'success' | 'info'
+
+export interface AppToast {
+  id: string
   message: string
-  tone: 'success' | 'info'
+  tone: AppFeedbackTone
 }
 
 export interface ActivityItem {
   id: string
   message: string
   time: string
-  tone: AppFeedback['tone']
+  tone: AppFeedbackTone
 }
 
 export function normalizeError(error: unknown) {
@@ -20,9 +25,44 @@ export function normalizeError(error: unknown) {
 
 export function useToasts() {
   const errorMessage = ref('')
-  const appFeedback = ref<AppFeedback | null>(null)
+  const appToasts = ref<AppToast[]>([])
   const activityItems = ref<ActivityItem[]>([])
-  let appFeedbackTimer: number | undefined
+  const toastTimers = new Map<string, number>()
+
+  function toastId() {
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  }
+
+  function clearToastTimer(id: string) {
+    const timer = toastTimers.get(id)
+
+    if (timer !== undefined) {
+      window.clearTimeout(timer)
+      toastTimers.delete(id)
+    }
+  }
+
+  function dismissToast(id: string) {
+    clearToastTimer(id)
+    appToasts.value = appToasts.value.filter((toast) => toast.id !== id)
+  }
+
+  function holdToast(id: string) {
+    clearToastTimer(id)
+  }
+
+  function releaseToast(id: string) {
+    if (!appToasts.value.some((toast) => toast.id === id) || toastTimers.has(id)) {
+      return
+    }
+
+    toastTimers.set(
+      id,
+      window.setTimeout(() => {
+        dismissToast(id)
+      }, TOAST_DISMISS_MS),
+    )
+  }
 
   function clearError() {
     errorMessage.value = ''
@@ -32,10 +72,10 @@ export function useToasts() {
     errorMessage.value = normalizeError(error)
   }
 
-  function recordActivity(message: string, tone: AppFeedback['tone'] = 'success') {
+  function recordActivity(message: string, tone: AppFeedbackTone = 'success') {
     activityItems.value = [
       {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        id: toastId(),
         message,
         tone,
         time: new Date().toLocaleTimeString([], {
@@ -47,33 +87,46 @@ export function useToasts() {
     ].slice(0, MAX_ACTIVITY_ITEMS)
   }
 
-  function showAppFeedback(message: string, tone: AppFeedback['tone'] = 'success') {
-    appFeedback.value = { message, tone }
-    recordActivity(message, tone)
+  function showAppFeedback(message: string, tone: AppFeedbackTone = 'success') {
+    const toast = {
+      id: toastId(),
+      message,
+      tone,
+    }
+    const nextToasts = [toast, ...appToasts.value].slice(0, MAX_TOAST_ITEMS)
 
-    if (appFeedbackTimer !== undefined) {
-      window.clearTimeout(appFeedbackTimer)
+    for (const existingToast of appToasts.value) {
+      if (!nextToasts.some((nextToast) => nextToast.id === existingToast.id)) {
+        clearToastTimer(existingToast.id)
+      }
     }
 
-    appFeedbackTimer = window.setTimeout(() => {
-      appFeedback.value = null
-      appFeedbackTimer = undefined
-    }, 4000)
+    appToasts.value = nextToasts
+    recordActivity(message, tone)
+
+    toastTimers.set(
+      toast.id,
+      window.setTimeout(() => {
+        dismissToast(toast.id)
+      }, TOAST_DISMISS_MS),
+    )
   }
 
   function cleanupToasts() {
-    if (appFeedbackTimer !== undefined) {
-      window.clearTimeout(appFeedbackTimer)
-      appFeedbackTimer = undefined
+    for (const id of toastTimers.keys()) {
+      clearToastTimer(id)
     }
   }
 
   return {
     activityItems,
-    appFeedback,
+    appToasts,
     clearError,
     cleanupToasts,
+    dismissToast,
     errorMessage,
+    holdToast,
+    releaseToast,
     showAppFeedback,
     showError,
   }

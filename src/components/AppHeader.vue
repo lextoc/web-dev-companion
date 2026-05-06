@@ -4,7 +4,6 @@ import AppIcon from './AppIcon.vue'
 defineProps<{
   activeRepositoryName?: string
   activeRepositoryPath?: string
-  activityLabel?: string | null
   activeScriptCount: number
   commandShortcutLabel: string
 }>()
@@ -31,9 +30,6 @@ defineEmits<{
       </div>
 
       <div class="top-actions">
-        <span v-if="activityLabel" class="state-chip info">
-          {{ activityLabel }}
-        </span>
         <span v-if="activeScriptCount > 0" class="state-chip warning">
           {{ activeScriptCount }} active
         </span>

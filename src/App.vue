@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import ActiveTerminalsSidebar from './components/ActiveTerminalsSidebar.vue'
+import AppIcon from './components/AppIcon.vue'
 import AppHeader from './components/AppHeader.vue'
 import CommandPalette from './components/CommandPalette.vue'
 import RepositoryDashboard from './components/RepositoryDashboard.vue'
@@ -44,13 +45,13 @@ const selectedPath = ref<string | null>(null)
 const selectedDetails = ref<RepositoryDetails | null>(null)
 const repoPathInput = ref('')
 const isLoading = ref(false)
+const isRefreshingRepositories = ref(false)
 const isDetailLoading = ref(false)
 const syncingBranchName = ref<string | null>(null)
 const deletingBranchName = ref<string | null>(null)
 const checkingOutBranchName = ref<string | null>(null)
 const statusActionLabel = ref<string | null>(null)
 const pendingStatusActionKey = ref<string | null>(null)
-const statusFeedbackMessage = ref<string | null>(null)
 const branchFeedbackMessages = ref<Record<string, string>>({})
 const commitClearToken = ref(0)
 const hasCommitDraft = ref(false)
@@ -64,15 +65,17 @@ let removeScriptOutputListener: (() => void) | undefined
 let removeWindowFocusListener: (() => void) | undefined
 let removeMenuCommandListener: (() => void) | undefined
 let autoRefreshTickTimer: number | undefined
-let statusFeedbackTimer: number | undefined
 let nextAutoRefreshAt = 0
 let lastFocusRefreshAt = 0
 
 const {
-  appFeedback,
+  appToasts,
   clearError,
   cleanupToasts,
+  dismissToast,
   errorMessage,
+  holdToast,
+  releaseToast,
   showAppFeedback,
   showError,
 } = useToasts()
@@ -131,33 +134,6 @@ const lastRepositoryRefreshLabel = computed(() => {
     hour: '2-digit',
     minute: '2-digit',
   })}`
-})
-const appActivityLabel = computed(() => {
-  if (statusActionLabel.value) {
-    return statusActionLabel.value
-  }
-
-  if (syncingBranchName.value) {
-    return `Syncing ${syncingBranchName.value}...`
-  }
-
-  if (deletingBranchName.value) {
-    return `Removing ${deletingBranchName.value}...`
-  }
-
-  if (checkingOutBranchName.value) {
-    return `Switching to ${checkingOutBranchName.value}...`
-  }
-
-  if (isDetailLoading.value) {
-    return 'Refreshing repository...'
-  }
-
-  if (isLoading.value) {
-    return 'Refreshing repositories...'
-  }
-
-  return null
 })
 const commandShortcutLabel = computed(() =>
   isMacPlatform.value ? '⌘K' : 'Ctrl K',
@@ -517,6 +493,7 @@ async function startPinnedScript(script: PinnedScript) {
 
 async function loadRepositories() {
   isLoading.value = true
+  isRefreshingRepositories.value = true
   clearError()
 
   try {
@@ -526,6 +503,7 @@ async function loadRepositories() {
     showError(error)
   } finally {
     isLoading.value = false
+    isRefreshingRepositories.value = false
   }
 }
 
@@ -650,7 +628,6 @@ async function deleteBranch(branchName: string) {
       branchName,
     })
     await loadRepositories()
-    showStatusFeedback(`Removed ${branchName}.`)
     showAppFeedback(`Removed branch ${branchName}.`)
   } catch (error) {
     showRepositoryError(selectedDetails.value.path, `Could not remove branch "${branchName}"`, error)
@@ -783,19 +760,6 @@ async function syncBranch(branchName: string) {
   }
 }
 
-function showStatusFeedback(message: string) {
-  statusFeedbackMessage.value = message
-
-  if (statusFeedbackTimer !== undefined) {
-    window.clearTimeout(statusFeedbackTimer)
-  }
-
-  statusFeedbackTimer = window.setTimeout(() => {
-    statusFeedbackMessage.value = null
-    statusFeedbackTimer = undefined
-  }, FEEDBACK_DISMISS_MS)
-}
-
 function showBranchFeedback(branchName: string, message: string) {
   branchFeedbackMessages.value = {
     ...branchFeedbackMessages.value,
@@ -821,14 +785,12 @@ async function runStatusAction(
 
   statusActionLabel.value = actionLabel
   pendingStatusActionKey.value = actionKey
-  statusFeedbackMessage.value = null
   clearError()
   const repoPath = selectedDetails.value.path
 
   try {
     selectedDetails.value = await action()
     await loadRepositories()
-    showStatusFeedback(successMessage)
     showAppFeedback(successMessage)
     return true
   } catch (error) {
@@ -1235,11 +1197,6 @@ function updateCommitDraft(hasDraft: boolean) {
 }
 
 function handlePageExit() {
-  if (statusFeedbackTimer !== undefined) {
-    window.clearTimeout(statusFeedbackTimer)
-    statusFeedbackTimer = undefined
-  }
-
   cleanupToasts()
   closeConfirmation(false)
   closeTerminalModal()
@@ -1357,7 +1314,6 @@ onBeforeUnmount(() => {
     <AppHeader
       :active-repository-name="selectedDetails?.name ?? selectedSummary?.name"
       :active-repository-path="selectedDetails?.path ?? selectedSummary?.path"
-      :activity-label="appActivityLabel"
       :active-script-count="activeTerminals.length"
       :command-shortcut-label="commandShortcutLabel"
       @command-palette="openCommandPalette"
@@ -1397,8 +1353,10 @@ onBeforeUnmount(() => {
           :running-scripts-by-repository-path="runningScriptsByRepositoryPath"
           :last-refreshed-label="lastRepositoryRefreshLabel"
           :is-loading="isLoading"
+          :is-refreshing="isRefreshingRepositories"
           @add="addRepositoryByPath"
           @browse="chooseAndAddRepository"
+          @refresh="loadRepositories"
           @open="openRepository"
           @remove="removeRepository"
           @toggle-pin="togglePinnedRepository"
@@ -1415,7 +1373,6 @@ onBeforeUnmount(() => {
           :is-detail-loading="isDetailLoading"
           :status-action-label="statusActionLabel"
           :pending-status-action-key="pendingStatusActionKey"
-          :status-feedback-message="statusFeedbackMessage"
           :commit-clear-token="commitClearToken"
           :commit-celebrations="appSettings.commitCelebrations"
           :npm-scripts="npmScripts"
@@ -1497,25 +1454,46 @@ onBeforeUnmount(() => {
     </div>
 
     <div
-      v-if="appActivityLabel || appFeedback || errorMessage"
+      v-if="appToasts.length > 0 || errorMessage"
       class="toast-stack"
       aria-live="polite"
-      aria-atomic="true"
+      aria-atomic="false"
     >
       <div
-        v-if="appActivityLabel || appFeedback"
+        v-for="toast in appToasts"
+        :key="toast.id"
         class="toast-message"
-        :class="appActivityLabel ? 'info' : (appFeedback?.tone ?? 'info')"
+        :class="toast.tone"
         role="status"
+        @focusin="holdToast(toast.id)"
+        @focusout="releaseToast(toast.id)"
+        @mouseenter="holdToast(toast.id)"
+        @mouseleave="releaseToast(toast.id)"
       >
-        <span v-if="appActivityLabel" class="activity-dot" aria-hidden="true"></span>
-        <span>{{ appActivityLabel ?? appFeedback?.message }}</span>
+        <span class="toast-icon" aria-hidden="true"></span>
+        <span>{{ toast.message }}</span>
+        <button
+          type="button"
+          class="toast-close"
+          :aria-label="`Dismiss notification: ${toast.message}`"
+          title="Dismiss"
+          @click="dismissToast(toast.id)"
+        >
+          <AppIcon name="close" class="button-icon" />
+        </button>
       </div>
 
       <div v-if="errorMessage" class="toast-message error" role="alert">
+        <span class="toast-icon" aria-hidden="true"></span>
         <span>{{ errorMessage }}</span>
-        <button type="button" class="toast-close" @click="errorMessage = ''">
-          Dismiss
+        <button
+          type="button"
+          class="toast-close"
+          aria-label="Dismiss error"
+          title="Dismiss"
+          @click="errorMessage = ''"
+        >
+          <AppIcon name="close" class="button-icon" />
         </button>
       </div>
     </div>

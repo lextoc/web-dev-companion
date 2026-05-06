@@ -58,7 +58,7 @@
 }
 
 .dashboard-toolbar-actions {
-  grid-template-columns: minmax(180px, 240px) auto;
+  grid-template-columns: minmax(180px, 240px) auto auto;
   align-items: end;
   gap: 12px;
 }
@@ -89,6 +89,10 @@
   min-height: 36px;
   padding: 0 13px;
   white-space: nowrap;
+}
+
+.dashboard-refresh-button {
+  justify-self: end;
 }
 
 .dashboard-add-toggle.active {

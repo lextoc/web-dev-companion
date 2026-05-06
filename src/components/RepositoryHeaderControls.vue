@@ -33,6 +33,12 @@ const branchFilter = ref("all");
 const selectedRemoteBranchName = ref("");
 const isBranchMenuOpen = ref(false);
 const branchMenuElement = ref<HTMLElement | null>(null);
+const refreshButtonElement = ref<HTMLElement | null>(null);
+const isRefreshIconSettling = ref(false);
+const refreshIconStartAngle = ref(0);
+const refreshIconEndAngle = ref(0);
+const refreshIconSettleDuration = ref(0);
+let refreshIconSettleTimer: number | undefined;
 
 const branchFilters = [
   { key: "all", label: "All" },
@@ -148,6 +154,58 @@ watch(
     }
   },
   { immediate: true },
+);
+
+function currentRefreshIconAngle() {
+  const iconElement = refreshButtonElement.value?.querySelector<HTMLElement>(".button-icon");
+
+  if (!iconElement) {
+    return 0;
+  }
+
+  const transform = window.getComputedStyle(iconElement).transform;
+
+  if (!transform || transform === "none") {
+    return 0;
+  }
+
+  const matrix = new DOMMatrixReadOnly(transform);
+  const angle = Math.atan2(matrix.b, matrix.a) * (180 / Math.PI);
+
+  return (angle + 360) % 360;
+}
+
+function prepareRefreshIconSettle() {
+  const startAngle = currentRefreshIconAngle();
+  const remainingAngle = startAngle === 0 ? 0 : 360 - startAngle;
+
+  refreshIconStartAngle.value = startAngle;
+  refreshIconEndAngle.value = remainingAngle === 0 ? 0 : 360;
+  refreshIconSettleDuration.value = Math.round((remainingAngle / 360) * 900);
+}
+
+watch(
+  () => props.isDetailLoading,
+  (isDetailLoading, wasDetailLoading) => {
+    if (refreshIconSettleTimer !== undefined) {
+      window.clearTimeout(refreshIconSettleTimer);
+      refreshIconSettleTimer = undefined;
+    }
+
+    if (isDetailLoading) {
+      isRefreshIconSettling.value = false;
+      return;
+    }
+
+    if (wasDetailLoading) {
+      prepareRefreshIconSettle();
+      isRefreshIconSettling.value = true;
+      refreshIconSettleTimer = window.setTimeout(() => {
+        isRefreshIconSettling.value = false;
+        refreshIconSettleTimer = undefined;
+      }, refreshIconSettleDuration.value);
+    }
+  },
 );
 
 function branchSyncLabel(branch: RepositoryDetails["gitBranches"][number]) {
@@ -303,6 +361,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener("pointerdown", handleDocumentPointerDown);
+
+  if (refreshIconSettleTimer !== undefined) {
+    window.clearTimeout(refreshIconSettleTimer);
+  }
 });
 </script>
 
@@ -585,11 +647,19 @@ onBeforeUnmount(() => {
 
     <div class="detail-refresh-area">
       <button
+        ref="refreshButtonElement"
         type="button"
         class="secondary refresh-button"
+        :class="{ pending: isDetailLoading, settling: isRefreshIconSettling }"
+        :style="{
+          '--refresh-start-angle': `${refreshIconStartAngle}deg`,
+          '--refresh-end-angle': `${refreshIconEndAngle}deg`,
+          '--refresh-settle-duration': `${refreshIconSettleDuration}ms`,
+        }"
         :disabled="isDetailLoading"
-        :title="autoRefreshLabel"
-        aria-label="Refresh repository"
+        :title="isDetailLoading ? 'Refreshing repository' : autoRefreshLabel"
+        :aria-busy="isDetailLoading"
+        :aria-label="isDetailLoading ? 'Refreshing repository' : 'Refresh repository'"
         @click="$emit('refresh')"
       >
         <AppIcon name="restart" class="button-icon" />

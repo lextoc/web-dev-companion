@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { RepositorySummary } from '../repositories'
 import AppDropdown from './AppDropdown.vue'
+import AppIcon from './AppIcon.vue'
 import RepositoryCard from './RepositoryCard.vue'
 
 const props = defineProps<{
@@ -11,12 +12,14 @@ const props = defineProps<{
   lastRefreshedLabel: string
   repoPathInput: string
   isLoading: boolean
+  isRefreshing: boolean
 }>()
 
 defineEmits<{
   'update:repoPathInput': [value: string]
   add: []
   browse: []
+  refresh: []
   open: [repository: RepositorySummary]
   remove: [repoPath: string]
   togglePin: [repoPath: string]
@@ -29,7 +32,13 @@ defineEmits<{
 const searchQuery = ref('')
 const sortMode = ref<'dirty' | 'name' | 'scripts'>('dirty')
 const isAddRepositoryOpen = ref(false)
+const isRefreshIconSettling = ref(false)
+const refreshButtonElement = ref<HTMLElement | null>(null)
+const refreshIconStartAngle = ref(0)
+const refreshIconEndAngle = ref(0)
+const refreshIconSettleDuration = ref(0)
 const pinnedRepositorySet = computed(() => new Set(props.pinnedRepositoryPaths))
+let refreshIconSettleTimer: number | undefined
 const sortOptions = [
   { label: 'Changes first', value: 'dirty' },
   { label: 'Name', value: 'name' },
@@ -94,6 +103,64 @@ const repositorySections = computed(() => {
     },
   ].filter((section) => section.repositories.length > 0)
 })
+
+function currentRefreshIconAngle() {
+  const iconElement = refreshButtonElement.value?.querySelector<HTMLElement>('.button-icon')
+
+  if (!iconElement) {
+    return 0
+  }
+
+  const transform = window.getComputedStyle(iconElement).transform
+
+  if (!transform || transform === 'none') {
+    return 0
+  }
+
+  const matrix = new DOMMatrixReadOnly(transform)
+  const angle = Math.atan2(matrix.b, matrix.a) * (180 / Math.PI)
+
+  return (angle + 360) % 360
+}
+
+function prepareRefreshIconSettle() {
+  const startAngle = currentRefreshIconAngle()
+  const remainingAngle = startAngle === 0 ? 0 : 360 - startAngle
+
+  refreshIconStartAngle.value = startAngle
+  refreshIconEndAngle.value = remainingAngle === 0 ? 0 : 360
+  refreshIconSettleDuration.value = Math.round((remainingAngle / 360) * 900)
+}
+
+watch(
+  () => props.isRefreshing,
+  (isRefreshing, wasRefreshing) => {
+    if (refreshIconSettleTimer !== undefined) {
+      window.clearTimeout(refreshIconSettleTimer)
+      refreshIconSettleTimer = undefined
+    }
+
+    if (isRefreshing) {
+      isRefreshIconSettling.value = false
+      return
+    }
+
+    if (wasRefreshing) {
+      prepareRefreshIconSettle()
+      isRefreshIconSettling.value = true
+      refreshIconSettleTimer = window.setTimeout(() => {
+        isRefreshIconSettling.value = false
+        refreshIconSettleTimer = undefined
+      }, refreshIconSettleDuration.value)
+    }
+  },
+)
+
+onBeforeUnmount(() => {
+  if (refreshIconSettleTimer !== undefined) {
+    window.clearTimeout(refreshIconSettleTimer)
+  }
+})
 </script>
 
 <template>
@@ -150,6 +217,25 @@ const repositorySections = computed(() => {
                 :options="sortOptions"
               />
             </label>
+            <button
+              ref="refreshButtonElement"
+              type="button"
+              class="secondary refresh-button dashboard-refresh-button"
+              :class="{ pending: isRefreshing, settling: isRefreshIconSettling }"
+              :style="{
+                '--refresh-start-angle': `${refreshIconStartAngle}deg`,
+                '--refresh-end-angle': `${refreshIconEndAngle}deg`,
+                '--refresh-settle-duration': `${refreshIconSettleDuration}ms`,
+              }"
+              :disabled="isLoading"
+              :aria-busy="isRefreshing"
+              :aria-label="isRefreshing ? 'Refreshing repositories' : 'Refresh repositories'"
+              title="Refresh repositories"
+              @click="$emit('refresh')"
+            >
+              <AppIcon name="restart" class="button-icon" />
+              <span class="refresh-button-label">Refresh</span>
+            </button>
             <button
               type="button"
               class="secondary dashboard-add-toggle"

@@ -1,1 +1,93 @@
-"use strict";const c=require("electron");function p(e){const t=Object.create(null,{[Symbol.toStringTag]:{value:"Module"}});if(e){for(const n in e)if(n!=="default"){const i=Object.getOwnPropertyDescriptor(e,n);Object.defineProperty(t,n,i.get?i:{enumerable:!0,get:()=>e[n]})}}return t.default=e,Object.freeze(t)}const a=p(c),{contextBridge:r,ipcRenderer:o}=a,d={list:()=>o.invoke("repositories:list"),chooseAndAdd:()=>o.invoke("repositories:choose-and-add"),addByPath:e=>o.invoke("repositories:add-by-path",e),remove:e=>o.invoke("repositories:remove",e),details:e=>o.invoke("repositories:details",e),checkoutBranch:e=>o.invoke("repositories:checkout-branch",e),checkoutRemoteBranch:e=>o.invoke("repositories:checkout-remote-branch",e),deleteBranch:e=>o.invoke("repositories:delete-branch",e),syncBranch:e=>o.invoke("repositories:sync-branch",e),stageFiles:e=>o.invoke("repositories:stage-files",e),unstageFiles:e=>o.invoke("repositories:unstage-files",e),diffFile:e=>o.invoke("repositories:diff-file",e),commit:e=>o.invoke("repositories:commit",e),openInFileManager:e=>o.invoke("repositories:open-in-file-manager",e),openInEditor:e=>o.invoke("repositories:open-in-editor",e),openInTerminal:e=>o.invoke("repositories:open-in-terminal",e),startScript:e=>o.invoke("repositories:start-script",e),stopScript:e=>o.invoke("repositories:stop-script",e),stopScripts:e=>o.send("repositories:stop-scripts",e),onScriptOutput:e=>{const t=(n,i)=>{e(i)};return o.on("repositories:script-output",t),()=>{o.off("repositories:script-output",t)}},onWindowFocus:e=>{const t=()=>{e()};return o.on("repositories:window-focus",t),()=>{o.off("repositories:window-focus",t)}}},u={notify:e=>o.invoke("desktop:notify",e),onMenuCommand:e=>{const t=(n,i)=>{e(i)};return o.on("desktop:menu-command",t),()=>{o.off("desktop:menu-command",t)}}};r.exposeInMainWorld("ipcRenderer",{on(...e){const[t,n]=e;return o.on(t,(i,...s)=>n(i,...s))},off(...e){const[t,...n]=e;return o.off(t,...n)},send(...e){const[t,...n]=e;return o.send(t,...n)},invoke(...e){const[t,...n]=e;return o.invoke(t,...n)}});r.exposeInMainWorld("repositories",d);r.exposeInMainWorld("desktop",u);
+"use strict";
+const electron = require("electron");
+function _interopNamespaceDefault(e) {
+  const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
+  if (e) {
+    for (const k in e) {
+      if (k !== "default") {
+        const d = Object.getOwnPropertyDescriptor(e, k);
+        Object.defineProperty(n, k, d.get ? d : {
+          enumerable: true,
+          get: () => e[k]
+        });
+      }
+    }
+  }
+  n.default = e;
+  return Object.freeze(n);
+}
+const electron__namespace = /* @__PURE__ */ _interopNamespaceDefault(electron);
+const { contextBridge, ipcRenderer } = electron__namespace;
+const repositories = {
+  list: () => ipcRenderer.invoke("repositories:list"),
+  chooseAndAdd: () => ipcRenderer.invoke("repositories:choose-and-add"),
+  addByPath: (repoPath) => ipcRenderer.invoke("repositories:add-by-path", repoPath),
+  remove: (repoPath) => ipcRenderer.invoke("repositories:remove", repoPath),
+  details: (repoPath) => ipcRenderer.invoke("repositories:details", repoPath),
+  checkoutBranch: (request) => ipcRenderer.invoke("repositories:checkout-branch", request),
+  checkoutRemoteBranch: (request) => ipcRenderer.invoke("repositories:checkout-remote-branch", request),
+  deleteBranch: (request) => ipcRenderer.invoke("repositories:delete-branch", request),
+  syncBranch: (request) => ipcRenderer.invoke("repositories:sync-branch", request),
+  stageFiles: (request) => ipcRenderer.invoke("repositories:stage-files", request),
+  unstageFiles: (request) => ipcRenderer.invoke("repositories:unstage-files", request),
+  diffFile: (request) => ipcRenderer.invoke("repositories:diff-file", request),
+  commit: (request) => ipcRenderer.invoke("repositories:commit", request),
+  openInFileManager: (request) => ipcRenderer.invoke("repositories:open-in-file-manager", request),
+  openInEditor: (request) => ipcRenderer.invoke("repositories:open-in-editor", request),
+  openInTerminal: (request) => ipcRenderer.invoke("repositories:open-in-terminal", request),
+  startScript: (request) => ipcRenderer.invoke("repositories:start-script", request),
+  stopScript: (runId) => ipcRenderer.invoke("repositories:stop-script", runId),
+  stopScripts: (runIds) => ipcRenderer.send("repositories:stop-scripts", runIds),
+  onScriptOutput: (listener) => {
+    const wrappedListener = (_event, output) => {
+      listener(output);
+    };
+    ipcRenderer.on("repositories:script-output", wrappedListener);
+    return () => {
+      ipcRenderer.off("repositories:script-output", wrappedListener);
+    };
+  },
+  onWindowFocus: (listener) => {
+    const wrappedListener = () => {
+      listener();
+    };
+    ipcRenderer.on("repositories:window-focus", wrappedListener);
+    return () => {
+      ipcRenderer.off("repositories:window-focus", wrappedListener);
+    };
+  }
+};
+const desktop = {
+  notify: (request) => ipcRenderer.invoke("desktop:notify", request),
+  onMenuCommand: (listener) => {
+    const wrappedListener = (_event, command) => {
+      listener(command);
+    };
+    ipcRenderer.on("desktop:menu-command", wrappedListener);
+    return () => {
+      ipcRenderer.off("desktop:menu-command", wrappedListener);
+    };
+  }
+};
+contextBridge.exposeInMainWorld("ipcRenderer", {
+  on(...args) {
+    const [channel, listener] = args;
+    return ipcRenderer.on(channel, (event, ...args2) => listener(event, ...args2));
+  },
+  off(...args) {
+    const [channel, ...omit] = args;
+    return ipcRenderer.off(channel, ...omit);
+  },
+  send(...args) {
+    const [channel, ...omit] = args;
+    return ipcRenderer.send(channel, ...omit);
+  },
+  invoke(...args) {
+    const [channel, ...omit] = args;
+    return ipcRenderer.invoke(channel, ...omit);
+  }
+  // You can expose other APTs you need here.
+  // ...
+});
+contextBridge.exposeInMainWorld("repositories", repositories);
+contextBridge.exposeInMainWorld("desktop", desktop);

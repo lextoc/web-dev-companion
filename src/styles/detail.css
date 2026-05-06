@@ -1,5 +1,6 @@
 .detail-nav {
   display: flex;
+  flex: 1 1 auto;
   min-width: 0;
   align-items: center;
   gap: 8px;
@@ -9,14 +10,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   width: calc(100% + (var(--shell-x) * 2));
-  min-height: 44px;
+  min-height: 52px;
   margin: 0;
   margin-left: calc(var(--shell-x) * -1);
   border: 0;
   border-radius: 0;
-  padding: 6px var(--shell-x);
+  padding: 7px var(--shell-x);
   background:
     linear-gradient(
       180deg,
@@ -60,18 +61,19 @@
 
 .branch-menu {
   position: relative;
+  min-width: 0;
 }
 
 .branch-menu-trigger {
   display: grid;
-  min-height: 36px;
-  max-width: min(430px, 45vw);
-  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 40px;
+  max-width: min(520px, 44vw);
+  grid-template-columns: 28px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   border-color: transparent;
-  padding: 3px 8px 3px 10px;
-  background: color-mix(in srgb, var(--surface-subtle) 74%, transparent);
+  padding: 4px 8px;
+  background: color-mix(in srgb, var(--surface) 58%, transparent);
   font-size: 0.76rem;
   text-align: left;
 }
@@ -81,11 +83,20 @@
   background: var(--surface-subtle);
 }
 
+.branch-menu-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  padding: 6px;
+  background: color-mix(in srgb, var(--brand) 11%, var(--surface));
+  color: var(--brand-text-hover);
+}
+
 .branch-menu-summary {
   display: flex;
   min-width: 0;
-  align-items: center;
-  gap: 7px;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .branch-menu-summary strong {
@@ -98,9 +109,67 @@
   white-space: nowrap;
 }
 
+.branch-menu-kicker,
+.branch-menu-meta {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.branch-menu-title-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.branch-menu-title-row .status-pill {
+  min-height: 20px;
+  padding: 2px 7px;
+  font-size: 0.68rem;
+}
+
+.branch-menu-meta {
+  max-width: 100%;
+  color: var(--muted-strong);
+  text-transform: none;
+}
+
 .branch-menu-trigger .panel-count {
   min-width: 22px;
   height: 22px;
+}
+
+.detail-state-summary {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-state-item {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--border-soft) 72%, transparent);
+  border-radius: 999px;
+  padding: 0 10px;
+  background: color-mix(in srgb, var(--surface) 48%, transparent);
+  color: var(--muted-strong);
+  font-size: 0.72rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.detail-state-item.warning {
+  border-color: color-mix(in srgb, var(--warning) 28%, transparent);
+  background: color-mix(in srgb, var(--warning-soft) 72%, transparent);
+  color: var(--warning-text);
 }
 
 .branch-menu-popover {
@@ -136,10 +205,20 @@
 }
 
 .refresh-button {
+  display: inline-flex;
   position: relative;
   overflow: hidden;
-  min-height: 34px;
-  padding: 0 14px 4px;
+  min-height: 36px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px 4px;
+}
+
+.refresh-button .button-icon {
+  position: relative;
+  z-index: 1;
+  width: 15px;
+  height: 15px;
 }
 
 .refresh-button-label {
@@ -173,7 +252,7 @@
   display: flex;
   flex: 0 0 auto;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   justify-content: flex-end;
 }
 
@@ -187,6 +266,12 @@
 .branch-controls .action-menu-trigger {
   width: 36px;
   min-height: 34px;
+  padding: 0;
+}
+
+.detail-quick-actions .subtle-icon-button {
+  width: 36px;
+  min-height: 36px;
   padding: 0;
 }
 

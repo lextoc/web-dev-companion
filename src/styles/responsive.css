@@ -114,6 +114,23 @@
     align-items: stretch;
   }
 
+  .detail-nav {
+    flex-direction: column;
+  }
+
+  .detail-context-pills,
+  .branch-menu,
+  .branch-menu-trigger,
+  .detail-state-summary {
+    width: 100%;
+    max-width: none;
+  }
+
+  .detail-state-item {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+
   .detail-nav > button,
   .detail-quick-actions button,
   .detail-refresh-area button {

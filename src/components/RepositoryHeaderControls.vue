@@ -88,6 +88,42 @@ const remoteBranchOptions = computed(() =>
     value: branch.name,
   })),
 );
+const currentBranch = computed(() =>
+  props.selectedDetails?.gitBranches.find((branch) => branch.current),
+);
+const currentBranchSyncLabel = computed(() =>
+  currentBranch.value ? branchSyncLabel(currentBranch.value) : "No branch details",
+);
+const changedFileCount = computed(() => {
+  const gitStatus = props.selectedDetails?.gitStatus;
+
+  if (!gitStatus) {
+    return 0;
+  }
+
+  return (
+    gitStatus.staged.length +
+    gitStatus.unstaged.length +
+    gitStatus.untracked.length +
+    gitStatus.conflicted.length
+  );
+});
+const changedFileLabel = computed(() => {
+  if (!props.selectedDetails) {
+    return "";
+  }
+
+  if (changedFileCount.value === 0) {
+    return "Clean tree";
+  }
+
+  return changedFileCount.value === 1 ? "1 changed file" : `${changedFileCount.value} changed files`;
+});
+const scriptCountLabel = computed(() => {
+  const count = props.selectedDetails?.npmScriptCount ?? 0;
+
+  return count === 1 ? "1 script" : `${count} scripts`;
+});
 
 watch(
   () => props.selectedDetails?.path,
@@ -280,11 +316,16 @@ onBeforeUnmount(() => {
             aria-controls="branch-management-menu"
             @click="isBranchMenuOpen = !isBranchMenuOpen"
           >
+            <AppIcon name="repository" class="branch-menu-icon" />
             <span class="branch-menu-summary">
-              <strong>{{ selectedDetails.branch }}</strong>
-              <span class="status-pill" :class="{ dirty: selectedDetails.dirty }">
-                {{ selectedDetails.dirty ? "Changes" : "Clean" }}
+              <span class="branch-menu-kicker">Current branch</span>
+              <span class="branch-menu-title-row">
+                <strong>{{ selectedDetails.branch }}</strong>
+                <span class="status-pill" :class="{ dirty: selectedDetails.dirty }">
+                  {{ selectedDetails.dirty ? "Changes" : "Clean" }}
+                </span>
               </span>
+              <span class="branch-menu-meta">{{ currentBranchSyncLabel }}</span>
             </span>
             <span class="panel-count">{{ selectedDetails.gitBranches.length }}</span>
           </button>
@@ -478,28 +519,57 @@ onBeforeUnmount(() => {
             </section>
           </div>
         </div>
+
+        <div class="detail-state-summary" aria-label="Repository summary">
+          <span class="detail-state-item" :class="{ warning: changedFileCount > 0 }">
+            {{ changedFileLabel }}
+          </span>
+          <span class="detail-state-item">{{ scriptCountLabel }}</span>
+        </div>
       </div>
     </nav>
 
     <div v-if="selectedDetails" class="detail-quick-actions" aria-label="Repository quick actions">
-      <ActionMenu :label="`More actions for ${selectedDetails.name}`">
-        <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInFileManager', selectedDetails.path)">
-          <AppIcon name="folder" class="button-icon" />
-          <span>Show in files</span>
-        </button>
-        <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInEditor', selectedDetails.path)">
-          <AppIcon name="edit" class="button-icon" />
-          <span>Open in editor</span>
-        </button>
-        <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInTerminal', selectedDetails.path)">
-          <AppIcon name="terminal" class="button-icon" />
-          <span>Open terminal</span>
-        </button>
-        <button type="button" class="action-menu-item" role="menuitem" @click="$emit('copyPath', selectedDetails.path)">
-          <AppIcon name="copy" class="button-icon" />
-          <span>Copy path</span>
-        </button>
-      </ActionMenu>
+      <button
+        type="button"
+        class="secondary subtle-icon-button"
+        :aria-label="`Show ${selectedDetails.name} in files`"
+        title="Show in files"
+        @click="$emit('openInFileManager', selectedDetails.path)"
+      >
+        <AppIcon name="folder" class="button-icon" />
+        <span class="visually-hidden">Show in files</span>
+      </button>
+      <button
+        type="button"
+        class="secondary subtle-icon-button"
+        :aria-label="`Open ${selectedDetails.name} in editor`"
+        title="Open in editor"
+        @click="$emit('openInEditor', selectedDetails.path)"
+      >
+        <AppIcon name="edit" class="button-icon" />
+        <span class="visually-hidden">Open in editor</span>
+      </button>
+      <button
+        type="button"
+        class="secondary subtle-icon-button"
+        :aria-label="`Open ${selectedDetails.name} terminal`"
+        title="Open terminal"
+        @click="$emit('openInTerminal', selectedDetails.path)"
+      >
+        <AppIcon name="terminal" class="button-icon" />
+        <span class="visually-hidden">Open terminal</span>
+      </button>
+      <button
+        type="button"
+        class="secondary subtle-icon-button"
+        :aria-label="`Copy path for ${selectedDetails.name}`"
+        title="Copy path"
+        @click="$emit('copyPath', selectedDetails.path)"
+      >
+        <AppIcon name="copy" class="button-icon" />
+        <span class="visually-hidden">Copy path</span>
+      </button>
     </div>
 
     <div class="detail-refresh-area">
@@ -508,8 +578,10 @@ onBeforeUnmount(() => {
         class="secondary refresh-button"
         :disabled="isDetailLoading"
         :title="autoRefreshLabel"
+        aria-label="Refresh repository"
         @click="$emit('refresh')"
       >
+        <AppIcon name="restart" class="button-icon" />
         <span class="refresh-button-label">Refresh</span>
         <span class="refresh-progress" aria-hidden="true">
           <span

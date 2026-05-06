@@ -17,11 +17,14 @@ defineEmits<{
 
 <template>
   <header class="top-bar">
+    <div class="app-titlebar">
+      <span>Web Dev Companion</span>
+    </div>
+
     <div class="top-bar-main">
       <div class="brand-heading">
         <img src="/web-dev-companion.svg" alt="" aria-hidden="true" />
         <div>
-          <p class="eyebrow">Web Dev Companion</p>
           <h1>{{ activeRepositoryName ?? 'Repositories' }}</h1>
           <p class="app-context-line">
             {{ activeRepositoryPath ?? 'Local repository dashboard' }}

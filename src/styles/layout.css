@@ -3,7 +3,7 @@
   --detail-command-bar-height: 58px;
   --shell-x: 24px;
   --scripts-sidebar-width: 360px;
-  --top-bar-gap: 18px;
+  --top-bar-gap: 0px;
   --top-bar-height: 76px;
   display: flex;
   height: 100vh;
@@ -29,7 +29,7 @@
   min-width: 0;
   min-height: 0;
   overflow: auto;
-  padding: 0 var(--app-layout-gap) 24px 0;
+  padding: 12px var(--app-layout-gap) 24px 0;
 }
 
 .top-bar,
@@ -50,12 +50,27 @@
   min-height: var(--top-bar-height);
   border: 0;
   border-radius: 0;
-  margin: 0 calc(var(--shell-x) * -1) var(--top-bar-gap);
-  padding: 10px var(--shell-x) 0;
+  margin: 0 calc(var(--shell-x) * -1);
+  padding: 0 var(--shell-x);
   background: color-mix(in srgb, var(--app-bg) 78%, var(--surface));
   box-shadow: none;
   -webkit-app-region: drag;
   backdrop-filter: blur(18px);
+}
+
+.app-titlebar {
+  display: none;
+  width: calc(100% + (var(--shell-x) * 2));
+  min-height: 30px;
+  align-items: center;
+  margin-left: calc(var(--shell-x) * -1);
+  padding: 0 calc(var(--shell-x) * 2);
+  color: var(--brand);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .top-bar-main {
@@ -64,23 +79,19 @@
   justify-content: space-between;
   gap: 24px;
   min-width: 0;
-  padding-bottom: 6px;
+  padding: 0 0 8px;
 }
 
 :root[data-platform="mac"] .app-shell {
-  --top-bar-height: 96px;
+  --top-bar-height: 100px;
 }
 
 :root[data-platform="mac"] .top-bar {
-  min-height: 96px;
-  padding-top: 30px;
-  padding-left: calc(var(--shell-x) * 2);
+  min-height: 100px;
 }
 
-:root[data-platform="mac"] .detail-command-bar {
-  width: calc(100% + (var(--shell-x) * 3));
-  margin-left: calc(var(--shell-x) * -2);
-  padding-left: var(--shell-x);
+:root[data-platform="mac"] .app-titlebar {
+  display: grid;
 }
 
 .top-actions {

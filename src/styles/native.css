@@ -84,17 +84,16 @@ textarea {
 }
 
 .app-shell {
-  --top-bar-gap: 16px;
+  --top-bar-gap: 0px;
   --top-bar-height: 72px;
 }
 
 :root[data-platform="mac"] .app-shell {
-  --top-bar-height: 88px;
+  --top-bar-height: 92px;
 }
 
 :root[data-platform="mac"] .top-bar {
-  min-height: 88px;
-  padding-top: 28px;
+  min-height: 92px;
 }
 
 .top-bar {

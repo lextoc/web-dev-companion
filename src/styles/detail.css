@@ -517,10 +517,6 @@
   padding-top: 12px;
 }
 
-.commit-changes-heading {
-  padding: 0 2px;
-}
-
 .remotes-panel {
   grid-column: 1 / -1;
   gap: 10px;

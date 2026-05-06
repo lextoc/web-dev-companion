@@ -344,60 +344,9 @@ function triggerCommitConfetti() {
                 >
                   <span v-for="index in 18" :key="index"></span>
                 </div>
-
-                <div class="commit-queue">
-                  <div class="commit-queue-heading">
-                    <span>Staged queue</span>
-                    <strong>{{ stagedFileLabel(selectedDetails.gitStatus) }}</strong>
-                  </div>
-                  <ul v-if="stagedPreview.length > 0" class="staged-preview">
-                    <li v-for="entry in stagedPreview" :key="`staged-preview-${entry.path}`">
-                      <code>{{ statusCode(entry) }}</code>
-                      <button
-                        type="button"
-                        class="staged-preview-file"
-                        :disabled="Boolean(statusDiffLoadingKey)"
-                        :aria-busy="statusDiffLoadingKey === statusDiffKey('staged', entry)"
-                        :title="entry.path"
-                        @click="openStatusDiff('staged', entry)"
-                      >
-                        <span>{{ entry.path }}</span>
-                        <small>
-                          {{
-                            statusDiffLoadingKey === statusDiffKey('staged', entry)
-                              ? "Loading changes..."
-                              : "View changes"
-                          }}
-                        </small>
-                      </button>
-                      <button
-                        type="button"
-                        class="secondary status-action staged-preview-action"
-                        :class="{ pending: isStatusActionPending('staged', [entry]) }"
-                        :disabled="Boolean(pendingStatusActionKey)"
-                        @click="emitStatusAction('staged', [entry])"
-                      >
-                        {{
-                          isStatusActionPending('staged', [entry])
-                            ? "Unstaging..."
-                            : "Unstage"
-                        }}
-                      </button>
-                    </li>
-                  </ul>
-                  <p v-else>
-                    Stage files from Changes before committing.
-                  </p>
-                </div>
               </form>
 
               <div class="commit-changes-section">
-                <div class="panel-heading commit-changes-heading">
-                  <div>
-                    <h3>Changes</h3>
-                    <span class="panel-subtitle">Stage, unstage, and inspect files</span>
-                  </div>
-                </div>
                 <div class="git-status-card">
                   <div class="status-counts" aria-label="Working tree summary">
                     <div
@@ -408,6 +357,51 @@ function triggerCommitConfetti() {
                       <strong>{{ item.count }}</strong>
                       <span>{{ item.label }}</span>
                     </div>
+                  </div>
+
+                  <div class="commit-queue">
+                    <div class="commit-queue-heading">
+                      <span>Staged queue</span>
+                      <strong>{{ stagedFileLabel(selectedDetails.gitStatus) }}</strong>
+                    </div>
+                    <ul v-if="stagedPreview.length > 0" class="staged-preview">
+                      <li v-for="entry in stagedPreview" :key="`staged-preview-${entry.path}`">
+                        <code>{{ statusCode(entry) }}</code>
+                        <button
+                          type="button"
+                          class="staged-preview-file"
+                          :disabled="Boolean(statusDiffLoadingKey)"
+                          :aria-busy="statusDiffLoadingKey === statusDiffKey('staged', entry)"
+                          :title="entry.path"
+                          @click="openStatusDiff('staged', entry)"
+                        >
+                          <span>{{ entry.path }}</span>
+                          <small>
+                            {{
+                              statusDiffLoadingKey === statusDiffKey('staged', entry)
+                                ? "Loading changes..."
+                                : "View changes"
+                            }}
+                          </small>
+                        </button>
+                        <button
+                          type="button"
+                          class="secondary status-action staged-preview-action"
+                          :class="{ pending: isStatusActionPending('staged', [entry]) }"
+                          :disabled="Boolean(pendingStatusActionKey)"
+                          @click="emitStatusAction('staged', [entry])"
+                        >
+                          {{
+                            isStatusActionPending('staged', [entry])
+                              ? "Unstaging..."
+                              : "Unstage"
+                          }}
+                        </button>
+                      </li>
+                    </ul>
+                    <p v-else>
+                      Stage files below before committing.
+                    </p>
                   </div>
 
                   <p v-if="statusActionLabel" class="status-pending">

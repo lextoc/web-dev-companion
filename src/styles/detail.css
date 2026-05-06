@@ -1595,7 +1595,7 @@ pre {
   font-size: 0.86rem;
 }
 
-.git-status-group-heading span {
+.git-status-group-title span {
   display: grid;
   min-width: 24px;
   height: 24px;

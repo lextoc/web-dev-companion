@@ -123,10 +123,15 @@
 
   .detail-context-pills,
   .branch-menu,
+  .branch-menu-combo,
   .branch-menu-trigger,
   .detail-state-summary {
     width: 100%;
     max-width: none;
+  }
+
+  .branch-menu-combo .branch-menu-trigger {
+    flex: 1 1 auto;
   }
 
   .detail-state-item {

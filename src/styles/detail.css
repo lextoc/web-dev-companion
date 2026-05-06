@@ -73,6 +73,12 @@
   min-width: 0;
 }
 
+.branch-menu-combo {
+  display: inline-flex;
+  min-width: 0;
+  align-items: stretch;
+}
+
 .branch-menu-trigger {
   display: grid;
   min-height: 34px;
@@ -87,9 +93,47 @@
   text-align: left;
 }
 
+.branch-menu-combo .branch-menu-trigger {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
 .branch-menu-trigger:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--border-control) 82%, transparent);
   background: var(--surface-subtle);
+}
+
+.branch-menu-sync-button {
+  width: 38px;
+  min-height: 34px;
+  margin-left: -1px;
+  border-color: color-mix(in srgb, var(--border-control) 68%, transparent);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  padding: 0;
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
+}
+
+.branch-menu-trigger:focus-visible,
+.branch-menu-sync-button:focus-visible,
+.branch-menu-trigger:hover:not(:disabled),
+.branch-menu-sync-button:hover:not(:disabled) {
+  position: relative;
+  z-index: 1;
+}
+
+.branch-menu-sync-button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--border-control) 82%, transparent);
+  background: var(--surface-subtle);
+}
+
+.branch-menu-sync-button .button-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.branch-menu-sync-button.pending .button-icon {
+  animation: refresh-spin 900ms linear infinite;
 }
 
 .branch-menu-icon {

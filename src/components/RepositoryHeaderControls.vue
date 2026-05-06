@@ -388,25 +388,45 @@ onBeforeUnmount(() => {
 
     <div v-if="selectedDetails" class="detail-repository-tools" aria-label="Repository actions">
       <div ref="branchMenuElement" class="branch-menu">
-        <button
-          type="button"
-          class="secondary branch-menu-trigger"
-          :aria-label="branchMenuLabel"
-          :aria-expanded="isBranchMenuOpen"
-          aria-controls="branch-management-menu"
-          :title="branchMenuLabel"
-          @click="isBranchMenuOpen = !isBranchMenuOpen"
-        >
-          <AppIcon name="repository" class="branch-menu-icon" />
-          <span class="branch-menu-summary">
-            <span class="branch-menu-kicker">Branch</span>
-            <span class="branch-menu-title-row">
-              <strong>{{ selectedDetails.branch }}</strong>
+        <div class="branch-menu-combo">
+          <button
+            type="button"
+            class="secondary branch-menu-trigger"
+            :aria-label="branchMenuLabel"
+            :aria-expanded="isBranchMenuOpen"
+            aria-controls="branch-management-menu"
+            :title="branchMenuLabel"
+            @click="isBranchMenuOpen = !isBranchMenuOpen"
+          >
+            <AppIcon name="repository" class="branch-menu-icon" />
+            <span class="branch-menu-summary">
+              <span class="branch-menu-kicker">Branch</span>
+              <span class="branch-menu-title-row">
+                <strong>{{ selectedDetails.branch }}</strong>
+              </span>
+              <span class="branch-menu-meta">{{ currentBranchSyncLabel }}</span>
             </span>
-            <span class="branch-menu-meta">{{ currentBranchSyncLabel }}</span>
-          </span>
-          <span class="panel-count">{{ selectedDetails.gitBranches.length }}</span>
-        </button>
+            <span class="panel-count">{{ selectedDetails.gitBranches.length }}</span>
+          </button>
+          <button
+            v-if="currentBranch"
+            type="button"
+            class="secondary branch-menu-sync-button"
+            :class="{ pending: isSyncingBranch(currentBranch.name, syncingBranchName) }"
+            :disabled="
+              Boolean(branchSyncDisabledReason(currentBranch, selectedDetails.gitStatus)) ||
+              Boolean(syncingBranchName) ||
+              Boolean(deletingBranchName)
+            "
+            :title="branchSyncTitle(currentBranch, selectedDetails.gitStatus, syncingBranchName)"
+            :aria-busy="isSyncingBranch(currentBranch.name, syncingBranchName)"
+            :aria-label="`${branchSyncActionLabel(currentBranch)} current branch ${currentBranch.name}`"
+            @click="$emit('syncBranch', currentBranch.name)"
+          >
+            <AppIcon name="restart" class="button-icon" />
+            <span class="visually-hidden">{{ branchSyncActionLabel(currentBranch) }}</span>
+          </button>
+        </div>
 
         <div
           v-if="isBranchMenuOpen"

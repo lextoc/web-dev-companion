@@ -1,6 +1,7 @@
 {
   "name": "web-dev-companion",
   "private": true,
+  "license": "UNLICENSED",
   "version": "0.1.0-alpha.0",
   "description": "Desktop companion for managing local web development repositories.",
   "author": "Alexander Claes",

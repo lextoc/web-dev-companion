@@ -101,4 +101,11 @@ Before pushing a new remote:
 
 ## License
 
-No public license has been declared yet.
+Copyright (c) 2026 Alexander Claes. All rights reserved.
+
+This project is proprietary. You may not copy, modify, publish, distribute,
+sublicense, sell, or otherwise use this project without prior written permission
+from the copyright holder.
+
+Third-party components included with or used by this project remain governed by
+their own license terms. See [LICENSE](LICENSE) for details.

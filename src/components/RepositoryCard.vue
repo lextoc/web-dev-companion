@@ -22,28 +22,36 @@ defineEmits<{
 </script>
 
 <template>
-  <article class="repo-card" :class="{ 'has-error': repository.error, pinned: isPinned }">
+  <article
+    class="repo-card"
+    :class="{
+      'has-error': repository.error,
+      'has-running-scripts': runningScriptCount > 0,
+      pinned: isPinned,
+    }"
+  >
     <button class="repo-card-main" type="button" @click="$emit('open', repository)">
       <span class="repo-title-row">
         <span class="repo-title-stack">
-          <strong>{{ repository.name }}</strong>
-          <span class="repo-path">{{ repository.path }}</span>
+          <strong :title="repository.name">{{ repository.name }}</strong>
+          <span class="repo-path" :title="repository.path">{{ repository.path }}</span>
         </span>
         <span class="repo-card-badges">
           <span class="status-pill" :class="{ dirty: repository.dirty }">
             {{ repository.dirty ? 'Changes' : 'Clean' }}
           </span>
-          <span class="branch-pill">{{ repository.branch }}</span>
+          <span class="branch-pill" :title="repository.branch">{{ repository.branch }}</span>
           <span class="branch-pill">{{ repository.npmScriptCount }} scripts</span>
           <span v-if="runningScriptCount > 0" class="health-running">
             {{ runningScriptCount }} running
           </span>
         </span>
       </span>
-      <span class="last-commit">{{ repository.error ?? repository.lastCommit }}</span>
+      <span class="last-commit" :title="repository.error ?? repository.lastCommit">
+        {{ repository.error ?? repository.lastCommit }}
+      </span>
       <span class="repo-health-row">
         <span v-if="repository.error" class="health-pill error">Needs attention</span>
-        <span v-if="isPinned" class="health-pill neutral">Pinned</span>
         <span v-if="lastRefreshedLabel" class="health-pill neutral">{{ lastRefreshedLabel }}</span>
       </span>
     </button>
@@ -51,14 +59,34 @@ defineEmits<{
     <div class="repo-quick-actions" aria-label="Repository quick actions">
       <button
         type="button"
-        class="secondary pin-action"
+        class="secondary repo-icon-action"
+        :aria-label="`Open ${repository.name} in editor`"
+        title="Open in editor"
+        @click="$emit('openInEditor', repository.path)"
+      >
+        <AppIcon name="edit" class="button-icon" />
+        <span class="visually-hidden">Open in editor</span>
+      </button>
+      <button
+        type="button"
+        class="secondary repo-icon-action"
+        :aria-label="`Open ${repository.name} terminal`"
+        title="Open terminal"
+        @click="$emit('openInTerminal', repository.path)"
+      >
+        <AppIcon name="terminal" class="button-icon" />
+        <span class="visually-hidden">Open terminal</span>
+      </button>
+      <button
+        type="button"
+        class="secondary pin-action repo-icon-action"
         :class="{ active: isPinned }"
         :aria-label="`${isPinned ? 'Unpin' : 'Pin'} ${repository.name}`"
         :title="isPinned ? 'Unpin repository' : 'Pin repository'"
         @click="$emit('togglePin', repository.path)"
       >
         <AppIcon :name="isPinned ? 'pin-off' : 'pin'" class="button-icon" />
-        <span>{{ isPinned ? 'Unpin' : 'Pin' }}</span>
+        <span class="visually-hidden">{{ isPinned ? 'Unpin' : 'Pin' }}</span>
       </button>
       <ActionMenu :label="`More actions for ${repository.name}`">
         <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInFileManager', repository.path)">

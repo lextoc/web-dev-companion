@@ -150,10 +150,6 @@ const repositorySections = computed(() => {
                 :options="sortOptions"
               />
             </label>
-            <div class="dashboard-result-count">
-              <strong>{{ filteredRepositories.length }}</strong>
-              <span>{{ filteredRepositories.length === 1 ? 'repository' : 'repositories' }}</span>
-            </div>
             <button
               type="button"
               class="secondary dashboard-add-toggle"

@@ -17,9 +17,7 @@ defineEmits<{
 
 <template>
   <header class="top-bar">
-    <div class="app-titlebar">
-      <span>Web Dev Companion</span>
-    </div>
+    <div class="app-titlebar" aria-hidden="true"></div>
 
     <div class="top-bar-main">
       <div class="brand-heading">

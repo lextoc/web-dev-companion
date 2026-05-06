@@ -92,7 +92,7 @@
 }
 
 :root[data-platform="mac"] .app-titlebar {
-  display: grid;
+  display: block;
 }
 
 .top-actions {

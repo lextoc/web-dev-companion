@@ -144,7 +144,6 @@ h2 {
 .top-bar,
 .detail-command-bar,
 .dashboard-toolbar,
-.dashboard-result-count,
 .add-repo,
 .repo-card,
 .repo-card.pinned,
@@ -252,6 +251,11 @@ h2 {
 .repo-quick-actions .action-menu-trigger {
   min-height: 32px;
   padding: 0 9px;
+}
+
+.repo-quick-actions .repo-icon-action,
+.repo-quick-actions .action-menu-trigger {
+  padding: 0;
 }
 
 .repo-card-badges {

@@ -1325,6 +1325,7 @@ onBeforeUnmount(() => {
           :is-detail-loading="isDetailLoading"
           :auto-refresh-label="autoRefreshLabel"
           :auto-refresh-progress="autoRefreshProgress"
+          :commit-celebrations="appSettings.commitCelebrations"
           :syncing-branch-name="syncingBranchName"
           :deleting-branch-name="deletingBranchName"
           :checking-out-branch-name="checkingOutBranchName"

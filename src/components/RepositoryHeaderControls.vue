@@ -10,6 +10,7 @@ const props = defineProps<{
   isDetailLoading: boolean;
   autoRefreshLabel: string;
   autoRefreshProgress: number;
+  commitCelebrations: boolean;
   syncingBranchName: string | null;
   deletingBranchName: string | null;
   checkingOutBranchName: string | null;
@@ -439,7 +440,9 @@ onBeforeUnmount(() => {
             type="button"
             class="secondary branch-menu-sync-button"
             :class="{
-              active: isBranchSyncActionReady(currentBranch, selectedDetails.gitStatus),
+              active:
+                commitCelebrations &&
+                isBranchSyncActionReady(currentBranch, selectedDetails.gitStatus),
               pending: isSyncingBranch(currentBranch.name, syncingBranchName),
             }"
             :disabled="

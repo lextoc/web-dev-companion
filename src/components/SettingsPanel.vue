@@ -83,7 +83,7 @@ const autoRefreshOptions = AUTO_REFRESH_INTERVAL_OPTIONS.map((option) => ({ ...o
         <input v-model="draft.commitCelebrations" type="checkbox" />
         <span>
           <strong>Commit celebrations</strong>
-          <small>Rainbow commit button and confetti on successful submit.</small>
+          <small>Rainbow commit and sync buttons, plus confetti on successful submit.</small>
         </span>
       </label>
 

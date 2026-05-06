@@ -234,6 +234,13 @@
     width: fit-content;
   }
 
+  .branch-menu-panel .branch-controls {
+    grid-column: auto;
+    grid-row: auto;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
   .status-action {
     justify-self: start;
   }

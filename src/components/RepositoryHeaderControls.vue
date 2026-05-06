@@ -358,14 +358,17 @@ onBeforeUnmount(() => {
             <div class="panel-heading">
               <div>
                 <h3>Branches</h3>
-                <span class="panel-subtitle">Switch, sync, remove, or create from remote</span>
+                <span class="panel-subtitle">{{ selectedDetails.branch }} - {{ currentBranchSyncLabel }}</span>
               </div>
               <button
                 type="button"
-                class="secondary branch-menu-close"
+                class="secondary subtle-icon-button branch-menu-close"
+                aria-label="Close branch menu"
+                title="Close"
                 @click="isBranchMenuOpen = false"
               >
-                Close
+                <AppIcon name="close" class="button-icon" />
+                <span class="visually-hidden">Close</span>
               </button>
             </div>
 
@@ -443,7 +446,7 @@ onBeforeUnmount(() => {
                     <small>
                       {{ branch.upstream ?? "No upstream" }}
                     </small>
-                    <small v-if="branch.current">Current branch</small>
+                    <small v-if="branch.current" class="branch-current-marker">Current branch</small>
                     <span class="branch-health">
                       <span v-if="branch.ahead > 0">{{ branch.ahead }} ahead</span>
                       <span v-if="branch.behind > 0">{{ branch.behind }} behind</span>

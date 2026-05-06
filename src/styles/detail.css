@@ -177,27 +177,38 @@
 .branch-menu-popover {
   position: absolute;
   z-index: 55;
-  top: calc(100% + 10px);
+  top: calc(100% + 8px);
   right: 0;
-  width: min(560px, calc(100vw - 48px));
+  width: min(440px, calc(100vw - 48px));
 }
 
 .branch-menu-panel {
   display: grid;
-  gap: 12px;
-  max-height: min(720px, calc(100vh - 150px));
+  gap: 8px;
+  max-height: min(620px, calc(100vh - 136px));
   overflow: auto;
   border: 1px solid var(--border-control);
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 8px;
+  padding: 10px;
   background: var(--surface);
   box-shadow: var(--shadow);
 }
 
 .branch-menu-close {
+  width: 30px;
   min-height: 30px;
-  padding: 0 10px;
-  font-size: 0.76rem;
+  padding: 0;
+}
+
+.branch-menu-panel .panel-heading {
+  gap: 10px;
+}
+
+.branch-menu-panel .panel-subtitle {
+  overflow: hidden;
+  max-width: 320px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .detail-refresh-area {
@@ -535,13 +546,27 @@ pre {
   font-size: 0.74rem;
 }
 
+.branch-menu-panel .branch-filters {
+  flex-wrap: nowrap;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.branch-menu-panel .branch-filters button {
+  min-height: 26px;
+  flex: 0 0 auto;
+  padding: 0 8px;
+  font-size: 0.7rem;
+}
+
 .remote-branch-checkout {
   display: grid;
-  gap: 7px;
+  gap: 6px;
   border: 0;
-  border-radius: 7px;
-  padding: 8px;
-  background: var(--surface-soft);
+  border-radius: 6px;
+  padding: 8px 0 10px;
+  background: transparent;
 }
 
 .remote-branch-checkout label {
@@ -562,7 +587,7 @@ pre {
 }
 
 .remote-branch-checkout .app-dropdown-button {
-  min-height: 32px;
+  min-height: 30px;
   padding: 0 8px;
   font-size: 0.78rem;
 }
@@ -1145,11 +1170,15 @@ pre {
 .branch-menu-panel .git-branches {
   height: auto;
   overflow: visible;
+  gap: 7px;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
 }
 
 .git-branch-list {
   display: grid;
-  gap: 6px;
+  gap: 0;
   align-content: start;
   grid-auto-rows: max-content;
   margin: 0;
@@ -1167,9 +1196,31 @@ pre {
   background: var(--surface-soft);
 }
 
+.branch-menu-panel .git-branch-list li {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 10px;
+  border-radius: 0;
+  padding: 8px 0;
+  background: transparent;
+  border-top: 1px solid var(--border-soft);
+}
+
 .git-branch-list li.current {
   background: var(--surface-hover);
   box-shadow: none;
+}
+
+.branch-menu-panel .git-branch-list li.current {
+  background: transparent;
+}
+
+.branch-menu-panel .git-branch-list li:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.branch-menu-panel .git-branch-list li > p {
+  grid-column: 1 / -1;
 }
 
 .git-branch-list strong,
@@ -1183,11 +1234,39 @@ pre {
   font-size: 0.88rem;
 }
 
+.branch-menu-panel .git-branch-list strong {
+  font-size: 0.82rem;
+}
+
 .git-branch-list small,
 .git-branches p {
   margin-bottom: 0;
   color: var(--muted);
   font-size: 0.78rem;
+}
+
+.branch-menu-panel .git-branch-list small,
+.branch-menu-panel .git-branches p {
+  font-size: 0.72rem;
+}
+
+.branch-menu-panel .git-branch-list small {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.branch-menu-panel .branch-current-marker {
+  display: none;
+}
+
+.branch-menu-panel .branch-health {
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.branch-menu-panel .branch-health span {
+  padding: 2px 6px;
+  font-size: 0.66rem;
 }
 
 .branch-pending {
@@ -1210,12 +1289,24 @@ pre {
   white-space: nowrap;
 }
 
+.branch-menu-panel .branch-sync {
+  padding: 3px 7px;
+  font-size: 0.68rem;
+}
+
 .branch-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
   justify-content: flex-end;
+}
+
+.branch-menu-panel .branch-controls {
+  grid-column: 2;
+  grid-row: 1;
+  flex-wrap: nowrap;
+  align-self: center;
 }
 
 .branch-sync.synced {
@@ -1227,6 +1318,12 @@ pre {
   min-height: 30px;
   padding: 0 10px;
   font-size: 0.78rem;
+}
+
+.branch-menu-panel .branch-action {
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: 0.72rem;
 }
 
 .branch-action.pending {

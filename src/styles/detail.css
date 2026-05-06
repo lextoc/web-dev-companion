@@ -211,6 +211,72 @@
   white-space: nowrap;
 }
 
+.current-branch-action-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--border-control) 72%, transparent);
+  border-radius: 7px;
+  padding: 10px;
+  background: var(--surface-soft);
+}
+
+.current-branch-action-copy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.current-branch-action-copy strong,
+.current-branch-action-copy small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.current-branch-action-copy strong {
+  color: var(--text);
+  font-size: var(--font-size-base);
+  font-weight: 900;
+}
+
+.current-branch-action-copy small {
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+}
+
+.current-branch-action-kicker {
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.current-branch-action-card .branch-sync {
+  width: fit-content;
+  margin-top: 2px;
+}
+
+.current-branch-action-card > p {
+  grid-column: 1 / -1;
+}
+
+.branch-primary-action {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  font-size: var(--font-size-compact);
+}
+
+.branch-primary-action.pending {
+  border-color: var(--focus);
+}
+
 .detail-refresh-area {
   display: flex;
   flex: 0 0 auto;

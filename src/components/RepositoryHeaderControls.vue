@@ -434,6 +434,56 @@ onBeforeUnmount(() => {
               </button>
             </div>
 
+            <section
+              v-if="currentBranch"
+              class="current-branch-action-card"
+              aria-label="Current branch sync action"
+            >
+              <div class="current-branch-action-copy">
+                <span class="current-branch-action-kicker">Current branch</span>
+                <strong>{{ currentBranch.name }}</strong>
+                <small>{{ currentBranch.upstream ?? "No upstream configured" }}</small>
+                <span class="branch-sync" :class="{ synced: currentBranch.inSyncWithRemote }">
+                  {{ branchSyncLabel(currentBranch) }}
+                </span>
+              </div>
+              <button
+                v-if="!currentBranch.inSyncWithRemote"
+                type="button"
+                class="branch-primary-action"
+                :class="{ pending: isSyncingBranch(currentBranch.name, syncingBranchName) }"
+                :disabled="
+                  Boolean(branchSyncDisabledReason(currentBranch, selectedDetails.gitStatus)) ||
+                  Boolean(syncingBranchName) ||
+                  Boolean(deletingBranchName)
+                "
+                :title="branchSyncTitle(currentBranch, selectedDetails.gitStatus, syncingBranchName)"
+                :aria-busy="isSyncingBranch(currentBranch.name, syncingBranchName)"
+                @click="$emit('syncBranch', currentBranch.name)"
+              >
+                <AppIcon name="restart" class="button-icon" />
+                <span>
+                  {{
+                    isSyncingBranch(currentBranch.name, syncingBranchName)
+                      ? `${branchSyncActionLabel(currentBranch)}ing...`
+                      : branchSyncActionLabel(currentBranch)
+                  }}
+                </span>
+              </button>
+              <p v-if="branchFeedbackMessages[currentBranch.name]" class="branch-feedback">
+                {{ branchFeedbackMessages[currentBranch.name] }}
+              </p>
+              <p
+                v-else-if="
+                  !currentBranch.inSyncWithRemote &&
+                  branchSyncDisabledReason(currentBranch, selectedDetails.gitStatus)
+                "
+                class="branch-safety"
+              >
+                {{ branchSyncDisabledReason(currentBranch, selectedDetails.gitStatus) }}
+              </p>
+            </section>
+
             <div class="git-branches">
               <form
                 v-if="remoteBranchesToCreate.length > 0"

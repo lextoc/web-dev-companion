@@ -267,6 +267,15 @@
     width: fit-content;
   }
 
+  .current-branch-action-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .branch-primary-action {
+    justify-content: center;
+  }
+
   .branch-menu-panel .branch-controls {
     grid-column: auto;
     grid-row: auto;

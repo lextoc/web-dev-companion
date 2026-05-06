@@ -5,6 +5,7 @@ import AppHeader from './components/AppHeader.vue'
 import CommandPalette from './components/CommandPalette.vue'
 import RepositoryDashboard from './components/RepositoryDashboard.vue'
 import RepositoryDetail from './components/RepositoryDetail.vue'
+import RepositoryHeaderControls from './components/RepositoryHeaderControls.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import TerminalModal from './components/TerminalModal.vue'
 import type { CommandPaletteItem } from './command-palette'
@@ -1274,7 +1275,30 @@ onBeforeUnmount(() => {
       :command-shortcut-label="commandShortcutLabel"
       @command-palette="openCommandPalette"
       @settings="isSettingsOpen = true"
-    />
+    >
+      <template v-if="selectedPath" #repository-controls>
+        <RepositoryHeaderControls
+          :selected-details="selectedDetails"
+          :is-detail-loading="isDetailLoading"
+          :auto-refresh-label="autoRefreshLabel"
+          :auto-refresh-progress="autoRefreshProgress"
+          :syncing-branch-name="syncingBranchName"
+          :deleting-branch-name="deletingBranchName"
+          :checking-out-branch-name="checkingOutBranchName"
+          :branch-feedback-messages="branchFeedbackMessages"
+          @back="closeDetails"
+          @refresh="refreshSelectedRepository"
+          @delete-branch="deleteBranch"
+          @checkout-branch="checkoutBranch"
+          @checkout-remote-branch="checkoutRemoteBranch"
+          @sync-branch="syncBranch"
+          @copy-path="copyRepositoryPath"
+          @open-in-editor="openRepositoryInEditor"
+          @open-in-file-manager="openRepositoryInFileManager"
+          @open-in-terminal="openRepositoryInTerminal"
+        />
+      </template>
+    </AppHeader>
 
     <div class="app-layout">
       <div class="main-pane">
@@ -1302,26 +1326,15 @@ onBeforeUnmount(() => {
           :selected-details="selectedDetails"
           :selected-summary="selectedSummary"
           :is-detail-loading="isDetailLoading"
-          :auto-refresh-label="autoRefreshLabel"
-          :auto-refresh-progress="autoRefreshProgress"
-          :syncing-branch-name="syncingBranchName"
-          :deleting-branch-name="deletingBranchName"
-          :checking-out-branch-name="checkingOutBranchName"
           :status-action-label="statusActionLabel"
           :pending-status-action-key="pendingStatusActionKey"
           :status-feedback-message="statusFeedbackMessage"
-          :branch-feedback-messages="branchFeedbackMessages"
           :commit-clear-token="commitClearToken"
           :commit-celebrations="appSettings.commitCelebrations"
           :npm-scripts="npmScripts"
           :pinned-script-names="pinnedScriptNamesForSelectedRepo"
           :script-terminals-by-script="currentRepoScriptTerminals"
-          @back="closeDetails"
           @refresh="refreshSelectedRepository"
-          @delete-branch="deleteBranch"
-          @checkout-branch="checkoutBranch"
-          @checkout-remote-branch="checkoutRemoteBranch"
-          @sync-branch="syncBranch"
           @stage-files="stageFiles"
           @unstage-files="unstageFiles"
           @commit="commitStatus"
@@ -1331,10 +1344,6 @@ onBeforeUnmount(() => {
           @stop-script="stopScript"
           @restart-script="restartScript"
           @open-terminal="openScriptTerminal"
-          @copy-path="copyRepositoryPath"
-          @open-in-editor="openRepositoryInEditor"
-          @open-in-file-manager="openRepositoryInFileManager"
-          @open-in-terminal="openRepositoryInTerminal"
         />
       </div>
 

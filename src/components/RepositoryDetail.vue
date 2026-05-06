@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { parseDiffOutput } from "../output-formatting";
 import type {
   GitStatusEntry,
@@ -9,24 +9,15 @@ import type {
   StatusFileDiff,
   StatusFileDiffType,
 } from "../repositories";
-import ActionMenu from "./ActionMenu.vue";
-import AppDropdown from "./AppDropdown.vue";
-import AppIcon from "./AppIcon.vue";
 import NpmScriptsPanel from "./NpmScriptsPanel.vue";
 
 const props = defineProps<{
   selectedDetails: RepositoryDetails | null;
   selectedSummary?: RepositorySummary;
   isDetailLoading: boolean;
-  autoRefreshLabel: string;
-  autoRefreshProgress: number;
-  syncingBranchName: string | null;
-  deletingBranchName: string | null;
-  checkingOutBranchName: string | null;
   statusActionLabel: string | null;
   pendingStatusActionKey: string | null;
   statusFeedbackMessage: string | null;
-  branchFeedbackMessages: Record<string, string>;
   commitClearToken: number;
   commitCelebrations: boolean;
   npmScripts: [string, string][];
@@ -35,12 +26,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  back: [];
   refresh: [];
-  deleteBranch: [branchName: string];
-  checkoutBranch: [branchName: string];
-  checkoutRemoteBranch: [remoteBranchName: string];
-  syncBranch: [branchName: string];
   stageFiles: [request: { paths: string[]; actionKey: string }];
   unstageFiles: [request: { paths: string[]; actionKey: string }];
   commit: [message: string];
@@ -50,77 +36,16 @@ const emit = defineEmits<{
   stopScript: [scriptName: string];
   restartScript: [scriptName: string];
   openTerminal: [scriptName: string];
-  copyPath: [repoPath: string];
-  openInEditor: [repoPath: string];
-  openInFileManager: [repoPath: string];
-  openInTerminal: [repoPath: string];
 }>();
 
 const commitMessage = ref("");
 const confettiBursts = ref<Array<{ id: number }>>([]);
-const branchFilter = ref("all");
-const selectedRemoteBranchName = ref("");
-const isBranchMenuOpen = ref(false);
-const branchMenuElement = ref<HTMLElement | null>(null);
 const activeDetailTab = ref<"git" | "scripts">("git");
 const selectedStatusDiff = ref<StatusFileDiff | null>(null);
 const statusDiffLoadingKey = ref<string | null>(null);
 const statusDiffError = ref<string | null>(null);
 const selectedStatusDiffLines = computed(() => parseDiffOutput(selectedStatusDiff.value?.content ?? ""));
 let nextConfettiBurstId = 0;
-
-const branchFilters = [
-  { key: "all", label: "All" },
-  { key: "behind", label: "Behind" },
-  { key: "ahead", label: "Ahead" },
-  { key: "no-upstream", label: "No upstream" },
-  { key: "in-sync", label: "In sync" },
-];
-
-const sortedBranches = computed(() => {
-  const branches = props.selectedDetails?.gitBranches ?? [];
-
-  return [...branches].sort((branchA, branchB) => {
-    if (branchA.current !== branchB.current) {
-      return branchA.current ? -1 : 1;
-    }
-
-    return branchA.name.localeCompare(branchB.name);
-  });
-});
-
-const filteredBranches = computed(() =>
-  sortedBranches.value.filter((branch) => {
-    if (branchFilter.value === "behind") {
-      return branch.behind > 0;
-    }
-
-    if (branchFilter.value === "ahead") {
-      return branch.ahead > 0;
-    }
-
-    if (branchFilter.value === "no-upstream") {
-      return !branch.upstream;
-    }
-
-    if (branchFilter.value === "in-sync") {
-      return branch.inSyncWithRemote;
-    }
-
-    return true;
-  }),
-);
-const remoteBranchesToCreate = computed(() =>
-  [...(props.selectedDetails?.gitRemoteBranches ?? [])]
-    .filter((branch) => !branch.hasLocalBranch)
-    .sort((branchA, branchB) => branchA.localName.localeCompare(branchB.localName)),
-);
-const remoteBranchOptions = computed(() =>
-  remoteBranchesToCreate.value.map((branch) => ({
-    label: branch.name,
-    value: branch.name,
-  })),
-);
 
 const stagedPreview = computed(() => props.selectedDetails?.gitStatus.staged ?? []);
 
@@ -135,19 +60,7 @@ watch(
   () => props.selectedDetails?.path,
   () => {
     activeDetailTab.value = "git";
-    selectedRemoteBranchName.value = "";
-    isBranchMenuOpen.value = false;
   },
-);
-
-watch(
-  remoteBranchesToCreate,
-  (branches) => {
-    if (!branches.some((branch) => branch.name === selectedRemoteBranchName.value)) {
-      selectedRemoteBranchName.value = branches[0]?.name ?? "";
-    }
-  },
-  { immediate: true },
 );
 
 watch(commitMessage, (message) => {
@@ -323,421 +236,10 @@ function triggerCommitConfetti() {
   }, 1200);
 }
 
-function branchSyncLabel(branch: RepositoryDetails["gitBranches"][number]) {
-  if (!branch.upstream) {
-    return "No upstream";
-  }
-
-  if (branch.inSyncWithRemote) {
-    return "In sync";
-  }
-
-  if (branch.remoteGone) {
-    return "Remote gone";
-  }
-
-  if (branch.ahead > 0 && branch.behind > 0) {
-    return `${branch.ahead} ahead, ${branch.behind} behind`;
-  }
-
-  if (branch.ahead > 0) {
-    return `${branch.ahead} ahead`;
-  }
-
-  return `${branch.behind} behind`;
-}
-
-function hasStagedOrUnstagedChanges(gitStatus: RepositoryDetails["gitStatus"]) {
-  return (
-    gitStatus.staged.length > 0 ||
-    gitStatus.unstaged.length > 0 ||
-    gitStatus.conflicted.length > 0
-  );
-}
-
-function branchSyncDisabledReason(
-  branch: RepositoryDetails["gitBranches"][number],
-  gitStatus: RepositoryDetails["gitStatus"],
-) {
-  if (hasStagedOrUnstagedChanges(gitStatus)) {
-    return "Commit, stash, or discard staged and unstaged changes before syncing.";
-  }
-
-  if (!branch.upstream) {
-    return "No upstream remote branch is configured.";
-  }
-
-  if (branch.remoteGone) {
-    return "Upstream remote branch is gone.";
-  }
-
-  if (branch.ahead > 0 && branch.behind > 0) {
-    return "Branch has both local and remote commits. Resolve it manually before syncing.";
-  }
-
-  return undefined;
-}
-
-function isSyncingBranch(branchName: string, syncingBranchName: string | null) {
-  return syncingBranchName === branchName;
-}
-
-function isDeletingBranch(branchName: string, deletingBranchName: string | null) {
-  return deletingBranchName === branchName;
-}
-
-function isCheckingOutBranch(branchName: string, checkingOutBranchName: string | null) {
-  return checkingOutBranchName === branchName;
-}
-
-function branchCheckoutDisabledReason(gitStatus: RepositoryDetails["gitStatus"]) {
-  return gitStatus.clean
-    ? undefined
-    : "Commit, stash, or discard working tree changes before switching branches.";
-}
-
-function branchSyncTitle(
-  branch: RepositoryDetails["gitBranches"][number],
-  gitStatus: RepositoryDetails["gitStatus"],
-  syncingBranchName: string | null,
-) {
-  if (isSyncingBranch(branch.name, syncingBranchName)) {
-    return `Syncing ${branch.name}`;
-  }
-
-  return branchSyncDisabledReason(branch, gitStatus) ?? branchSyncActionTitle(branch);
-}
-
-function branchSyncActionLabel(branch: RepositoryDetails["gitBranches"][number]) {
-  if (branch.ahead > 0 && branch.behind === 0) {
-    return "Push";
-  }
-
-  if (branch.behind > 0 && branch.ahead === 0) {
-    return "Pull";
-  }
-
-  return "Sync";
-}
-
-function branchSyncActionTitle(branch: RepositoryDetails["gitBranches"][number]) {
-  if (branch.ahead > 0 && branch.behind === 0) {
-    return "Push local commits to the upstream branch";
-  }
-
-  if (branch.behind > 0 && branch.ahead === 0) {
-    return "Fast-forward the local branch from upstream";
-  }
-
-  return "Sync branch with upstream";
-}
-
-function branchSafetyNotes(
-  branch: RepositoryDetails["gitBranches"][number],
-  gitStatus: RepositoryDetails["gitStatus"],
-) {
-  const notes = [];
-  const syncReason = branchSyncDisabledReason(branch, gitStatus);
-
-  if (syncReason && !branch.inSyncWithRemote) {
-    notes.push(syncReason);
-  }
-
-  if (!branch.canDelete && branch.deleteReason) {
-    notes.push(branch.deleteReason);
-  }
-
-  return [...new Set(notes)];
-}
-
-function checkoutSelectedRemoteBranch() {
-  if (!selectedRemoteBranchName.value) {
-    return;
-  }
-
-  emit("checkoutRemoteBranch", selectedRemoteBranchName.value);
-}
-
-function handleDocumentPointerDown(event: PointerEvent) {
-  const target = event.target as Node;
-
-  if (target instanceof Element && target.closest(".app-dropdown-menu")) {
-    return;
-  }
-
-  if (!branchMenuElement.value?.contains(target)) {
-    isBranchMenuOpen.value = false;
-  }
-}
-
-onMounted(() => {
-  document.addEventListener("pointerdown", handleDocumentPointerDown);
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener("pointerdown", handleDocumentPointerDown);
-});
 </script>
 
 <template>
   <section class="detail-view">
-    <div class="detail-command-bar">
-      <nav class="detail-nav" aria-label="Repository detail navigation">
-        <button type="button" class="secondary detail-back-button" @click="$emit('back')">
-          <AppIcon name="arrow-left" class="button-icon" />
-          <span>Back</span>
-        </button>
-
-        <div v-if="selectedDetails" class="detail-context-pills" aria-label="Repository state">
-          <div ref="branchMenuElement" class="branch-menu">
-            <button
-              type="button"
-              class="secondary branch-menu-trigger"
-              :aria-expanded="isBranchMenuOpen"
-              aria-controls="branch-management-menu"
-              @click="isBranchMenuOpen = !isBranchMenuOpen"
-            >
-              <span class="branch-menu-summary">
-                <strong>{{ selectedDetails.branch }}</strong>
-                <span class="status-pill" :class="{ dirty: selectedDetails.dirty }">
-                  {{ selectedDetails.dirty ? "Changes" : "Clean" }}
-                </span>
-              </span>
-              <span class="panel-count">{{ selectedDetails.gitBranches.length }}</span>
-            </button>
-
-            <div
-              v-if="isBranchMenuOpen"
-              id="branch-management-menu"
-              class="branch-menu-popover"
-              role="dialog"
-              aria-label="Branch management"
-              @keydown.esc.stop.prevent="isBranchMenuOpen = false"
-            >
-              <section class="branch-menu-panel">
-                <div class="panel-heading">
-                  <div>
-                    <h3>Branches</h3>
-                    <span class="panel-subtitle">Switch, sync, remove, or create from remote</span>
-                  </div>
-                  <button
-                    type="button"
-                    class="secondary branch-menu-close"
-                    @click="isBranchMenuOpen = false"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                <div class="git-branches">
-                  <form
-                    v-if="remoteBranchesToCreate.length > 0"
-                    class="remote-branch-checkout"
-                    @submit.prevent="checkoutSelectedRemoteBranch"
-                  >
-                    <label for="remote-branch-select">
-                      Create from remote
-                    </label>
-                    <div class="remote-branch-create-row">
-                      <AppDropdown
-                        id="remote-branch-select"
-                        v-model="selectedRemoteBranchName"
-                        menu-class="remote-branch-dropdown-menu"
-                        :options="remoteBranchOptions"
-                        :disabled="
-                          Boolean(checkingOutBranchName) ||
-                          Boolean(syncingBranchName) ||
-                          Boolean(deletingBranchName) ||
-                          Boolean(branchCheckoutDisabledReason(selectedDetails.gitStatus))
-                        "
-                      />
-                      <button
-                        type="submit"
-                        class="secondary branch-action"
-                        :disabled="
-                          !selectedRemoteBranchName ||
-                          Boolean(checkingOutBranchName) ||
-                          Boolean(syncingBranchName) ||
-                          Boolean(deletingBranchName) ||
-                          Boolean(branchCheckoutDisabledReason(selectedDetails.gitStatus))
-                        "
-                        :title="branchCheckoutDisabledReason(selectedDetails.gitStatus) ?? 'Create and check out a local tracking branch'"
-                      >
-                        {{
-                          checkingOutBranchName === selectedRemoteBranchName
-                            ? "Creating..."
-                            : "Create"
-                        }}
-                      </button>
-                    </div>
-                  </form>
-
-                  <div class="branch-filters" aria-label="Branch filters">
-                    <button
-                      v-for="filter in branchFilters"
-                      :key="filter.key"
-                      type="button"
-                      class="secondary"
-                      :class="{ active: branchFilter === filter.key }"
-                      @click="branchFilter = filter.key"
-                    >
-                      {{ filter.label }}
-                    </button>
-                  </div>
-
-                  <p v-if="syncingBranchName" class="branch-pending">
-                    Syncing {{ syncingBranchName }}...
-                  </p>
-                  <p v-else-if="checkingOutBranchName" class="branch-pending">
-                    Switching to {{ checkingOutBranchName }}...
-                  </p>
-
-                  <ul v-if="filteredBranches.length > 0" class="git-branch-list">
-                    <li
-                      v-for="branch in filteredBranches"
-                      :key="branch.name"
-                      :class="{ current: branch.current }"
-                    >
-                      <div>
-                        <strong>{{ branch.name }}</strong>
-                        <small>
-                          {{ branch.upstream ?? "No upstream" }}
-                        </small>
-                        <small v-if="branch.current">Current branch</small>
-                        <span class="branch-health">
-                          <span v-if="branch.ahead > 0">{{ branch.ahead }} ahead</span>
-                          <span v-if="branch.behind > 0">{{ branch.behind }} behind</span>
-                          <span v-if="branch.remoteGone">Remote gone</span>
-                          <span v-if="branch.inSyncWithRemote">In sync</span>
-                        </span>
-                      </div>
-                      <p v-if="branchFeedbackMessages[branch.name]" class="branch-feedback">
-                        {{ branchFeedbackMessages[branch.name] }}
-                      </p>
-                      <p
-                        v-else-if="branchSafetyNotes(branch, selectedDetails.gitStatus).length > 0"
-                        class="branch-safety"
-                      >
-                        {{ branchSafetyNotes(branch, selectedDetails.gitStatus).join(" ") }}
-                      </p>
-                      <div class="branch-controls">
-                        <span class="branch-sync" :class="{ synced: branch.inSyncWithRemote }">
-                          {{ branchSyncLabel(branch) }}
-                        </span>
-                        <button
-                          v-if="!branch.current"
-                          type="button"
-                          class="secondary branch-action"
-                          :class="{ pending: isCheckingOutBranch(branch.name, checkingOutBranchName) }"
-                          :disabled="
-                            Boolean(branchCheckoutDisabledReason(selectedDetails.gitStatus)) ||
-                            Boolean(checkingOutBranchName) ||
-                            Boolean(syncingBranchName) ||
-                            Boolean(deletingBranchName)
-                          "
-                          :title="branchCheckoutDisabledReason(selectedDetails.gitStatus) ?? 'Switch to this local branch'"
-                          @click="$emit('checkoutBranch', branch.name)"
-                        >
-                          {{ isCheckingOutBranch(branch.name, checkingOutBranchName) ? "Switching..." : "Switch" }}
-                        </button>
-                        <ActionMenu
-                          v-if="!branch.inSyncWithRemote || !branch.current"
-                          :label="`More actions for ${branch.name}`"
-                        >
-                          <button
-                            v-if="!branch.inSyncWithRemote"
-                            type="button"
-                            class="action-menu-item"
-                            role="menuitem"
-                            :class="{ pending: isSyncingBranch(branch.name, syncingBranchName) }"
-                            :disabled="
-                              Boolean(branchSyncDisabledReason(branch, selectedDetails.gitStatus)) ||
-                              Boolean(syncingBranchName) ||
-                              Boolean(deletingBranchName)
-                            "
-                            :title="branchSyncTitle(branch, selectedDetails.gitStatus, syncingBranchName)"
-                            :aria-busy="isSyncingBranch(branch.name, syncingBranchName)"
-                            @click="$emit('syncBranch', branch.name)"
-                          >
-                            <AppIcon name="restart" class="button-icon" />
-                            <span>
-                              {{
-                                isSyncingBranch(branch.name, syncingBranchName)
-                                  ? `${branchSyncActionLabel(branch)}ing...`
-                                  : branchSyncActionLabel(branch)
-                              }}
-                            </span>
-                          </button>
-                          <button
-                            v-if="!branch.current"
-                            type="button"
-                            class="action-menu-item danger"
-                            role="menuitem"
-                            :class="{ pending: isDeletingBranch(branch.name, deletingBranchName) }"
-                            :disabled="
-                              !branch.canDelete || Boolean(syncingBranchName) || Boolean(deletingBranchName)
-                            "
-                            :title="branch.deleteReason ?? 'Delete local branch'"
-                            @click="$emit('deleteBranch', branch.name)"
-                          >
-                            <AppIcon name="trash" class="button-icon" />
-                            <span>
-                              {{ isDeletingBranch(branch.name, deletingBranchName) ? "Removing..." : "Remove branch" }}
-                            </span>
-                          </button>
-                        </ActionMenu>
-                      </div>
-                    </li>
-                  </ul>
-
-                  <p v-else>No branches match this filter.</p>
-                </div>
-              </section>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <div v-if="selectedDetails" class="detail-quick-actions" aria-label="Repository quick actions">
-        <ActionMenu :label="`More actions for ${selectedDetails.name}`">
-          <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInFileManager', selectedDetails.path)">
-            <AppIcon name="folder" class="button-icon" />
-            <span>Show in files</span>
-          </button>
-          <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInEditor', selectedDetails.path)">
-            <AppIcon name="edit" class="button-icon" />
-            <span>Open in editor</span>
-          </button>
-          <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInTerminal', selectedDetails.path)">
-            <AppIcon name="terminal" class="button-icon" />
-            <span>Open terminal</span>
-          </button>
-          <button type="button" class="action-menu-item" role="menuitem" @click="$emit('copyPath', selectedDetails.path)">
-            <AppIcon name="copy" class="button-icon" />
-            <span>Copy path</span>
-          </button>
-        </ActionMenu>
-      </div>
-
-      <div class="detail-refresh-area">
-        <button
-          type="button"
-          class="secondary refresh-button"
-          :disabled="isDetailLoading"
-          :title="autoRefreshLabel"
-          @click="$emit('refresh')"
-        >
-          <span class="refresh-button-label">Refresh</span>
-          <span class="refresh-progress" aria-hidden="true">
-            <span
-              class="refresh-progress-fill"
-              :style="{ width: `${autoRefreshProgress}%` }"
-            ></span>
-          </span>
-        </button>
-      </div>
-    </div>
-
     <div v-if="isDetailLoading && !selectedDetails" class="detail-skeleton" aria-label="Loading repository">
       <section v-for="index in 3" :key="index" class="detail-panel skeleton-card">
         <span></span>

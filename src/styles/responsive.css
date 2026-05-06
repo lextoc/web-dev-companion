@@ -88,16 +88,19 @@
   }
 
   .top-bar,
+  .top-bar-main,
   .add-row {
     align-items: stretch;
     flex-direction: column;
   }
 
   .detail-command-bar {
-    grid-template-columns: 1fr;
+    align-items: stretch;
+    flex-direction: column;
     width: calc(100% + (var(--shell-x) * 2));
     margin-left: calc(var(--shell-x) * -1);
     padding-right: var(--shell-x);
+    padding-left: var(--shell-x);
   }
 
   .detail-nav,
@@ -245,6 +248,7 @@
     width: calc(100% + (var(--shell-x) * 2));
     margin-left: calc(var(--shell-x) * -1);
     padding-right: var(--shell-x);
+    padding-left: var(--shell-x);
   }
 
   .repo-card {

@@ -295,8 +295,8 @@ async function chooseAndAddRepository() {
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 1600,
-    height: 1000,
+    width: 1360,
+    height: 820,
     minWidth: 1360,
     minHeight: 820,
     title: appName,
@@ -313,8 +313,6 @@ function createWindow() {
       preload: path.join(currentDirectory, 'preload.js'),
     },
   })
-
-  win.maximize()
 
   win.on('focus', () => {
     win?.webContents.send('repositories:window-focus')

@@ -267,6 +267,13 @@ function isSyncingBranch(branchName: string, syncingBranchName: string | null) {
   return syncingBranchName === branchName;
 }
 
+function isBranchSyncActionReady(
+  branch: RepositoryDetails["gitBranches"][number],
+  gitStatus: RepositoryDetails["gitStatus"],
+) {
+  return !branch.inSyncWithRemote && !branchSyncDisabledReason(branch, gitStatus);
+}
+
 function isDeletingBranch(branchName: string, deletingBranchName: string | null) {
   return deletingBranchName === branchName;
 }
@@ -303,6 +310,25 @@ function branchSyncActionLabel(branch: RepositoryDetails["gitBranches"][number])
   }
 
   return "Sync";
+}
+
+function branchSyncActionIcon(
+  branch: RepositoryDetails["gitBranches"][number],
+  syncingBranchName: string | null,
+) {
+  if (isSyncingBranch(branch.name, syncingBranchName)) {
+    return "restart";
+  }
+
+  if (branch.ahead > 0 && branch.behind === 0) {
+    return "push";
+  }
+
+  if (branch.behind > 0 && branch.ahead === 0) {
+    return "pull";
+  }
+
+  return "restart";
 }
 
 function branchSyncActionTitle(branch: RepositoryDetails["gitBranches"][number]) {
@@ -412,7 +438,10 @@ onBeforeUnmount(() => {
             v-if="currentBranch"
             type="button"
             class="secondary branch-menu-sync-button"
-            :class="{ pending: isSyncingBranch(currentBranch.name, syncingBranchName) }"
+            :class="{
+              active: isBranchSyncActionReady(currentBranch, selectedDetails.gitStatus),
+              pending: isSyncingBranch(currentBranch.name, syncingBranchName),
+            }"
             :disabled="
               Boolean(branchSyncDisabledReason(currentBranch, selectedDetails.gitStatus)) ||
               Boolean(syncingBranchName) ||
@@ -423,7 +452,10 @@ onBeforeUnmount(() => {
             :aria-label="`${branchSyncActionLabel(currentBranch)} current branch ${currentBranch.name}`"
             @click="$emit('syncBranch', currentBranch.name)"
           >
-            <AppIcon name="restart" class="button-icon" />
+            <AppIcon
+              :name="branchSyncActionIcon(currentBranch, syncingBranchName)"
+              class="button-icon"
+            />
             <span class="visually-hidden">{{ branchSyncActionLabel(currentBranch) }}</span>
           </button>
         </div>

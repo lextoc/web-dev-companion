@@ -104,14 +104,59 @@
 }
 
 .branch-menu-sync-button {
+  display: inline-grid;
+  position: relative;
+  overflow: hidden;
   width: 38px;
   min-height: 34px;
+  place-items: center;
   margin-left: -1px;
   border-color: color-mix(in srgb, var(--border-control) 68%, transparent);
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
   padding: 0;
   background: color-mix(in srgb, var(--surface) 76%, transparent);
+}
+
+.branch-menu-sync-button.active:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.42);
+  background: linear-gradient(
+    90deg,
+    #ff4f8b 0%,
+    #ff4f8b 10%,
+    #ff8f3d 18%,
+    #ffdd4d 28%,
+    #59d66f 40%,
+    #43d9ff 54%,
+    #8b67ff 68%,
+    #d85dff 80%,
+    #ff4f8b 92%,
+    #ff4f8b 100%
+  );
+  background-position: 0% 50%;
+  background-size: 520% 100%;
+  color: #ffffff;
+  box-shadow:
+    0 8px 18px rgba(255, 79, 139, 0.18),
+    0 4px 12px rgba(67, 217, 255, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.18);
+  text-shadow: 0 1px 1px rgba(14, 20, 25, 0.32);
+  animation: rainbow-button-flow 8s linear infinite;
+}
+
+.branch-menu-sync-button.active:not(:disabled)::before {
+  content: "";
+  position: absolute;
+  inset: -80% -40%;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.42) 46%,
+    transparent 62%
+  );
+  pointer-events: none;
+  transform: translateX(-52%);
+  animation: rainbow-button-sheen 2.8s ease-in-out infinite;
 }
 
 .branch-menu-trigger:focus-visible,
@@ -127,7 +172,29 @@
   background: var(--surface-subtle);
 }
 
+.branch-menu-sync-button.active:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.58);
+  background: linear-gradient(
+    90deg,
+    #ff347b 0%,
+    #ff347b 10%,
+    #ff7b35 18%,
+    #ffd63d 28%,
+    #43cb67 40%,
+    #2fcdf5 54%,
+    #7656f2 68%,
+    #cf55ff 80%,
+    #ff347b 92%,
+    #ff347b 100%
+  );
+  background-size: 520% 100%;
+  color: #ffffff;
+  animation-duration: 4.5s;
+}
+
 .branch-menu-sync-button .button-icon {
+  position: relative;
+  z-index: 1;
   width: 15px;
   height: 15px;
 }

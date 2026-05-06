@@ -364,13 +364,17 @@ h2 {
 }
 
 .active-terminals {
-  border-left: 1px solid var(--border-soft);
-  background: color-mix(in srgb, var(--surface) 86%, var(--app-bg));
+  border-left: 1px solid color-mix(in srgb, var(--border-soft) 78%, transparent);
+  background: color-mix(in srgb, var(--surface) 80%, var(--app-bg));
 }
 
 .active-terminals .active-terminals-heading,
 .active-terminals .active-terminal-item {
   background: transparent;
+}
+
+.active-terminal-item + .active-terminal-item {
+  border-top: 1px solid color-mix(in srgb, var(--border-soft) 54%, transparent);
 }
 
 .active-terminal-item p {

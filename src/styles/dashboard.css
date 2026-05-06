@@ -137,11 +137,11 @@
   align-content: start;
   overflow: hidden;
   border: 0;
-  border-left: 1px solid var(--border-soft);
+  border-left: 1px solid color-mix(in srgb, var(--border-soft) 78%, transparent);
   border-radius: 0;
   margin-top: 0;
   padding: 0;
-  background: color-mix(in srgb, var(--surface) 84%, var(--app-bg));
+  background: color-mix(in srgb, var(--surface) 76%, var(--app-bg));
   box-shadow: none;
 }
 
@@ -151,9 +151,9 @@
   justify-content: flex-start;
   gap: 10px;
   width: 100%;
-  min-height: 68px;
+  min-height: 62px;
   border-bottom: 0;
-  padding: 20px 18px 10px;
+  padding: 20px 22px 8px;
   background: transparent;
 }
 
@@ -176,7 +176,7 @@
   height: 28px;
   place-items: center;
   border-radius: 999px;
-  background: var(--surface-subtle);
+  background: color-mix(in srgb, var(--surface-subtle) 84%, transparent);
   color: var(--muted-strong);
   font-size: var(--font-size-base);
   font-weight: 900;
@@ -185,15 +185,15 @@
 .active-terminal-groups {
   display: grid;
   align-content: start;
-  gap: 22px;
+  gap: 20px;
   min-height: 0;
   overflow: auto;
-  padding: 14px 18px 20px;
+  padding: 14px 20px 22px;
 }
 
 .active-terminal-group {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .active-terminal-group-heading {
@@ -202,12 +202,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-soft) 62%, transparent);
 }
 
 .active-terminal-group h3 {
   min-width: 0;
   overflow: hidden;
-  color: var(--muted-strong);
+  color: color-mix(in srgb, var(--muted-strong) 86%, var(--text));
   font-size: var(--font-size-base);
   text-overflow: ellipsis;
   text-transform: uppercase;
@@ -216,7 +218,7 @@
 
 .active-terminal-group-heading span {
   flex: 0 0 auto;
-  color: var(--muted);
+  color: color-mix(in srgb, var(--muted) 88%, transparent);
   font-size: var(--font-size-compact);
   font-weight: 900;
   text-transform: uppercase;
@@ -224,7 +226,7 @@
 
 .active-terminal-list {
   display: grid;
-  gap: 4px;
+  gap: 0;
   border-top: 0;
 }
 
@@ -234,10 +236,15 @@
   gap: 10px;
   align-items: start;
   border: 0;
-  border-radius: 8px;
-  padding: 10px 0;
+  border-radius: 7px;
+  padding: 10px 8px;
   background: transparent;
   cursor: pointer;
+}
+
+.active-terminal-item + .active-terminal-item {
+  border-top: 1px solid color-mix(in srgb, var(--border-soft) 54%, transparent);
+  border-radius: 0;
 }
 
 .active-terminal-item.pinned {
@@ -248,7 +255,7 @@
 
 .active-terminal-item:hover {
   box-shadow: none;
-  background: var(--surface-hover);
+  background: color-mix(in srgb, var(--surface-hover) 64%, transparent);
 }
 
 .active-terminal-item:focus-visible {
@@ -281,12 +288,13 @@
 .active-terminal-item strong {
   display: block;
   color: var(--text);
-  font-size: var(--font-size-heading);
+  font-size: var(--font-size-base);
+  line-height: 1.25;
 }
 
 .active-terminal-item code {
   display: block;
-  color: var(--muted);
+  color: color-mix(in srgb, var(--muted) 92%, var(--text));
   font-size: var(--font-size-compact);
 }
 
@@ -305,20 +313,20 @@
 .active-terminal-status {
   flex: 0 0 auto;
   border-radius: 999px;
-  padding: 3px 7px;
-  background: var(--warning-soft);
+  padding: 2px 7px;
+  background: color-mix(in srgb, var(--warning-soft) 74%, transparent);
   color: var(--warning-text);
   font-size: var(--font-size-compact);
   font-weight: 900;
 }
 
 .active-terminal-status.done {
-  background: var(--success-soft);
+  background: color-mix(in srgb, var(--success-soft) 74%, transparent);
   color: var(--success-text);
 }
 
 .active-terminal-status.pinned {
-  background: var(--surface-subtle);
+  background: color-mix(in srgb, var(--surface-subtle) 74%, transparent);
   color: var(--muted-strong);
 }
 

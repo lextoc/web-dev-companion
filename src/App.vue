@@ -26,6 +26,14 @@ const PINNED_REPOSITORIES_KEY = 'web-dev-companion:pinned-repositories'
 const PINNED_SCRIPTS_KEY = 'web-dev-companion:pinned-scripts'
 const RECENT_COMMANDS_KEY = 'web-dev-companion:recent-commands'
 const MAX_RECENT_COMMANDS = 6
+const FEEDBACK_DISMISS_MS = 4000
+const AUTO_REFRESH_TICK_MS = 1000
+const SCRIPT_ITEM_SEPARATOR = '\n'
+
+type ScriptPaletteReference = {
+  repoPath: string
+  scriptName: string
+}
 
 type AppHistoryState =
   | { view: 'dashboard' }
@@ -258,7 +266,7 @@ const commandPaletteItems = computed(() => {
   if (selectedDetails.value) {
     for (const [scriptName, command] of Object.entries(selectedDetails.value.npmScripts)) {
       addItem({
-        id: `script:${selectedDetails.value.path}\n${scriptName}`,
+        id: `script:${paletteScriptId(selectedDetails.value.path, scriptName)}`,
         icon: 'play',
         title: `Run ${scriptName}`,
         section: 'Current scripts',
@@ -271,7 +279,7 @@ const commandPaletteItems = computed(() => {
 
   for (const script of pinnedScripts.value) {
     addItem({
-      id: `script:${script.repoPath}\n${script.scriptName}`,
+      id: `script:${paletteScriptId(script.repoPath, script.scriptName)}`,
       icon: 'play',
       title: `Run ${script.scriptName}`,
       section: 'Pinned scripts',
@@ -307,6 +315,58 @@ const commandPaletteItems = computed(() => {
 
   return [...recentItems, ...baseItems]
 })
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((entry): entry is string => typeof entry === 'string')
+}
+
+function isPinnedScript(script: unknown): script is PinnedScript {
+  return (
+    typeof script === 'object' &&
+    script !== null &&
+    typeof (script as Pick<PinnedScript, 'repoPath'>).repoPath === 'string' &&
+    typeof (script as Pick<PinnedScript, 'repoName'>).repoName === 'string' &&
+    typeof (script as Pick<PinnedScript, 'scriptName'>).scriptName === 'string' &&
+    typeof (script as Pick<PinnedScript, 'command'>).command === 'string' &&
+    ((script as Pick<PinnedScript, 'packageManager'>).packageManager === undefined ||
+      typeof (script as Pick<PinnedScript, 'packageManager'>).packageManager === 'string')
+  )
+}
+
+function isPinnedScriptList(value: unknown): value is PinnedScript[] {
+  return Array.isArray(value) && value.every(isPinnedScript)
+}
+
+function readStoredValue<T>(key: string, validator: (value: unknown) => value is T, fallback: T) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) ?? 'null')
+    if (validator(parsed)) {
+      return parsed
+    }
+  } catch {}
+
+  return fallback
+}
+
+function writeStoredValue<T>(key: string, value: T) {
+  localStorage.setItem(key, JSON.stringify(value))
+}
+
+function paletteScriptId(repoPath: string, scriptName: string) {
+  return `${repoPath}${SCRIPT_ITEM_SEPARATOR}${scriptName}`
+}
+
+function parsePaletteScriptId(value: string): ScriptPaletteReference | null {
+  const separatorIndex = value.lastIndexOf(SCRIPT_ITEM_SEPARATOR)
+  if (separatorIndex < 0) {
+    return null
+  }
+
+  return {
+    repoPath: value.slice(0, separatorIndex),
+    scriptName: value.slice(separatorIndex + 1),
+  }
+}
 
 function currentHistoryState() {
   const state = window.history.state
@@ -348,58 +408,30 @@ async function applyHistoryState(state: AppHistoryState | undefined) {
 }
 
 function loadPinnedRepositories() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(PINNED_REPOSITORIES_KEY) ?? '[]')
-    pinnedRepositoryPaths.value = Array.isArray(parsed)
-      ? parsed.filter((repoPath): repoPath is string => typeof repoPath === 'string')
-      : []
-  } catch {
-    pinnedRepositoryPaths.value = []
-  }
+  pinnedRepositoryPaths.value = readStoredValue(PINNED_REPOSITORIES_KEY, isStringArray, [])
 }
 
 function loadPinnedScripts() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(PINNED_SCRIPTS_KEY) ?? '[]')
-
-    pinnedScripts.value = Array.isArray(parsed)
-      ? parsed.filter((script): script is PinnedScript =>
-        typeof script?.repoPath === 'string' &&
-        typeof script?.repoName === 'string' &&
-        typeof script?.scriptName === 'string' &&
-        typeof script?.command === 'string' &&
-        (script.packageManager === undefined || typeof script.packageManager === 'string'),
-      )
-      : []
-  } catch {
-    pinnedScripts.value = []
-  }
+  pinnedScripts.value = readStoredValue(PINNED_SCRIPTS_KEY, isPinnedScriptList, [])
 }
 
 function loadRecentCommands() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(RECENT_COMMANDS_KEY) ?? '[]')
-    recentCommandIds.value = Array.isArray(parsed)
-      ? parsed.filter((commandId): commandId is string => typeof commandId === 'string')
-      : []
-  } catch {
-    recentCommandIds.value = []
-  }
+  recentCommandIds.value = readStoredValue(RECENT_COMMANDS_KEY, isStringArray, [])
 }
 
 function savePinnedRepositories(repoPaths: string[]) {
   pinnedRepositoryPaths.value = repoPaths
-  localStorage.setItem(PINNED_REPOSITORIES_KEY, JSON.stringify(repoPaths))
+  writeStoredValue(PINNED_REPOSITORIES_KEY, repoPaths)
 }
 
 function savePinnedScripts(scripts: PinnedScript[]) {
   pinnedScripts.value = scripts
-  localStorage.setItem(PINNED_SCRIPTS_KEY, JSON.stringify(scripts))
+  writeStoredValue(PINNED_SCRIPTS_KEY, scripts)
 }
 
 function saveRecentCommands(commandIds: string[]) {
   recentCommandIds.value = commandIds.slice(0, MAX_RECENT_COMMANDS)
-  localStorage.setItem(RECENT_COMMANDS_KEY, JSON.stringify(recentCommandIds.value))
+  writeStoredValue(RECENT_COMMANDS_KEY, recentCommandIds.value)
 }
 
 function rememberCommand(commandId: string) {
@@ -410,7 +442,7 @@ function rememberCommand(commandId: string) {
 }
 
 function pinnedScriptKey(script: Pick<PinnedScript, 'repoPath' | 'scriptName'>) {
-  return `${script.repoPath}\n${script.scriptName}`
+  return `${script.repoPath}${SCRIPT_ITEM_SEPARATOR}${script.scriptName}`
 }
 
 function saveAppSettings(settings: AppSettings) {
@@ -761,7 +793,7 @@ function showStatusFeedback(message: string) {
   statusFeedbackTimer = window.setTimeout(() => {
     statusFeedbackMessage.value = null
     statusFeedbackTimer = undefined
-  }, 4000)
+  }, FEEDBACK_DISMISS_MS)
 }
 
 function showBranchFeedback(branchName: string, message: string) {
@@ -774,7 +806,7 @@ function showBranchFeedback(branchName: string, message: string) {
     const nextFeedbackMessages = { ...branchFeedbackMessages.value }
     delete nextFeedbackMessages[branchName]
     branchFeedbackMessages.value = nextFeedbackMessages
-  }, 4000)
+  }, FEEDBACK_DISMISS_MS)
 }
 
 async function runStatusAction(
@@ -1079,10 +1111,13 @@ async function runCommandPaletteItem(itemId: string) {
   }
 
   if (itemId.startsWith('script:')) {
-    const scriptKey = itemId.slice('script:'.length)
-    const separatorIndex = scriptKey.lastIndexOf('\n')
-    const scriptRepoPath = scriptKey.slice(0, separatorIndex)
-    const scriptName = scriptKey.slice(separatorIndex + 1)
+    const script = parsePaletteScriptId(itemId.slice('script:'.length))
+
+    if (!script) {
+      return
+    }
+
+    const { repoPath: scriptRepoPath, scriptName } = script
 
     if (selectedDetails.value?.path === scriptRepoPath) {
       await runScript(scriptName)
@@ -1150,7 +1185,7 @@ function resetAutoRefreshTimer() {
   autoRefreshRemainingMs.value = appSettings.value.autoRefreshIntervalMs
 
   if (autoRefreshTickTimer === undefined) {
-    autoRefreshTickTimer = window.setInterval(updateAutoRefreshCountdown, 1000)
+    autoRefreshTickTimer = window.setInterval(updateAutoRefreshCountdown, AUTO_REFRESH_TICK_MS)
   }
 }
 

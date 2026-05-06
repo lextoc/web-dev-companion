@@ -21,6 +21,9 @@ interface TerminalEntry {
   terminal?: ScriptTerminal
 }
 
+type TerminalEntryMap = Map<string, TerminalEntry>
+type TerminalGroupMap = Map<string, TerminalEntry[]>
+
 const props = defineProps<{
   terminals: ScriptTerminal[]
   pinnedScripts: PinnedScript[]
@@ -34,12 +37,13 @@ defineEmits<{
   unpinPinned: [script: PinnedScript]
 }>()
 
-const terminalGroups = computed<TerminalGroup[]>(() => {
+const terminalEntriesByKey = computed<TerminalEntryMap>(() => {
   const entriesByKey = new Map<string, TerminalEntry>()
 
   for (const terminal of props.terminals) {
-    entriesByKey.set(scriptKey(terminal.repoPath, terminal.scriptName), {
-      key: scriptKey(terminal.repoPath, terminal.scriptName),
+    const key = getTerminalKey(terminal.repoPath, terminal.scriptName)
+    entriesByKey.set(key, {
+      key,
       repoName: terminal.repoName,
       scriptName: terminal.scriptName,
       command: terminal.command,
@@ -48,7 +52,7 @@ const terminalGroups = computed<TerminalGroup[]>(() => {
   }
 
   for (const pinnedScript of props.pinnedScripts) {
-    const key = scriptKey(pinnedScript.repoPath, pinnedScript.scriptName)
+    const key = getTerminalKey(pinnedScript.repoPath, pinnedScript.scriptName)
     const existingEntry = entriesByKey.get(key)
 
     entriesByKey.set(key, {
@@ -61,54 +65,85 @@ const terminalGroups = computed<TerminalGroup[]>(() => {
     })
   }
 
-  const groups = new Map<string, TerminalEntry[]>()
+  return entriesByKey
+})
 
-  for (const entry of entriesByKey.values()) {
+const terminalGroups = computed<TerminalGroup[]>(() => {
+  const groups: TerminalGroupMap = new Map<string, TerminalEntry[]>()
+
+  for (const entry of terminalEntriesByKey.value.values()) {
     const existingEntries = groups.get(entry.repoName) ?? []
     existingEntries.push(entry)
     groups.set(entry.repoName, existingEntries)
   }
 
   return [...groups.entries()]
-    .sort(([repoNameA], [repoNameB]) => repoNameA.localeCompare(repoNameB))
-    .map(([repoName, entries]) => ({
-      repoName,
-      runningCount: entries.filter((entry) => entry.terminal?.isRunning).length,
-      doneCount: entries.filter((entry) => entry.terminal && !entry.terminal.isRunning).length,
-      pinnedCount: entries.filter((entry) => entry.pinnedScript).length,
-      entries: [...entries].sort((entryA, entryB) =>
-        Number(Boolean(entryB.terminal?.isRunning)) - Number(Boolean(entryA.terminal?.isRunning))
-        || Number(Boolean(entryB.terminal)) - Number(Boolean(entryA.terminal))
-        || entryA.scriptName.localeCompare(entryB.scriptName),
-      ),
-    }))
+    .sort(sortEntriesByRepoName)
+    .map(([repoName, entries]) => createGroup(repoName, entries))
 })
 
-const pinnedIdleCount = computed(() =>
-  props.pinnedScripts.filter((pinnedScript) =>
-    !props.terminals.some((terminal) =>
-      terminal.repoPath === pinnedScript.repoPath && terminal.scriptName === pinnedScript.scriptName,
-    ),
-  ).length,
-)
+const pinnedIdleCount = computed(() => {
+  const activeScriptKeys = new Set(
+    props.terminals.map((terminal) => getTerminalKey(terminal.repoPath, terminal.scriptName)),
+  )
+
+  let count = 0
+  for (const pinnedScript of props.pinnedScripts) {
+    if (!activeScriptKeys.has(getTerminalKey(pinnedScript.repoPath, pinnedScript.scriptName))) {
+      count += 1
+    }
+  }
+  return count
+})
+
 const sidebarScriptCount = computed(() => props.terminals.length + pinnedIdleCount.value)
 
-function scriptKey(repoPath: string, scriptName: string) {
+function createGroup(repoName: string, entries: TerminalEntry[]) {
+  const sortedEntries = [...entries].sort(compareTerminalEntries)
+
+  return {
+    repoName,
+    runningCount: entries.filter((entry) => entry.terminal?.isRunning).length,
+    doneCount: entries.filter((entry) => entry.terminal && !entry.terminal.isRunning).length,
+    pinnedCount: entries.filter((entry) => entry.pinnedScript).length,
+    entries: sortedEntries,
+  }
+}
+
+function getTerminalKey(repoPath: string, scriptName: string) {
   return `${repoPath}\n${scriptName}`
 }
 
-function getTerminalPreview(terminal: ScriptTerminal) {
-  const outputLines = plainTerminalText(terminal.output)
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-  const lastLine = outputLines[outputLines.length - 1]
+function sortEntriesByRepoName(
+  [repoNameA]: [string, TerminalEntry[]],
+  [repoNameB]: [string, TerminalEntry[]],
+) {
+  return repoNameA.localeCompare(repoNameB)
+}
 
-  if (lastLine) {
-    return lastLine
+function compareTerminalEntries(entryA: TerminalEntry, entryB: TerminalEntry) {
+  return (
+    Number(Boolean(entryB.terminal?.isRunning)) - Number(Boolean(entryA.terminal?.isRunning))
+    || Number(Boolean(entryB.terminal)) - Number(Boolean(entryA.terminal))
+    || entryA.scriptName.localeCompare(entryB.scriptName)
+  )
+}
+
+function getTerminalPreview(terminal: ScriptTerminal) {
+  const outputLines = plainTerminalText(terminal.output).split(/\r?\n/)
+
+  for (let i = outputLines.length - 1; i >= 0; i -= 1) {
+    const line = outputLines[i].trim()
+    if (line) {
+      return line
+    }
   }
 
-  return terminal.isRunning ? 'Waiting for output...' : 'No output captured.'
+  if (terminal.isRunning) {
+    return 'Waiting for output...'
+  }
+
+  return 'No output captured.'
 }
 </script>
 

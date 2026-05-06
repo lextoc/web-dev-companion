@@ -182,34 +182,62 @@ h3 {
 }
 
 .state-chip {
+  position: relative;
   display: inline-flex;
-  min-height: 30px;
   align-items: center;
+  gap: 6px;
+  height: 25px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
   border-radius: 999px;
   padding: 0 10px;
-  background: var(--surface-subtle);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 34%, transparent), transparent),
+    color-mix(in srgb, var(--surface-subtle) 64%, var(--surface));
   color: var(--muted-strong);
-  font-size: var(--font-size-compact);
-  font-weight: 900;
+  font-size: 0.72rem;
+  font-weight: 720;
+  line-height: 25px;
+  vertical-align: middle;
   white-space: nowrap;
 }
 
+.state-chip::before {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.72;
+  content: "";
+}
+
 .state-chip.success {
-  background: var(--success-soft);
+  border-color: color-mix(in srgb, var(--success-text) 20%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 36%, transparent), transparent),
+    color-mix(in srgb, var(--success-soft) 86%, var(--surface));
   color: var(--success-text);
 }
 
 .state-chip.warning {
-  background: var(--warning-soft);
+  border-color: color-mix(in srgb, var(--warning-text) 24%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 36%, transparent), transparent),
+    color-mix(in srgb, var(--warning-soft) 86%, var(--surface));
   color: var(--warning-text);
 }
 
 .state-chip.danger {
-  background: var(--danger-soft);
+  border-color: color-mix(in srgb, var(--danger-text) 20%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 36%, transparent), transparent),
+    color-mix(in srgb, var(--danger-soft) 86%, var(--surface));
   color: var(--danger-text);
 }
 
 .state-chip.info {
-  background: var(--info-soft);
+  border-color: color-mix(in srgb, var(--info-text) 20%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 36%, transparent), transparent),
+    color-mix(in srgb, var(--info-soft) 86%, var(--surface));
   color: var(--info-text);
 }

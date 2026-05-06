@@ -285,10 +285,13 @@ h2 {
 .health-running,
 .active-terminal-status,
 .panel-count {
-  min-height: 22px;
-  padding-top: 2px;
-  padding-bottom: 2px;
-  font-size: var(--font-size-compact);
+  height: 22px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 0.72rem;
+  font-weight: 720;
+  line-height: 22px;
+  vertical-align: middle;
 }
 
 .icon-button {

@@ -1469,13 +1469,16 @@ pre {
     var(--success-text) 32%,
     var(--border-control)
   );
-  background: var(--surface);
+  background: color-mix(in srgb, var(--terminal-bg) 64%, var(--surface));
   color: var(--text);
 }
 
 .commit-panel.ready .commit-form textarea:focus {
   border-color: var(--success-text);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success-text) 24%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--success-text) 32%, transparent),
+    inset 0 1px 3px color-mix(in srgb, var(--text) 12%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--success-text) 22%, transparent);
 }
 
 .commit-panel.ready .commit-submit:not(:disabled) {
@@ -1830,26 +1833,20 @@ pre {
   width: 100%;
   min-height: 96px;
   resize: vertical;
-  border: 1px solid
-    color-mix(in srgb, var(--border-control) 88%, var(--brand-ring));
+  border: 1px solid var(--border-muted);
   border-left: 3px solid
     color-mix(in srgb, var(--brand) 58%, var(--border-control));
-  border-radius: 8px;
-  padding: 12px 14px 18px;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface) 92%, var(--surface-soft)),
-      color-mix(in srgb, var(--surface-soft) 78%, var(--surface))
-    ),
-    var(--surface);
+  border-radius: 6px;
+  padding: 11px 13px 18px;
+  background: color-mix(in srgb, var(--terminal-bg) 58%, var(--surface));
   color: var(--text);
-  font: inherit;
+  font-family: var(--font-mono);
   font-size: var(--font-size-base);
-  line-height: 1.5;
+  font-weight: 650;
+  line-height: 1.45;
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--surface) 86%, transparent),
-    0 1px 2px color-mix(in srgb, var(--text) 7%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--text) 4%, transparent),
+    inset 0 1px 3px color-mix(in srgb, var(--text) 10%, transparent);
   transition:
     border-color 140ms ease,
     box-shadow 140ms ease,
@@ -1863,10 +1860,11 @@ pre {
 .commit-form textarea:focus {
   border-color: var(--brand);
   border-left-color: var(--brand);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--terminal-bg) 72%, var(--surface));
   box-shadow:
-    0 0 0 3px var(--brand-ring),
-    0 8px 18px color-mix(in srgb, var(--brand) 10%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--brand) 28%, transparent),
+    inset 0 1px 3px color-mix(in srgb, var(--text) 12%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--brand-ring) 76%, transparent);
   outline: 0;
 }
 
@@ -1924,13 +1922,13 @@ pre {
 .commit-form-wide textarea:focus {
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--brand) 28%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--surface) 86%, transparent);
+    inset 0 1px 3px color-mix(in srgb, var(--text) 12%, transparent);
 }
 
 .commit-panel.ready .commit-form-wide textarea:focus {
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--success-text) 32%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--surface) 86%, transparent);
+    inset 0 1px 3px color-mix(in srgb, var(--text) 12%, transparent);
 }
 
 .commit-line-summary {

@@ -89,6 +89,9 @@ The test command runs the Vue TypeScript checker. There are currently no unit or
 pnpm run build
 ```
 
+Local builds are packaged without macOS code signing, so a development machine's
+personal or expired Apple certificates do not affect `pnpm run build`.
+
 Release helpers are also available:
 
 ```sh

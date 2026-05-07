@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "test": "vue-tsc --noEmit",
-    "build": "vue-tsc && vite build && electron-builder",
+    "build": "vue-tsc && vite build && electron-builder --config.mac.identity=null",
     "release:alpha": "vue-tsc && vite build && electron-builder --mac --win --x64",
     "release:alpha:mac": "vue-tsc && vite build && electron-builder --mac",
     "release:alpha:win": "vue-tsc && vite build && electron-builder --win --x64",

@@ -8,10 +8,14 @@ Web Dev Companion is an Electron, Vue 3, and TypeScript app for keeping local pr
 
 - Save and browse local Git repositories.
 - Search, sort, and pin frequently used repositories.
-- Review branch, remote, dirty state, and file status details.
+- Review branch, remote, dirty state, file status details, diffs, and recent commits.
+- Stage and unstage files, write commits, and inspect commit details from the repository view.
+- Sync, switch, create tracking branches from remotes, and remove safe local branches.
 - Open repositories in the file manager, configured editor, or terminal.
-- Run and monitor package scripts in managed terminals.
-- Use the command palette and desktop menu shortcuts for common actions.
+- Run, pin, monitor, restart, and stop package scripts in managed terminals.
+- Auto-refresh repository state, including refresh-on-focus for the active repository.
+- Use the command palette, recent commands, keyboard shortcuts, and desktop menu shortcuts for common actions.
+- Configure theme, editor command, refresh interval, sync confirmation behavior, and commit celebration effects.
 
 ## Feature Ideas
 

@@ -66,7 +66,7 @@ describe("AppActionMenu", () => {
     });
 
     const trigger = wrapper.get("button.action-menu-trigger");
-    await trigger.trigger("xclick");
+    await trigger.trigger("click");
     await nextTick();
 
     expect(document.body.querySelector('[role="menu"]')).not.toBeNull();

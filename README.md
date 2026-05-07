@@ -52,7 +52,7 @@ The current app already covers the daily repository cockpit: saved projects, Git
 
 ## Requirements
 
-- Node.js 20 or newer.
+- Node.js 20.19.4. Run `nvm use` from the project root if you use nvm.
 - pnpm 10.14.0.
 - Git available on your `PATH`.
 

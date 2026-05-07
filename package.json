@@ -6,6 +6,10 @@
   "description": "Desktop companion for managing local web development repositories.",
   "author": "Alexander Claes",
   "packageManager": "pnpm@10.14.0",
+  "engines": {
+    "node": ">=20.19.4 <21",
+    "pnpm": "10.14.0"
+  },
   "scripts": {
     "dev": "vite",
     "test": "vue-tsc --noEmit",

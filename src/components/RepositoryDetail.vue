@@ -15,8 +15,7 @@ import type {
   StatusFileDiff,
   StatusFileDiffType,
 } from "../repositories";
-import NpmScriptsPanel from "./NpmScriptsPanel.vue";
-import { RunProjectScriptsButton } from "./smart";
+import { NpmScriptsPanel, RunProjectScriptsButton } from "./smart";
 import { AppTabs, type AppTabItem } from "./ui";
 
 const props = defineProps<{

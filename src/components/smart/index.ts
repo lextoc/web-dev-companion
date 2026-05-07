@@ -1,1 +1,5 @@
+export { default as ActiveTerminalsSidebar } from './ActiveTerminalsSidebar.vue'
+export { default as CommandPalette } from './CommandPalette.vue'
+export { default as NpmScriptsPanel } from './NpmScriptsPanel.vue'
+export { default as RepositoryHeaderControls } from './RepositoryHeaderControls.vue'
 export { default as RunProjectScriptsButton } from './RunProjectScriptsButton.vue'

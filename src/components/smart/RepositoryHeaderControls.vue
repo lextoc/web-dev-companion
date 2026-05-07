@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import type { RepositoryDetails } from "../repositories";
-import { AppActionMenu, AppButton, AppDropdown, AppIcon, AppMenuItem } from "./ui";
+import type { RepositoryDetails } from "../../repositories";
+import { AppActionMenu, AppButton, AppDropdown, AppIcon, AppMenuItem } from "../ui";
 
 const props = defineProps<{
   selectedDetails: RepositoryDetails | null;

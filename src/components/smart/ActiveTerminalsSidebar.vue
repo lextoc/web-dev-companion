@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { plainTerminalText } from "../output-formatting";
+import { plainTerminalText } from "../../output-formatting";
 import type {
   GitCommandLogEntry,
   PinnedScript,
   ScriptTerminal,
-} from "../repositories";
-import { AppButton } from "./ui";
+} from "../../repositories";
+import { AppButton } from "../ui";
 
 interface TerminalGroup {
   repoName: string;

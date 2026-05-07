@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import type { CommandPaletteItem } from '../command-palette'
-import { AppIcon } from './ui'
+import type { CommandPaletteItem } from '../../command-palette'
+import { AppIcon } from '../ui'
 
 const props = defineProps<{
   items: CommandPaletteItem[]

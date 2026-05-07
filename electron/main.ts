@@ -39,8 +39,6 @@ const windowBounds = {
   height: 820,
   minWidth: 1360,
   minHeight: 820,
-  maxWidth: 1800,
-  maxHeight: 1100,
 }
 
 app.setName(appName)

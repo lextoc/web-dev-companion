@@ -12,6 +12,8 @@ interface TerminalGroup {
   repoName: string;
   runningCount: number;
   doneCount: number;
+  failedCount: number;
+  stoppedCount: number;
   pinnedCount: number;
   entries: TerminalEntry[];
 }
@@ -143,7 +145,13 @@ function createGroup(repoName: string, entries: TerminalEntry[]) {
     repoName,
     runningCount: entries.filter((entry) => entry.terminal?.isRunning).length,
     doneCount: entries.filter(
-      (entry) => entry.terminal && !entry.terminal.isRunning,
+      (entry) => entry.terminal && getTerminalStatus(entry.terminal) === "done",
+    ).length,
+    failedCount: entries.filter(
+      (entry) => entry.terminal && getTerminalStatus(entry.terminal) === "failed",
+    ).length,
+    stoppedCount: entries.filter(
+      (entry) => entry.terminal && getTerminalStatus(entry.terminal) === "stopped",
     ).length,
     pinnedCount: entries.filter((entry) => entry.pinnedScript).length,
     entries: sortedEntries,
@@ -165,9 +173,45 @@ function compareTerminalEntries(entryA: TerminalEntry, entryB: TerminalEntry) {
   return (
     Number(Boolean(entryB.terminal?.isRunning)) -
       Number(Boolean(entryA.terminal?.isRunning)) ||
+    Number(entryB.terminal ? getTerminalStatus(entryB.terminal) === "failed" : false) -
+      Number(entryA.terminal ? getTerminalStatus(entryA.terminal) === "failed" : false) ||
     Number(Boolean(entryB.terminal)) - Number(Boolean(entryA.terminal)) ||
     entryA.scriptName.localeCompare(entryB.scriptName)
   );
+}
+
+function getTerminalStatus(terminal: ScriptTerminal) {
+  if (terminal.isRunning) {
+    return "running";
+  }
+
+  if (terminal.signal) {
+    return "stopped";
+  }
+
+  if (terminal.exitCode !== null && terminal.exitCode !== undefined && terminal.exitCode !== 0) {
+    return "failed";
+  }
+
+  return "done";
+}
+
+function getTerminalStatusLabel(terminal: ScriptTerminal) {
+  const status = getTerminalStatus(terminal);
+
+  if (status === "running") {
+    return "Running";
+  }
+
+  if (status === "failed") {
+    return "Failed";
+  }
+
+  if (status === "stopped") {
+    return "Stopped";
+  }
+
+  return "Done";
 }
 
 function getTerminalPreview(terminal: ScriptTerminal) {
@@ -215,6 +259,12 @@ function formatCommandTime(startedAt: string) {
           <h3>{{ group.repoName }}</h3>
           <span>
             {{ group.runningCount }} running
+            <template v-if="group.failedCount">
+              &middot; {{ group.failedCount }} failed</template
+            >
+            <template v-if="group.stoppedCount">
+              &middot; {{ group.stoppedCount }} stopped</template
+            >
             <template v-if="group.doneCount">
               &middot; {{ group.doneCount }} done</template
             >
@@ -246,15 +296,15 @@ function formatCommandTime(startedAt: string) {
                 <span
                   class="active-terminal-status"
                   :class="{
-                    done: entry.terminal && !entry.terminal.isRunning,
+                    done: entry.terminal && getTerminalStatus(entry.terminal) === 'done',
+                    failed: entry.terminal && getTerminalStatus(entry.terminal) === 'failed',
+                    stopped: entry.terminal && getTerminalStatus(entry.terminal) === 'stopped',
                     pinned: !entry.terminal,
                   }"
                 >
                   {{
                     entry.terminal
-                      ? entry.terminal.isRunning
-                        ? "Running"
-                        : "Done"
+                      ? getTerminalStatusLabel(entry.terminal)
                       : "Pinned"
                   }}
                 </span>

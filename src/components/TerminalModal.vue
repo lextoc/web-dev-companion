@@ -40,6 +40,38 @@ watch(
   },
   { flush: 'post' },
 )
+
+const terminalStatus = computed(() => {
+  if (props.terminal.isRunning) {
+    return 'running'
+  }
+
+  if (props.terminal.signal) {
+    return 'stopped'
+  }
+
+  if (props.terminal.exitCode !== null && props.terminal.exitCode !== undefined && props.terminal.exitCode !== 0) {
+    return 'failed'
+  }
+
+  return 'done'
+})
+
+const terminalStatusLabel = computed(() => {
+  if (terminalStatus.value === 'running') {
+    return 'Running'
+  }
+
+  if (terminalStatus.value === 'failed') {
+    return 'Failed'
+  }
+
+  if (terminalStatus.value === 'stopped') {
+    return 'Stopped'
+  }
+
+  return 'Done'
+})
 </script>
 
 <template>
@@ -56,8 +88,15 @@ watch(
           <h2 id="terminal-modal-title">{{ terminal.scriptName }}</h2>
           <code>{{ terminal.command }}</code>
         </div>
-        <span class="active-terminal-status" :class="{ done: !terminal.isRunning }">
-          {{ terminal.isRunning ? 'Running' : 'Done' }}
+        <span
+          class="active-terminal-status"
+          :class="{
+            done: terminalStatus === 'done',
+            failed: terminalStatus === 'failed',
+            stopped: terminalStatus === 'stopped',
+          }"
+        >
+          {{ terminalStatusLabel }}
         </span>
       </div>
 

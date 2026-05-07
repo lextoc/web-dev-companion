@@ -859,6 +859,7 @@
 
 .project-health-card.warning,
 .project-health-script-row.failed,
+.project-health-script-row.stopped,
 .project-health-script-row.timed-out {
   border-color: color-mix(in srgb, var(--warning-text) 34%, var(--border-control));
   background: color-mix(in srgb, var(--warning-soft) 44%, var(--surface));
@@ -916,6 +917,7 @@
 
 .project-health-card.warning .project-health-card-heading strong,
 .project-health-script-row.failed > span,
+.project-health-script-row.stopped > span,
 .project-health-script-row.timed-out > span {
   background: var(--warning-soft);
   color: var(--warning-text);

@@ -107,6 +107,8 @@ export function useTerminals({
       ...terminal,
       output: `${terminal.output}${output.text}`,
       isRunning: output.done ? false : terminal.isRunning,
+      exitCode: output.done ? output.exitCode ?? null : terminal.exitCode,
+      signal: output.done ? output.signal ?? null : terminal.signal,
     }
 
     if (output.done) {
@@ -176,6 +178,8 @@ export function useTerminals({
           output: `$ ${scriptRun.command}\n`,
           isRunning: true,
           startedAt: Date.now(),
+          exitCode: null,
+          signal: null,
         },
       }
 

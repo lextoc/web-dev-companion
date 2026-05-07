@@ -211,7 +211,19 @@ function projectScriptRuntimeStatus(script: ProjectScriptCheck) {
     return script.status;
   }
 
-  return terminal.isRunning ? "running" : "finished";
+  if (terminal.isRunning) {
+    return "running";
+  }
+
+  if (terminal.signal) {
+    return "stopped";
+  }
+
+  if (terminal.exitCode !== null && terminal.exitCode !== undefined && terminal.exitCode !== 0) {
+    return "failed";
+  }
+
+  return "finished";
 }
 
 function projectScriptRuntimeStatusLabel(script: ProjectScriptCheck) {
@@ -221,7 +233,19 @@ function projectScriptRuntimeStatusLabel(script: ProjectScriptCheck) {
     return scriptStatusLabel(script);
   }
 
-  return terminal.isRunning ? "Running" : "Finished";
+  if (terminal.isRunning) {
+    return "Running";
+  }
+
+  if (terminal.signal) {
+    return "Stopped";
+  }
+
+  if (terminal.exitCode !== null && terminal.exitCode !== undefined && terminal.exitCode !== 0) {
+    return "Failed";
+  }
+
+  return "Finished";
 }
 
 function openOrRunProjectScript(script: ProjectScriptCheck) {

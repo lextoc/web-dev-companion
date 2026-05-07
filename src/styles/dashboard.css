@@ -329,6 +329,16 @@
   color: var(--success-text);
 }
 
+.active-terminal-status.failed {
+  background: color-mix(in srgb, var(--danger-soft) 78%, transparent);
+  color: var(--danger-text);
+}
+
+.active-terminal-status.stopped {
+  background: color-mix(in srgb, var(--warning-soft) 78%, transparent);
+  color: var(--warning-text);
+}
+
 .active-terminal-status.pinned {
   background: color-mix(in srgb, var(--surface-subtle) 74%, transparent);
   color: var(--muted-strong);

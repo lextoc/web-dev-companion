@@ -264,6 +264,8 @@ export interface ScriptTerminal {
   output: string
   isRunning: boolean
   startedAt: number
+  exitCode?: number | null
+  signal?: string | null
 }
 
 export interface PinnedScript {

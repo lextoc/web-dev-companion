@@ -460,6 +460,7 @@ onBeforeUnmount(() => {
               :name="branchSyncActionIcon(currentBranch, syncingBranchName)"
               class="button-icon"
             />
+            <span class="branch-menu-sync-text">Sync</span>
             <kbd class="shortcut-label branch-menu-sync-shortcut">{{ syncShortcutLabel }}</kbd>
             <span class="visually-hidden">{{ branchSyncActionLabel(currentBranch) }}</span>
           </button>

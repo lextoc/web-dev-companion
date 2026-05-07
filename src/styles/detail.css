@@ -123,11 +123,11 @@
   display: inline-flex;
   position: relative;
   overflow: hidden;
-  min-width: 68px;
+  min-width: 106px;
   min-height: 34px;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 7px;
   margin-left: -1px;
   border-color: color-mix(in srgb, var(--border-control) 68%, transparent);
   border-top-left-radius: 0;
@@ -216,6 +216,17 @@
   flex: 0 0 auto;
   width: 15px;
   height: 15px;
+}
+
+.branch-menu-sync-text {
+  position: relative;
+  z-index: 1;
+  color: inherit;
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .branch-menu-sync-shortcut {

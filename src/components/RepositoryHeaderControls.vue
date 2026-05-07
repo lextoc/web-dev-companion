@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { RepositoryDetails } from "../repositories";
-import ActionMenu from "./ActionMenu.vue";
-import AppDropdown from "./AppDropdown.vue";
-import AppIcon from "./AppIcon.vue";
+import { AppActionMenu, AppButton, AppDropdown, AppIcon, AppMenuItem } from "./ui";
 
 const props = defineProps<{
   selectedDetails: RepositoryDetails | null;
@@ -399,10 +397,9 @@ onBeforeUnmount(() => {
 <template>
   <div class="detail-command-bar">
     <nav class="detail-nav" aria-label="Repository detail navigation">
-      <button type="button" class="secondary detail-back-button" @click="$emit('back')">
-        <AppIcon name="arrow-left" class="button-icon" />
-        <span>Back</span>
-      </button>
+      <AppButton variant="secondary" icon="arrow-left" class="detail-back-button" @click="$emit('back')">
+        Back
+      </AppButton>
 
       <div v-if="selectedDetails" class="detail-context-pills" aria-label="Repository state">
         <div class="detail-state-summary" aria-label="Repository summary">
@@ -480,16 +477,17 @@ onBeforeUnmount(() => {
                 <h3>Branches</h3>
                 <span class="panel-subtitle">{{ selectedDetails.branch }} - {{ currentBranchSyncLabel }}</span>
               </div>
-              <button
-                type="button"
-                class="secondary subtle-icon-button branch-menu-close"
+              <AppButton
+                variant="secondary"
+                size="icon"
+                icon="close"
+                class="branch-menu-close"
                 aria-label="Close branch menu"
                 title="Close"
                 @click="isBranchMenuOpen = false"
               >
-                <AppIcon name="close" class="button-icon" />
-                <span class="visually-hidden">Close</span>
-              </button>
+                Close
+              </AppButton>
             </div>
 
             <section
@@ -653,15 +651,13 @@ onBeforeUnmount(() => {
                     >
                       {{ isCheckingOutBranch(branch.name, checkingOutBranchName) ? "Switching..." : "Switch" }}
                     </button>
-                    <ActionMenu
+                    <AppActionMenu
                       v-if="!branch.inSyncWithRemote || !branch.current"
                       :label="`More actions for ${branch.name}`"
                     >
-                      <button
+                      <AppMenuItem
                         v-if="!branch.inSyncWithRemote"
-                        type="button"
-                        class="action-menu-item"
-                        role="menuitem"
+                        icon="restart"
                         :class="{ pending: isSyncingBranch(branch.name, syncingBranchName) }"
                         :disabled="
                           Boolean(branchSyncDisabledReason(branch, selectedDetails.gitStatus)) ||
@@ -672,20 +668,16 @@ onBeforeUnmount(() => {
                         :aria-busy="isSyncingBranch(branch.name, syncingBranchName)"
                         @click="$emit('syncBranch', branch.name)"
                       >
-                        <AppIcon name="restart" class="button-icon" />
-                        <span>
-                          {{
-                            isSyncingBranch(branch.name, syncingBranchName)
-                              ? `${branchSyncActionLabel(branch)}ing...`
-                              : branchSyncActionLabel(branch)
-                          }}
-                        </span>
-                      </button>
-                      <button
+                        {{
+                          isSyncingBranch(branch.name, syncingBranchName)
+                            ? `${branchSyncActionLabel(branch)}ing...`
+                            : branchSyncActionLabel(branch)
+                        }}
+                      </AppMenuItem>
+                      <AppMenuItem
                         v-if="!branch.current"
-                        type="button"
-                        class="action-menu-item danger"
-                        role="menuitem"
+                        icon="trash"
+                        tone="danger"
                         :class="{ pending: isDeletingBranch(branch.name, deletingBranchName) }"
                         :disabled="
                           !branch.canDelete || Boolean(syncingBranchName) || Boolean(deletingBranchName)
@@ -693,12 +685,9 @@ onBeforeUnmount(() => {
                         :title="branch.deleteReason ?? 'Delete local branch'"
                         @click="$emit('deleteBranch', branch.name)"
                       >
-                        <AppIcon name="trash" class="button-icon" />
-                        <span>
-                          {{ isDeletingBranch(branch.name, deletingBranchName) ? "Removing..." : "Remove branch" }}
-                        </span>
-                      </button>
-                    </ActionMenu>
+                        {{ isDeletingBranch(branch.name, deletingBranchName) ? "Removing..." : "Remove branch" }}
+                      </AppMenuItem>
+                    </AppActionMenu>
                   </div>
                 </li>
               </ul>
@@ -710,46 +699,46 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="detail-quick-actions" aria-label="Repository quick actions">
-        <button
-          type="button"
-          class="secondary subtle-icon-button"
+        <AppButton
+          variant="secondary"
+          size="icon"
+          icon="folder"
           :aria-label="`Show ${selectedDetails.name} in files`"
           title="Show in files"
           @click="$emit('openInFileManager', selectedDetails.path)"
         >
-          <AppIcon name="folder" class="button-icon" />
-          <span class="visually-hidden">Show in files</span>
-        </button>
-        <button
-          type="button"
-          class="secondary subtle-icon-button"
+          Show in files
+        </AppButton>
+        <AppButton
+          variant="secondary"
+          size="icon"
+          icon="edit"
           :aria-label="`Open ${selectedDetails.name} in editor`"
           title="Open in editor"
           @click="$emit('openInEditor', selectedDetails.path)"
         >
-          <AppIcon name="edit" class="button-icon" />
-          <span class="visually-hidden">Open in editor</span>
-        </button>
-        <button
-          type="button"
-          class="secondary subtle-icon-button"
+          Open in editor
+        </AppButton>
+        <AppButton
+          variant="secondary"
+          size="icon"
+          icon="terminal"
           :aria-label="`Open ${selectedDetails.name} terminal`"
           title="Open terminal"
           @click="$emit('openInTerminal', selectedDetails.path)"
         >
-          <AppIcon name="terminal" class="button-icon" />
-          <span class="visually-hidden">Open terminal</span>
-        </button>
-        <button
-          type="button"
-          class="secondary subtle-icon-button"
+          Open terminal
+        </AppButton>
+        <AppButton
+          variant="secondary"
+          size="icon"
+          icon="copy"
           :aria-label="`Copy path for ${selectedDetails.name}`"
           title="Copy path"
           @click="$emit('copyPath', selectedDetails.path)"
         >
-          <AppIcon name="copy" class="button-icon" />
-          <span class="visually-hidden">Copy path</span>
-        </button>
+          Copy path
+        </AppButton>
       </div>
     </div>
 

@@ -12,6 +12,7 @@ import type {
   StatusFileDiffType,
 } from "../repositories";
 import NpmScriptsPanel from "./NpmScriptsPanel.vue";
+import { AppTabs, type AppTabItem } from "./ui";
 
 const props = defineProps<{
   selectedDetails: RepositoryDetails | null;
@@ -43,6 +44,11 @@ const emit = defineEmits<{
 const commitMessage = ref("");
 const confettiBursts = ref<Array<{ id: number }>>([]);
 const activeDetailTab = ref<"git" | "log" | "scripts">("git");
+const detailTabs: AppTabItem[] = [
+  { key: "git", label: "Git overview" },
+  { key: "log", label: "Git log" },
+  { key: "scripts", label: "NPM scripts" },
+];
 const selectedStatusDiff = ref<StatusFileDiff | null>(null);
 const statusDiffLoadingKey = ref<string | null>(null);
 const statusDiffError = ref<string | null>(null);
@@ -469,52 +475,14 @@ function triggerCommitConfetti() {
     </div>
 
     <template v-else-if="selectedDetails">
-      <nav class="detail-tabs" role="tablist" aria-label="Repository detail sections">
-        <button
-          id="git-overview-tab"
-          type="button"
-          class="secondary"
-          role="tab"
-          :class="{ active: activeDetailTab === 'git' }"
-          :aria-selected="activeDetailTab === 'git'"
-          aria-controls="git-overview-panel"
-          @click="activeDetailTab = 'git'"
-        >
-          Git overview
-        </button>
-        <button
-          id="git-log-tab"
-          type="button"
-          class="secondary"
-          role="tab"
-          :class="{ active: activeDetailTab === 'log' }"
-          :aria-selected="activeDetailTab === 'log'"
-          aria-controls="git-log-panel"
-          @click="activeDetailTab = 'log'"
-        >
-          Git log
-        </button>
-        <button
-          id="npm-scripts-tab"
-          type="button"
-          class="secondary"
-          role="tab"
-          :class="{ active: activeDetailTab === 'scripts' }"
-          :aria-selected="activeDetailTab === 'scripts'"
-          aria-controls="npm-scripts-panel"
-          @click="activeDetailTab = 'scripts'"
-        >
-          NPM scripts
-        </button>
-      </nav>
-
-      <div
-        v-if="activeDetailTab === 'git'"
-        id="git-overview-panel"
-        class="detail-layout scripts-tab-layout"
-        role="tabpanel"
-        aria-labelledby="git-overview-tab"
+      <AppTabs
+        v-model="activeDetailTab"
+        :tabs="detailTabs"
+        label="Repository detail sections"
+        tablist-class="detail-tabs"
+        panel-class="detail-layout scripts-tab-layout"
       >
+        <template #git>
         <div class="git-main-grid">
           <div class="git-work-column">
             <section
@@ -734,15 +702,9 @@ function triggerCommitConfetti() {
             </section>
           </div>
         </div>
-      </div>
+        </template>
 
-      <div
-        v-else-if="activeDetailTab === 'log'"
-        id="git-log-panel"
-        class="detail-layout scripts-tab-layout"
-        role="tabpanel"
-        aria-labelledby="git-log-tab"
-      >
+        <template #log>
         <section class="detail-panel git-log-panel">
           <div v-if="selectedDetails.gitLog.length > 0" class="git-log-table-wrap">
             <table class="git-log-table">
@@ -792,15 +754,9 @@ function triggerCommitConfetti() {
             No commits found.
           </div>
         </section>
-      </div>
+        </template>
 
-      <div
-        v-else-if="activeDetailTab === 'scripts'"
-        id="npm-scripts-panel"
-        class="detail-layout scripts-tab-layout"
-        role="tabpanel"
-        aria-labelledby="npm-scripts-tab"
-      >
+        <template #scripts>
         <NpmScriptsPanel
           :npm-scripts="npmScripts"
           :pinned-script-names="pinnedScriptNames"
@@ -811,7 +767,8 @@ function triggerCommitConfetti() {
           @restart="$emit('restartScript', $event)"
           @open="$emit('openTerminal', $event)"
         />
-      </div>
+        </template>
+      </AppTabs>
     </template>
 
     <div v-else class="empty-state">

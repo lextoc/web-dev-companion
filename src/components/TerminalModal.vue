@@ -3,6 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
 import { parseAnsiOutput } from '../output-formatting'
 import type { ScriptTerminal } from '../repositories'
+import { AppButton } from './ui'
 
 const props = defineProps<{
   terminal: ScriptTerminal
@@ -66,18 +67,17 @@ watch(
       ><span :class="segment.className">{{ segment.text }}</span></template></pre>
 
       <div class="terminal-modal-actions">
-        <button type="button" class="secondary" @click="$emit('close')">Hide</button>
-        <button type="button" class="secondary" @click="$emit('restart', terminal.runId)">
+        <AppButton variant="secondary" @click="$emit('close')">Hide</AppButton>
+        <AppButton variant="secondary" @click="$emit('restart', terminal.runId)">
           Restart
-        </button>
-        <button
-          type="button"
+        </AppButton>
+        <AppButton
           class="terminal-stop"
-          :class="{ secondary: !terminal.isRunning }"
+          :variant="terminal.isRunning ? 'primary' : 'secondary'"
           @click="$emit('stop', terminal.runId)"
         >
           {{ terminal.isRunning ? 'Stop' : 'Close' }}
-        </button>
+        </AppButton>
       </div>
     </section>
   </div>

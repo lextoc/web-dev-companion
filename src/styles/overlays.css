@@ -132,7 +132,7 @@
   gap: 6px;
 }
 
-.settings-dialog .settings-toggle-row {
+.settings-dialog .app-checkbox {
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 12px;
@@ -149,18 +149,18 @@
   text-transform: uppercase;
 }
 
-.settings-dialog .settings-toggle-row span {
+.settings-dialog .app-checkbox span {
   display: grid;
   gap: 2px;
   text-transform: none;
 }
 
-.settings-dialog .settings-toggle-row strong {
+.settings-dialog .app-checkbox strong {
   color: var(--text);
   font-size: var(--font-size-base);
 }
 
-.settings-dialog .settings-toggle-row small {
+.settings-dialog .app-checkbox small {
   color: var(--muted);
   font-size: var(--font-size-compact);
   font-weight: 700;

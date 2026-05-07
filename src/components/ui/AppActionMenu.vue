@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
-import AppIcon from './AppIcon.vue'
+import AppButton from './AppButton.vue'
 
 const props = withDefaults(defineProps<{
   align?: 'left' | 'right'
@@ -92,9 +92,11 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="menuRoot" class="action-menu" :class="{ open: isOpen }">
-    <button
-      type="button"
-      class="secondary subtle-icon-button action-menu-trigger"
+    <AppButton
+      variant="secondary"
+      size="icon"
+      icon="more-horizontal"
+      class="action-menu-trigger"
       :aria-label="label"
       :aria-expanded="isOpen"
       aria-haspopup="menu"
@@ -102,8 +104,8 @@ onBeforeUnmount(() => {
       @click="toggleMenu"
       @keydown.esc.prevent="closeMenu"
     >
-      <AppIcon name="more-horizontal" class="button-icon" />
-    </button>
+      {{ label }}
+    </AppButton>
 
     <Teleport to="body">
       <div

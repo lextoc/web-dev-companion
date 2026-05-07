@@ -112,6 +112,13 @@ button:disabled {
   font-size: var(--font-size-title);
 }
 
+.app-button-with-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
 .subtle-icon-button {
   display: inline-grid;
   width: 34px;

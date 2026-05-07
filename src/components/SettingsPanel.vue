@@ -6,7 +6,7 @@ import {
   type AppSettings,
   type ThemeMode,
 } from '../settings'
-import AppDropdown from './AppDropdown.vue'
+import { AppButton, AppCheckbox, AppDropdown } from './ui'
 
 const props = defineProps<{
   settings: AppSettings
@@ -80,21 +80,19 @@ const autoRefreshOptions = AUTO_REFRESH_INTERVAL_OPTIONS.map((option) => ({ ...o
         <AppDropdown id="settings-theme" v-model="themeModeModel" :options="themeOptions" />
       </label>
 
-      <label class="settings-toggle-row">
-        <input v-model="draft.commitCelebrations" type="checkbox" />
-        <span>
-          <strong>Commit celebrations</strong>
-          <small>Rainbow commit and sync buttons, plus confetti on successful submit.</small>
-        </span>
-      </label>
+      <AppCheckbox
+        v-model="draft.commitCelebrations"
+        description="Rainbow commit and sync buttons, plus confetti on successful submit."
+      >
+        Commit celebrations
+      </AppCheckbox>
 
-      <label class="settings-toggle-row">
-        <input v-model="draft.skipBranchSyncConfirmation" type="checkbox" />
-        <span>
-          <strong>Skip sync confirmation</strong>
-          <small>Run branch push and pull actions without asking first.</small>
-        </span>
-      </label>
+      <AppCheckbox
+        v-model="draft.skipBranchSyncConfirmation"
+        description="Run branch push and pull actions without asking first."
+      >
+        Skip sync confirmation
+      </AppCheckbox>
 
       <label>
         <span>Editor command</span>
@@ -102,8 +100,8 @@ const autoRefreshOptions = AUTO_REFRESH_INTERVAL_OPTIONS.map((option) => ({ ...o
       </label>
 
       <div class="settings-actions">
-        <button type="button" class="secondary" @click="$emit('close')">Cancel</button>
-        <button type="button" @click="saveSettings">Save</button>
+        <AppButton variant="secondary" @click="$emit('close')">Cancel</AppButton>
+        <AppButton @click="saveSettings">Save</AppButton>
       </div>
     </section>
   </div>

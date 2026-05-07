@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { RepositorySummary } from '../repositories'
-import ActionMenu from './ActionMenu.vue'
-import AppIcon from './AppIcon.vue'
+import { AppActionMenu, AppButton, AppMenuItem } from './ui'
 
 defineProps<{
   repository: RepositorySummary
@@ -30,7 +29,7 @@ defineEmits<{
       pinned: isPinned,
     }"
   >
-    <button class="repo-card-main" type="button" @click="$emit('open', repository)">
+    <AppButton class="repo-card-main" @click="$emit('open', repository)">
       <span class="repo-title-row">
         <span class="repo-title-stack">
           <strong :title="repository.name">{{ repository.name }}</strong>
@@ -54,63 +53,61 @@ defineEmits<{
         <span v-if="repository.error" class="health-pill error">Needs attention</span>
         <span v-if="lastRefreshedLabel" class="health-pill neutral">{{ lastRefreshedLabel }}</span>
       </span>
-    </button>
+    </AppButton>
 
     <div class="repo-quick-actions" aria-label="Repository quick actions">
-      <button
-        type="button"
-        class="secondary repo-icon-action"
+      <AppButton
+        variant="secondary"
+        size="icon"
+        icon="edit"
+        class="repo-icon-action"
         :aria-label="`Open ${repository.name} in editor`"
         title="Open in editor"
         @click="$emit('openInEditor', repository.path)"
       >
-        <AppIcon name="edit" class="button-icon" />
-        <span class="visually-hidden">Open in editor</span>
-      </button>
-      <button
-        type="button"
-        class="secondary repo-icon-action"
+        Open in editor
+      </AppButton>
+      <AppButton
+        variant="secondary"
+        size="icon"
+        icon="terminal"
+        class="repo-icon-action"
         :aria-label="`Open ${repository.name} terminal`"
         title="Open terminal"
         @click="$emit('openInTerminal', repository.path)"
       >
-        <AppIcon name="terminal" class="button-icon" />
-        <span class="visually-hidden">Open terminal</span>
-      </button>
-      <button
-        type="button"
-        class="secondary pin-action repo-icon-action"
-        :class="{ active: isPinned }"
+        Open terminal
+      </AppButton>
+      <AppButton
+        variant="secondary"
+        size="icon"
+        :icon="isPinned ? 'pin-off' : 'pin'"
+        class="pin-action repo-icon-action"
+        :active="isPinned"
         :aria-label="`${isPinned ? 'Unpin' : 'Pin'} ${repository.name}`"
         :title="isPinned ? 'Unpin repository' : 'Pin repository'"
         @click="$emit('togglePin', repository.path)"
       >
-        <AppIcon :name="isPinned ? 'pin-off' : 'pin'" class="button-icon" />
-        <span class="visually-hidden">{{ isPinned ? 'Unpin' : 'Pin' }}</span>
-      </button>
-      <ActionMenu :label="`More actions for ${repository.name}`">
-        <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInFileManager', repository.path)">
-          <AppIcon name="folder" class="button-icon" />
-          <span>Show in files</span>
-        </button>
-        <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInEditor', repository.path)">
-          <AppIcon name="edit" class="button-icon" />
-          <span>Open in editor</span>
-        </button>
-        <button type="button" class="action-menu-item" role="menuitem" @click="$emit('openInTerminal', repository.path)">
-          <AppIcon name="terminal" class="button-icon" />
-          <span>Open terminal</span>
-        </button>
-        <button type="button" class="action-menu-item" role="menuitem" @click="$emit('copyPath', repository.path)">
-          <AppIcon name="copy" class="button-icon" />
-          <span>Copy path</span>
-        </button>
+        {{ isPinned ? 'Unpin' : 'Pin' }}
+      </AppButton>
+      <AppActionMenu :label="`More actions for ${repository.name}`">
+        <AppMenuItem icon="folder" @click="$emit('openInFileManager', repository.path)">
+          Show in files
+        </AppMenuItem>
+        <AppMenuItem icon="edit" @click="$emit('openInEditor', repository.path)">
+          Open in editor
+        </AppMenuItem>
+        <AppMenuItem icon="terminal" @click="$emit('openInTerminal', repository.path)">
+          Open terminal
+        </AppMenuItem>
+        <AppMenuItem icon="copy" @click="$emit('copyPath', repository.path)">
+          Copy path
+        </AppMenuItem>
         <div class="action-menu-separator" role="separator"></div>
-        <button type="button" class="action-menu-item danger" role="menuitem" @click="$emit('remove', repository.path)">
-          <AppIcon name="trash" class="button-icon" />
-          <span>Remove repository</span>
-        </button>
-      </ActionMenu>
+        <AppMenuItem icon="trash" tone="danger" @click="$emit('remove', repository.path)">
+          Remove repository
+        </AppMenuItem>
+      </AppActionMenu>
     </div>
   </article>
 </template>

@@ -3,7 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
 import { parseAnsiOutput } from '../output-formatting'
 import type { ScriptTerminal } from '../repositories'
-import AppIcon from './AppIcon.vue'
+import { AppButton, AppIcon } from './ui'
 
 const props = defineProps<{
   npmScripts: [string, string][]
@@ -190,46 +190,44 @@ watch(
                   <code>{{ scriptTerminalsByScript[scriptName].command }}</code>
                 </div>
                 <div class="terminal-actions">
-                  <button
-                    type="button"
-                    class="secondary terminal-pin subtle-icon-button"
-                    :class="{ active: isPinned(scriptName) }"
+                  <AppButton
+                    variant="secondary"
+                    size="icon"
+                    :icon="isPinned(scriptName) ? 'pin-off' : 'pin'"
+                    class="terminal-pin"
+                    :active="isPinned(scriptName)"
                     :aria-label="`${isPinned(scriptName) ? 'Unpin' : 'Pin'} ${scriptName}`"
                     :title="isPinned(scriptName) ? 'Unpin script' : 'Pin script'"
                     @click.stop="$emit('togglePin', scriptName)"
                     @keydown.enter.stop
                     @keydown.space.stop
                   >
-                    <AppIcon :name="isPinned(scriptName) ? 'pin-off' : 'pin'" class="button-icon" />
-                    <span class="visually-hidden">{{ isPinned(scriptName) ? 'Unpin' : 'Pin' }}</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="secondary terminal-restart subtle-icon-button"
+                    {{ isPinned(scriptName) ? 'Unpin' : 'Pin' }}
+                  </AppButton>
+                  <AppButton
+                    variant="secondary"
+                    size="icon"
+                    icon="restart"
+                    class="terminal-restart"
                     :aria-label="`Restart ${scriptName}`"
                     title="Restart script"
                     @click.stop="$emit('restart', scriptName)"
                     @keydown.enter.stop
                     @keydown.space.stop
                   >
-                    <AppIcon name="restart" class="button-icon" />
-                    <span class="visually-hidden">Restart</span>
-                  </button>
-                  <button
-                    type="button"
+                    Restart
+                  </AppButton>
+                  <AppButton
+                    :icon="scriptTerminalsByScript[scriptName].isRunning ? 'stop' : 'close'"
                     class="terminal-stop terminal-action-button"
-                    :class="{ secondary: !scriptTerminalsByScript[scriptName].isRunning }"
+                    :variant="scriptTerminalsByScript[scriptName].isRunning ? 'primary' : 'secondary'"
                     :aria-label="`${scriptTerminalsByScript[scriptName].isRunning ? 'Stop' : 'Close'} ${scriptName}`"
                     @click.stop="$emit('stop', scriptName)"
                     @keydown.enter.stop
                     @keydown.space.stop
                   >
-                    <AppIcon
-                      :name="scriptTerminalsByScript[scriptName].isRunning ? 'stop' : 'close'"
-                      class="button-icon"
-                    />
-                    <span>{{ scriptTerminalsByScript[scriptName].isRunning ? 'Stop' : 'Close' }}</span>
-                  </button>
+                    {{ scriptTerminalsByScript[scriptName].isRunning ? 'Stop' : 'Close' }}
+                  </AppButton>
                 </div>
               </div>
               <pre :ref="(element) => setTerminalOutputElement(scriptName, element)" class="ansi-output"><template
@@ -254,19 +252,20 @@ watch(
                   </span>
                   <code>{{ scriptName }}</code>
                 </div>
-                <button
-                  type="button"
-                  class="secondary script-pin-button subtle-icon-button"
-                  :class="{ active: isPinned(scriptName) }"
+                <AppButton
+                  variant="secondary"
+                  size="icon"
+                  :icon="isPinned(scriptName) ? 'pin-off' : 'pin'"
+                  class="script-pin-button"
+                  :active="isPinned(scriptName)"
                   :aria-label="`${isPinned(scriptName) ? 'Unpin' : 'Pin'} ${scriptName}`"
                   :title="isPinned(scriptName) ? 'Unpin script' : 'Pin script'"
                   @click.stop="$emit('togglePin', scriptName)"
                   @keydown.enter.stop
                   @keydown.space.stop
                 >
-                  <AppIcon :name="isPinned(scriptName) ? 'pin-off' : 'pin'" class="button-icon" />
-                  <span class="visually-hidden">{{ isPinned(scriptName) ? 'Unpin' : 'Pin' }}</span>
-                </button>
+                  {{ isPinned(scriptName) ? 'Unpin' : 'Pin' }}
+                </AppButton>
               </div>
               <span class="script-command">{{ command }}</span>
             </div>

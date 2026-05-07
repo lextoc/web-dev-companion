@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import ActiveTerminalsSidebar from './components/ActiveTerminalsSidebar.vue'
-import AppIcon from './components/AppIcon.vue'
-import AppHeader from './components/AppHeader.vue'
 import CommandPalette from './components/CommandPalette.vue'
 import RepositoryDashboard from './components/RepositoryDashboard.vue'
 import RepositoryDetail from './components/RepositoryDetail.vue'
 import RepositoryHeaderControls from './components/RepositoryHeaderControls.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import TerminalModal from './components/TerminalModal.vue'
+import { AppButton, AppHeader } from './components/ui'
 import type { CommandPaletteItem } from './command-palette'
 import { useConfirmations } from './composables/useConfirmations'
 import { useSettings } from './composables/useSettings'
@@ -1480,16 +1479,15 @@ onBeforeUnmount(() => {
         <h2 id="confirm-title">{{ confirmationDialog.title }}</h2>
         <p>{{ confirmationDialog.message }}</p>
         <div class="confirm-actions">
-          <button type="button" class="secondary" @click="closeConfirmation(false)">
+          <AppButton variant="secondary" @click="closeConfirmation(false)">
             Cancel
-          </button>
-          <button
-            type="button"
-            :class="{ danger: confirmationDialog.danger }"
+          </AppButton>
+          <AppButton
+            :variant="confirmationDialog.danger ? 'danger' : 'primary'"
             @click="closeConfirmation(true)"
           >
             {{ confirmationDialog.confirmLabel }}
-          </button>
+          </AppButton>
         </div>
       </section>
     </div>
@@ -1513,29 +1511,31 @@ onBeforeUnmount(() => {
       >
         <span class="toast-icon" aria-hidden="true"></span>
         <span>{{ toast.message }}</span>
-        <button
-          type="button"
+        <AppButton
+          size="icon"
+          icon="close"
           class="toast-close"
           :aria-label="`Dismiss notification: ${toast.message}`"
           title="Dismiss"
           @click="dismissToast(toast.id)"
         >
-          <AppIcon name="close" class="button-icon" />
-        </button>
+          Dismiss
+        </AppButton>
       </div>
 
       <div v-if="errorMessage" class="toast-message error" role="alert">
         <span class="toast-icon" aria-hidden="true"></span>
         <span>{{ errorMessage }}</span>
-        <button
-          type="button"
+        <AppButton
+          size="icon"
+          icon="close"
           class="toast-close"
           aria-label="Dismiss error"
           title="Dismiss"
           @click="errorMessage = ''"
         >
-          <AppIcon name="close" class="button-icon" />
-        </button>
+          Dismiss
+        </AppButton>
       </div>
     </div>
   </main>

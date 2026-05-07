@@ -35,7 +35,7 @@ const emit = defineEmits<{
   refresh: [];
   stageFiles: [request: { paths: string[]; actionKey: string }];
   unstageFiles: [request: { paths: string[]; actionKey: string }];
-  commit: [message: string];
+  commit: [request: { message: string; checkHealthBeforeCommit: boolean; healthScriptNames: string[] }];
   commitDraftChange: [hasDraft: boolean];
   runScript: [scriptName: string];
   togglePinScript: [scriptName: string];
@@ -45,6 +45,7 @@ const emit = defineEmits<{
 }>();
 
 const commitMessage = ref("");
+const checkHealthBeforeCommit = ref(false);
 const confettiBursts = ref<Array<{ id: number }>>([]);
 const activeDetailTab = ref<"git" | "log" | "health" | "scripts">("git");
 const detailTabs: AppTabItem[] = [
@@ -146,11 +147,15 @@ const stagedLineTotals = computed(() =>
     { additions: 0, deletions: 0 },
   ),
 );
+const availableProjectHealthScriptNames = computed(() =>
+  projectHealth.value?.scripts.filter((script) => script.present).map((script) => script.name) ?? [],
+);
 
 watch(
   () => props.commitClearToken,
   () => {
     commitMessage.value = "";
+    triggerCommitConfetti();
   },
 );
 
@@ -641,6 +646,18 @@ function commitDisabledReason(
     return "Stage at least one file before committing.";
   }
 
+  if (checkHealthBeforeCommit.value && projectHealthLoading.value) {
+    return "Project health is still loading.";
+  }
+
+  if (checkHealthBeforeCommit.value && !projectHealth.value) {
+    return "Project health has not loaded.";
+  }
+
+  if (checkHealthBeforeCommit.value && availableProjectHealthScriptNames.value.length === 0) {
+    return "No health scripts are available.";
+  }
+
   if (!commitMessage.value.trim()) {
     return "Enter a commit message.";
   }
@@ -659,8 +676,11 @@ function submitCommit(
     return;
   }
 
-  triggerCommitConfetti();
-  emit("commit", message);
+  emit("commit", {
+    message,
+    checkHealthBeforeCommit: checkHealthBeforeCommit.value,
+    healthScriptNames: availableProjectHealthScriptNames.value,
+  });
 }
 
 function handleCommitMessageKeydown(
@@ -743,14 +763,20 @@ function triggerCommitConfetti() {
                   ></textarea>
                 </div>
 
-                <RunProjectHealthScriptsButton
-                  class="secondary commit-run-scripts"
-                  :health="projectHealth"
-                  :loading="projectHealthLoading"
-                  :script-terminals-by-script="scriptTerminalsByScript"
-                  @run-script="$emit('runScript', $event)"
-                  @restart-script="$emit('restartScript', $event)"
-                />
+                <div class="commit-health-controls">
+                  <label class="commit-health-check-option">
+                    <input v-model="checkHealthBeforeCommit" type="checkbox" />
+                    <span>Before commit</span>
+                  </label>
+                  <RunProjectHealthScriptsButton
+                    class="secondary commit-run-scripts"
+                    :health="projectHealth"
+                    :loading="projectHealthLoading"
+                    :script-terminals-by-script="scriptTerminalsByScript"
+                    @run-script="$emit('runScript', $event)"
+                    @restart-script="$emit('restartScript', $event)"
+                  />
+                </div>
 
                 <button
                   type="submit"

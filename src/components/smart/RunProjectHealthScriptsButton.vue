@@ -31,7 +31,7 @@ const label = computed(() => {
     return "Scripts running";
   }
 
-  return "Run scripts";
+  return "Check health";
 });
 const title = computed(() => {
   if (!props.health) {
@@ -46,7 +46,7 @@ const title = computed(() => {
     return "All common scripts are already running.";
   }
 
-  return "Run available common scripts.";
+  return "Run available common scripts to check project health.";
 });
 
 function runScripts() {

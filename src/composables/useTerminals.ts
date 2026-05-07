@@ -7,6 +7,13 @@ interface UseTerminalsOptions {
   showError: (error: unknown) => void
 }
 
+interface ScriptRunResult {
+  exitCode?: number | null
+  runId: string
+  scriptName: string
+  signal?: string | null
+}
+
 export function useTerminals({
   clearError,
   selectedDetails,
@@ -15,6 +22,7 @@ export function useTerminals({
   const selectedTerminalRunId = ref<string | null>(null)
   const scriptTerminals = ref<Record<string, ScriptTerminal>>({})
   const appOwnedRunIds = new Set<string>()
+  const scriptRunWaiters = new Map<string, Array<(result: ScriptRunResult) => void>>()
 
   const hasRunningScripts = computed(() =>
     Object.values(scriptTerminals.value).some((terminal) => terminal.isRunning),
@@ -103,6 +111,34 @@ export function useTerminals({
 
     if (output.done) {
       appOwnedRunIds.delete(output.runId)
+      resolveScriptRun(output.runId, {
+        exitCode: output.exitCode,
+        runId: output.runId,
+        scriptName: terminal.scriptName,
+        signal: output.signal,
+      })
+    }
+  }
+
+  function waitForScriptRun(terminal: ScriptTerminal) {
+    return new Promise<ScriptRunResult>((resolve) => {
+      const waiters = scriptRunWaiters.get(terminal.runId) ?? []
+      waiters.push(resolve)
+      scriptRunWaiters.set(terminal.runId, waiters)
+    })
+  }
+
+  function resolveScriptRun(runId: string, result: ScriptRunResult) {
+    const waiters = scriptRunWaiters.get(runId)
+
+    if (!waiters) {
+      return
+    }
+
+    scriptRunWaiters.delete(runId)
+
+    for (const resolve of waiters) {
+      resolve(result)
     }
   }
 
@@ -174,6 +210,63 @@ export function useTerminals({
 
     clearError()
     await startTerminal(script.repoPath, script.repoName, script.scriptName, script.packageManager)
+  }
+
+  async function runRepositoryScriptsAndWait(
+    repository: Pick<RepositoryDetails, 'name' | 'packageManager' | 'path'>,
+    scriptNames: string[],
+  ) {
+    const uniqueScriptNames = [...new Set(scriptNames)]
+    const pendingResults: Array<Promise<ScriptRunResult>> = []
+
+    for (const scriptName of uniqueScriptNames) {
+      const existingTerminal = terminalForScript(repository.path, scriptName)
+
+      if (existingTerminal?.isRunning) {
+        pendingResults.push(waitForScriptRun(existingTerminal))
+        continue
+      }
+
+      if (existingTerminal) {
+        await stopTerminal(existingTerminal.runId)
+      }
+
+      const runId = await startTerminal(
+        repository.path,
+        repository.name,
+        scriptName,
+        repository.packageManager,
+      )
+
+      if (!runId) {
+        throw new Error(`Could not start "${scriptName}".`)
+      }
+
+      const terminal = scriptTerminals.value[runId]
+
+      if (!terminal) {
+        throw new Error(`Could not monitor "${scriptName}".`)
+      }
+
+      pendingResults.push(waitForScriptRun(terminal))
+    }
+
+    const results = await Promise.all(pendingResults)
+    const failedResults = results.filter((result) => result.signal || result.exitCode !== 0)
+
+    if (failedResults.length > 0) {
+      throw new Error(
+        `Health check failed: ${failedResults
+          .map((result) =>
+            result.signal
+              ? `${result.scriptName} stopped with ${result.signal}`
+              : `${result.scriptName} exited with code ${result.exitCode ?? 'unknown'}`,
+          )
+          .join(', ')}.`,
+      )
+    }
+
+    return results
   }
 
   async function stopTerminal(runId: string) {
@@ -274,6 +367,7 @@ export function useTerminals({
     restartScript,
     restartTerminal,
     runRepositoryScript,
+    runRepositoryScriptsAndWait,
     runningScriptsByRepositoryPath,
     runScript,
     selectedTerminal,

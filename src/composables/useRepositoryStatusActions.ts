@@ -12,9 +12,16 @@ interface UseRepositoryStatusActionsOptions {
   isLoading: ReadableRef<boolean>
   loadRepositories: () => Promise<void>
   resetAutoRefreshTimer: () => void
+  runHealthScriptsBeforeCommit?: (repository: RepositoryDetails, scriptNames: string[]) => Promise<unknown>
   selectedDetails: Ref<RepositoryDetails | null>
   showAppFeedback: (message: string, tone?: AppFeedbackTone) => void
   showRepositoryError: (repoPath: string, title: string, error: unknown) => void
+}
+
+interface CommitStatusRequest {
+  checkHealthBeforeCommit?: boolean
+  healthScriptNames?: string[]
+  message: string
 }
 
 export function useRepositoryStatusActions({
@@ -23,6 +30,7 @@ export function useRepositoryStatusActions({
   isLoading,
   loadRepositories,
   resetAutoRefreshTimer,
+  runHealthScriptsBeforeCommit,
   selectedDetails,
   showAppFeedback,
   showRepositoryError,
@@ -142,12 +150,39 @@ export function useRepositoryStatusActions({
     )
   }
 
-  async function commitStatus(message: string) {
+  async function commitStatus(request: string | CommitStatusRequest) {
     if (!selectedDetails.value) {
       return
     }
 
+    const commitRequest = typeof request === 'string'
+      ? { message: request }
+      : request
     const repoPath = selectedDetails.value.path
+    const healthScriptNames = commitRequest.healthScriptNames ?? []
+
+    if (commitRequest.checkHealthBeforeCommit && healthScriptNames.length > 0) {
+      if (!runHealthScriptsBeforeCommit) {
+        showRepositoryError(repoPath, 'Health check failed.', new Error('Health checks are not available.'))
+        return
+      }
+
+      statusActionLabel.value = 'Checking health...'
+      pendingStatusActionKey.value = 'commit-health'
+      clearError()
+
+      try {
+        await runHealthScriptsBeforeCommit(selectedDetails.value, healthScriptNames)
+      } catch (error) {
+        showRepositoryError(repoPath, 'Health check failed.', error)
+        return
+      } finally {
+        statusActionLabel.value = null
+        pendingStatusActionKey.value = null
+        resetAutoRefreshTimer()
+      }
+    }
+
     const didCommit = await runStatusAction(
       'Committing...',
       'commit',
@@ -155,7 +190,7 @@ export function useRepositoryStatusActions({
       () =>
         window.repositories.commit({
           repoPath,
-          message,
+          message: commitRequest.message,
         }),
     )
 

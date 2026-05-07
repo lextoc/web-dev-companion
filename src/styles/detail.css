@@ -1870,7 +1870,7 @@ pre {
   grid-template-columns: minmax(0, 1fr) 132px;
   align-items: stretch;
   column-gap: 0;
-  row-gap: 6px;
+  row-gap: 8px;
   border-color: transparent;
   padding: 10px;
   background: linear-gradient(
@@ -2252,6 +2252,7 @@ pre {
 
 .commit-form-wide .commit-message-row label {
   grid-column: 1;
+  grid-row: 1;
   align-self: end;
   padding-left: 2px;
   line-height: 1.1;
@@ -2338,11 +2339,51 @@ pre {
   border-bottom-right-radius: 0;
 }
 
-.commit-run-scripts {
-  grid-column: 2;
+.commit-health-controls {
+  grid-column: 1 / -1;
   grid-row: 1;
-  justify-self: stretch;
+  display: flex;
+  align-self: end;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+}
+
+.commit-health-check-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.commit-health-check-option input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--brand);
+}
+
+.commit-health-controls button.commit-run-scripts {
   min-width: 0;
+  min-height: 30px;
+  border-radius: 7px;
+  padding: 0 10px;
+  background: color-mix(in srgb, var(--surface-subtle) 76%, var(--surface));
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--surface) 68%, transparent),
+    0 4px 12px color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+.commit-health-controls button.commit-run-scripts:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--brand) 32%, var(--border-control));
+  background: color-mix(in srgb, var(--surface) 82%, var(--brand-soft));
+  color: var(--text);
 }
 
 .commit-submit {

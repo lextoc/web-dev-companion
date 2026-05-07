@@ -198,9 +198,20 @@
     justify-self: start;
   }
 
-  .commit-form-wide .commit-run-scripts {
+  .commit-form-wide .commit-health-controls {
     grid-column: 1;
-    grid-row: auto;
+    grid-row: 2;
+    align-items: stretch;
+    flex-direction: column;
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .commit-health-check-option {
+    min-height: 24px;
+  }
+
+  .commit-health-controls button.commit-run-scripts {
     width: 100%;
   }
 

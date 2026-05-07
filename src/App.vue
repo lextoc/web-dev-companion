@@ -135,6 +135,15 @@ const lastRepositoryRefreshLabel = computed(() => {
 const commandShortcutLabel = computed(() =>
   isMacPlatform.value ? '⌘K' : 'Ctrl K',
 )
+const commitShortcutLabel = computed(() =>
+  isMacPlatform.value ? '⌘↵' : 'Ctrl ↵',
+)
+const syncShortcutLabel = computed(() =>
+  isMacPlatform.value ? '⌘S' : 'Ctrl S',
+)
+const currentBranch = computed(() =>
+  selectedDetails.value?.gitBranches.find((branch) => branch.current),
+)
 const commandPaletteItems = computed(() => {
   const items = new Map<string, CommandPaletteItem>()
   const addItem = (item: CommandPaletteItem) => {
@@ -683,6 +692,49 @@ function branchSyncAction(branch: RepositoryDetails['gitBranches'][number] | und
   }
 }
 
+function hasStagedOrUnstagedChanges(gitStatus: RepositoryDetails['gitStatus']) {
+  return (
+    gitStatus.staged.length > 0 ||
+    gitStatus.unstaged.length > 0 ||
+    gitStatus.conflicted.length > 0
+  )
+}
+
+function branchSyncDisabledReason(
+  branch: RepositoryDetails['gitBranches'][number],
+  gitStatus: RepositoryDetails['gitStatus'],
+) {
+  if (hasStagedOrUnstagedChanges(gitStatus)) {
+    return 'Commit, stash, or discard staged and unstaged changes before syncing.'
+  }
+
+  if (!branch.upstream) {
+    return 'No upstream remote branch is configured.'
+  }
+
+  if (branch.remoteGone) {
+    return 'Upstream remote branch is gone.'
+  }
+
+  if (branch.ahead > 0 && branch.behind > 0) {
+    return 'Branch has both local and remote commits. Resolve it manually before syncing.'
+  }
+
+  return undefined
+}
+
+function canSyncCurrentBranch() {
+  if (!selectedDetails.value || !currentBranch.value) {
+    return false
+  }
+
+  return (
+    !syncingBranchName.value &&
+    !deletingBranchName.value &&
+    !branchSyncDisabledReason(currentBranch.value, selectedDetails.value.gitStatus)
+  )
+}
+
 async function syncBranch(branchName: string) {
   if (!selectedDetails.value) {
     return
@@ -1173,6 +1225,28 @@ function handleGlobalKeydown(event: KeyboardEvent) {
 
   if (
     (event.metaKey || event.ctrlKey) &&
+    key === 's' &&
+    !event.altKey &&
+    !event.shiftKey
+  ) {
+    event.preventDefault()
+
+    if (
+      canSyncCurrentBranch() &&
+      !isCommandPaletteOpen.value &&
+      !selectedTerminal.value &&
+      !confirmationDialog.value &&
+      !isSettingsOpen.value &&
+      currentBranch.value
+    ) {
+      void syncBranch(currentBranch.value.name)
+    }
+
+    return
+  }
+
+  if (
+    (event.metaKey || event.ctrlKey) &&
     key === 'a' &&
     !event.altKey &&
     !event.shiftKey &&
@@ -1288,6 +1362,7 @@ onBeforeUnmount(() => {
           :auto-refresh-label="autoRefreshLabel"
           :auto-refresh-progress="autoRefreshProgress"
           :commit-celebrations="appSettings.commitCelebrations"
+          :sync-shortcut-label="syncShortcutLabel"
           :syncing-branch-name="syncingBranchName"
           :deleting-branch-name="deletingBranchName"
           :checking-out-branch-name="checkingOutBranchName"
@@ -1338,6 +1413,7 @@ onBeforeUnmount(() => {
           :pending-status-action-key="pendingStatusActionKey"
           :commit-clear-token="commitClearToken"
           :commit-celebrations="appSettings.commitCelebrations"
+          :commit-shortcut-label="commitShortcutLabel"
           :npm-scripts="npmScripts"
           :pinned-script-names="pinnedScriptNamesForSelectedRepo"
           :script-terminals-by-script="currentRepoScriptTerminals"

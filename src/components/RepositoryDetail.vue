@@ -21,6 +21,7 @@ const props = defineProps<{
   pendingStatusActionKey: string | null;
   commitClearToken: number;
   commitCelebrations: boolean;
+  commitShortcutLabel: string;
   npmScripts: [string, string][];
   pinnedScriptNames: string[];
   scriptTerminalsByScript: Record<string, ScriptTerminal>;
@@ -430,6 +431,18 @@ function submitCommit(
   emit("commit", message);
 }
 
+function handleCommitMessageKeydown(
+  event: KeyboardEvent,
+  gitStatus: RepositoryDetails["gitStatus"],
+  isDetailLoading: boolean,
+  pendingStatusActionKey: string | null,
+) {
+  if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !event.altKey) {
+    event.preventDefault();
+    submitCommit(gitStatus, isDetailLoading, pendingStatusActionKey);
+  }
+}
+
 function triggerCommitConfetti() {
   if (!props.commitCelebrations) {
     return;
@@ -525,8 +538,13 @@ function triggerCommitConfetti() {
                     rows="3"
                     placeholder="Describe this change"
                     :disabled="pendingStatusActionKey === 'commit'"
-                    @keydown.meta.enter.prevent="
-                      submitCommit(selectedDetails.gitStatus, isDetailLoading, pendingStatusActionKey)
+                    @keydown="
+                      handleCommitMessageKeydown(
+                        $event,
+                        selectedDetails.gitStatus,
+                        isDetailLoading,
+                        pendingStatusActionKey,
+                      )
                     "
                   ></textarea>
                 </div>
@@ -551,7 +569,15 @@ function triggerCommitConfetti() {
                     )
                   "
                 >
-                  {{ pendingStatusActionKey === "commit" ? "Committing..." : "Commit" }}
+                  <span>
+                    {{ pendingStatusActionKey === "commit" ? "Committing..." : "Commit" }}
+                  </span>
+                  <kbd
+                    v-if="pendingStatusActionKey !== 'commit'"
+                    class="shortcut-label commit-submit-shortcut"
+                  >
+                    {{ commitShortcutLabel }}
+                  </kbd>
                 </button>
 
                 <div

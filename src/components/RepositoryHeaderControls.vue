@@ -11,6 +11,7 @@ const props = defineProps<{
   autoRefreshLabel: string;
   autoRefreshProgress: number;
   commitCelebrations: boolean;
+  syncShortcutLabel: string;
   syncingBranchName: string | null;
   deletingBranchName: string | null;
   checkingOutBranchName: string | null;
@@ -459,6 +460,7 @@ onBeforeUnmount(() => {
               :name="branchSyncActionIcon(currentBranch, syncingBranchName)"
               class="button-icon"
             />
+            <kbd class="shortcut-label branch-menu-sync-shortcut">{{ syncShortcutLabel }}</kbd>
             <span class="visually-hidden">{{ branchSyncActionLabel(currentBranch) }}</span>
           </button>
         </div>

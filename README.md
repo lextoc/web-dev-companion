@@ -11,6 +11,8 @@ Web Dev Companion is an Electron, Vue 3, and TypeScript app for keeping local pr
 - Review branch, remote, dirty state, file status details, diffs, and recent commits.
 - Stage and unstage files, write commits, and inspect commit details from the repository view.
 - Sync, switch, create tracking branches from remotes, and remove safe local branches.
+- Review project health, including package manager detection, Node configuration, lockfile and install state, outdated dependencies, and common script checks.
+- Run available health scripts from the health panel or before committing.
 - Open repositories in the file manager, configured editor, or terminal.
 - Run, pin, monitor, restart, and stop package scripts in managed terminals.
 - Auto-refresh repository state, including refresh-on-focus for the active repository.
@@ -24,7 +26,6 @@ The current app already covers the daily repository cockpit: saved projects, Git
 ### High-Impact Additions
 
 - **Workspace groups**: group repositories by client, product, stack, or workflow so the dashboard can switch between focused sets instead of one flat list.
-- **Project health checks**: surface package manager, Node version, lockfile state, outdated dependencies, missing install state, and whether common scripts pass.
 - **Script presets**: save multi-script launch profiles such as `dev + api + storybook` and start or stop them together from the dashboard or command palette.
 - **Pull request context**: show the current branch's PR link, review state, checks, and mergeability when the repository has a GitHub remote.
 - **Commit assistant**: draft a conventional commit message from staged diffs, with editable suggestions before committing.
@@ -85,7 +86,7 @@ The app stores its saved repository list in Electron's per-user app data directo
 pnpm test
 ```
 
-The test command runs the Vue TypeScript checker. There are currently no unit or end-to-end test suites.
+The test command runs the Vue TypeScript checker and the Vitest component test suite.
 
 ## Build
 

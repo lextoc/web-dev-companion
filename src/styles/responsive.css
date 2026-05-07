@@ -198,6 +198,12 @@
     justify-self: start;
   }
 
+  .commit-form-wide .commit-run-scripts {
+    grid-column: 1;
+    grid-row: auto;
+    width: 100%;
+  }
+
   .commit-form-wide textarea,
   .commit-submit {
     border-radius: 8px;

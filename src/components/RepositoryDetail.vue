@@ -16,6 +16,7 @@ import type {
   StatusFileDiffType,
 } from "../repositories";
 import NpmScriptsPanel from "./NpmScriptsPanel.vue";
+import { RunProjectScriptsButton } from "./smart";
 import { AppTabs, type AppTabItem } from "./ui";
 
 const props = defineProps<{
@@ -490,10 +491,6 @@ function projectScriptTerminal(scriptName: string) {
   return props.scriptTerminalsByScript[scriptName];
 }
 
-function projectScriptIsRunning(scriptName: string) {
-  return projectScriptTerminal(scriptName)?.isRunning ?? false;
-}
-
 function projectScriptRuntimeStatus(script: ProjectScriptCheck) {
   const terminal = projectScriptTerminal(script.name);
 
@@ -514,20 +511,6 @@ function projectScriptRuntimeStatusLabel(script: ProjectScriptCheck) {
   return terminal.isRunning ? "Running" : "Finished";
 }
 
-function runAvailableProjectScripts(health: ProjectHealth) {
-  for (const script of availableProjectScripts(health)) {
-    if (projectScriptIsRunning(script.name)) {
-      continue;
-    }
-
-    if (projectScriptTerminal(script.name)) {
-      emit("restartScript", script.name);
-    } else {
-      emit("runScript", script.name);
-    }
-  }
-}
-
 function openOrRunProjectScript(script: ProjectScriptCheck) {
   if (!script.present) {
     return;
@@ -539,10 +522,6 @@ function openOrRunProjectScript(script: ProjectScriptCheck) {
   }
 
   emit("runScript", script.name);
-}
-
-function runnableProjectScriptCount(health: ProjectHealth) {
-  return availableProjectScripts(health).filter((script) => !projectScriptIsRunning(script.name)).length;
 }
 
 function healthCheckedAtLabel(checkedAt?: string) {
@@ -1026,6 +1005,15 @@ function triggerCommitConfetti() {
                     "
                   ></textarea>
                 </div>
+
+                <RunProjectScriptsButton
+                  class="secondary commit-run-scripts"
+                  :health="projectHealth"
+                  :loading="projectHealthLoading"
+                  :script-terminals-by-script="scriptTerminalsByScript"
+                  @run-script="$emit('runScript', $event)"
+                  @restart-script="$emit('restartScript', $event)"
+                />
 
                 <button
                   type="submit"
@@ -1529,13 +1517,13 @@ function triggerCommitConfetti() {
                   <h4>{{ availableProjectScripts(projectHealth).length }} available</h4>
                 </div>
                 <div class="project-health-section-actions">
-                  <button
-                    type="button"
-                    :disabled="projectHealthLoading || runnableProjectScriptCount(projectHealth) === 0"
-                    @click="runAvailableProjectScripts(projectHealth)"
-                  >
-                    {{ runnableProjectScriptCount(projectHealth) === 0 ? "Scripts running" : "Run scripts" }}
-                  </button>
+                  <RunProjectScriptsButton
+                    :health="projectHealth"
+                    :loading="projectHealthLoading"
+                    :script-terminals-by-script="scriptTerminalsByScript"
+                    @run-script="$emit('runScript', $event)"
+                    @restart-script="$emit('restartScript', $event)"
+                  />
                 </div>
               </div>
 

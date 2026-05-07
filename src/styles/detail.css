@@ -2338,6 +2338,13 @@ pre {
   border-bottom-right-radius: 0;
 }
 
+.commit-run-scripts {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: stretch;
+  min-width: 0;
+}
+
 .commit-submit {
   display: inline-flex;
   grid-column: 2;

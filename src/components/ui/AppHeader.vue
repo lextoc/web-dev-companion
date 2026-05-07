@@ -21,7 +21,8 @@ defineEmits<{
     <div class="top-bar-main">
       <div class="brand-heading">
         <img src="/web-dev-companion.svg" alt="" aria-hidden="true" />
-        <div>
+        <div class="brand-copy">
+          <p class="app-product-name">Web Dev Companion</p>
           <h1>{{ activeRepositoryName ?? 'Repositories' }}</h1>
           <p class="app-context-line">
             {{ activeRepositoryPath ?? 'Local repository dashboard' }}

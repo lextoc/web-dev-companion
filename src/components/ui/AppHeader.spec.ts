@@ -17,6 +17,7 @@ describe("AppHeader", () => {
     });
 
     expect(wrapper.get("header").classes()).toContain("top-bar");
+    expect(wrapper.get(".app-product-name").text()).toBe("Web Dev Companion");
     expect(wrapper.get("h1").text()).toBe("web-dev-companion");
     expect(wrapper.get(".app-context-line").text()).toBe(
       "/Users/alexanderclaes/web-dev-companion",
@@ -45,6 +46,7 @@ describe("AppHeader", () => {
       },
     });
 
+    expect(wrapper.get(".app-product-name").text()).toBe("Web Dev Companion");
     expect(wrapper.get("h1").text()).toBe("Repositories");
     expect(wrapper.get(".app-context-line").text()).toBe(
       "Local repository dashboard",

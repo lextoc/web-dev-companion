@@ -127,6 +127,12 @@
   gap: 12px;
 }
 
+.brand-copy {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
 .brand-heading img {
   width: 42px;
   height: 42px;
@@ -142,6 +148,18 @@
   font-size: var(--font-size-compact);
   font-weight: 800;
   text-transform: uppercase;
+}
+
+.app-product-name {
+  margin: 0;
+  overflow: hidden;
+  color: var(--brand);
+  font-size: var(--font-size-compact);
+  font-weight: 850;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 h1,

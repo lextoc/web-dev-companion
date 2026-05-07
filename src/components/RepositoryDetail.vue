@@ -123,6 +123,19 @@ const logDateFormatter = new Intl.DateTimeFormat(undefined, {
 });
 
 const stagedPreview = computed(() => props.selectedDetails?.gitStatus.staged ?? []);
+const stagedLineTotals = computed(() =>
+  stagedPreview.value.reduce(
+    (totals, entry) => {
+      const stats = statusLineStats.value[statusDiffKey("staged", entry)];
+
+      return {
+        additions: totals.additions + (stats?.additions ?? 0),
+        deletions: totals.deletions + (stats?.deletions ?? 0),
+      };
+    },
+    { additions: 0, deletions: 0 },
+  ),
+);
 
 watch(
   () => props.commitClearToken,
@@ -634,6 +647,12 @@ function triggerCommitConfetti() {
                   <span v-for="index in 18" :key="index"></span>
                 </div>
               </form>
+
+              <div v-if="stagedPreview.length" class="commit-line-summary" aria-label="Staged line changes">
+                <span>Staged lines</span>
+                <strong class="status-line-additions">+{{ stagedLineTotals.additions }}</strong>
+                <strong class="status-line-deletions">-{{ stagedLineTotals.deletions }}</strong>
+              </div>
 
               <div class="commit-changes-section">
                 <div class="git-status-card">

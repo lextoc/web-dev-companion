@@ -1933,6 +1933,25 @@ pre {
     inset 0 1px 0 color-mix(in srgb, var(--surface) 86%, transparent);
 }
 
+.commit-line-summary {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+  margin-top: -7px;
+  border-radius: 6px;
+  padding: 0 2px;
+  color: color-mix(in srgb, var(--muted) 88%, transparent);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+}
+
+.commit-line-summary span {
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
 .commit-queue {
   display: grid;
   grid-column: 1 / -1;

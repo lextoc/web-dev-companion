@@ -1306,24 +1306,28 @@ function handleGlobalKeydown(event: KeyboardEvent) {
 
   if (isCommandPaletteOpen.value) {
     event.preventDefault()
+    event.stopImmediatePropagation()
     closeCommandPalette()
     return
   }
 
   if (selectedTerminal.value) {
     event.preventDefault()
+    event.stopImmediatePropagation()
     closeTerminalModal()
     return
   }
 
   if (confirmationDialog.value) {
     event.preventDefault()
+    event.stopImmediatePropagation()
     closeConfirmation(false)
     return
   }
 
   if (isSettingsOpen.value) {
     event.preventDefault()
+    event.stopImmediatePropagation()
     isSettingsOpen.value = false
     return
   }

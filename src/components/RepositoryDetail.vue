@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { parseDiffOutput } from "../output-formatting";
 import type {
   CommitChangedFile,
@@ -166,6 +166,14 @@ watch(
 
 watch(commitMessage, (message) => {
   emit("commitDraftChange", Boolean(message.trim()));
+});
+
+onMounted(() => {
+  window.addEventListener("keydown", handleRepositoryDetailKeydown);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleRepositoryDetailKeydown);
 });
 
 function statusGroups(gitStatus: RepositoryDetails["gitStatus"]) {
@@ -467,6 +475,41 @@ async function openStatusDiff(groupKey: string, entry: GitStatusEntry) {
 function closeStatusDiff() {
   selectedStatusDiff.value = null;
   statusDiffError.value = null;
+}
+
+function isRepositoryDetailModalOpen() {
+  return (
+    Boolean(selectedStatusDiff.value || statusDiffError.value) ||
+    Boolean(selectedCommitDetails.value || commitDetailsLoadingHash.value || commitDetailsError.value)
+  );
+}
+
+function hasAppLevelModalOpen() {
+  return Boolean(
+    document.querySelector(
+      ".command-palette-backdrop, .terminal-modal-backdrop, .modal-backdrop:not(.commit-detail-backdrop):not(.status-diff-backdrop)",
+    ),
+  );
+}
+
+function handleRepositoryDetailKeydown(event: KeyboardEvent) {
+  if (event.key !== "Escape" || event.defaultPrevented || !isRepositoryDetailModalOpen()) {
+    return;
+  }
+
+  if (hasAppLevelModalOpen()) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  if (selectedStatusDiff.value || statusDiffError.value) {
+    closeStatusDiff();
+    return;
+  }
+
+  closeCommitDetails();
 }
 
 function isStatusActionPending(groupKey: string, entries: GitStatusEntry[]) {

@@ -27,6 +27,7 @@ const repositories: RepositoryApi = {
   diffFile: (request) => ipcRenderer.invoke('repositories:diff-file', request),
   commitDetails: (request) => ipcRenderer.invoke('repositories:commit-details', request),
   commit: (request) => ipcRenderer.invoke('repositories:commit', request),
+  openCommitInBrowser: (request) => ipcRenderer.invoke('repositories:open-commit-in-browser', request),
   openInFileManager: (request) => ipcRenderer.invoke('repositories:open-in-file-manager', request),
   openInEditor: (request) => ipcRenderer.invoke('repositories:open-in-editor', request),
   openInTerminal: (request) => ipcRenderer.invoke('repositories:open-in-terminal', request),

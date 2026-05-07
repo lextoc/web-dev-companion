@@ -368,6 +368,22 @@ async function openRepositoryInTerminal(repoPath: string) {
   }
 }
 
+async function openCommitInBrowser(hash: string) {
+  if (!selectedDetails.value) {
+    return
+  }
+
+  const repoPath = selectedDetails.value.path
+  clearError()
+
+  try {
+    await window.repositories.openCommitInBrowser({ repoPath, hash })
+    showAppFeedback('Opened commit in browser.', 'info')
+  } catch (error) {
+    showRepositoryError(repoPath, `Could not open commit ${hash}`, error)
+  }
+}
+
 async function handleMenuCommand(command: DesktopMenuCommand) {
   if (command === 'settings') {
     isSettingsOpen.value = true
@@ -670,6 +686,7 @@ onBeforeUnmount(() => {
           @stop-script="stopScript"
           @restart-script="restartScript"
           @open-terminal="openScriptTerminal"
+          @open-commit-in-browser="openCommitInBrowser"
         />
       </div>
 

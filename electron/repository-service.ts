@@ -8,6 +8,7 @@ import type {
   CheckoutRemoteBranchRequest,
   CommitRequest,
   DeleteBranchRequest,
+  OpenCommitInBrowserRequest,
   RepositoryDetails,
   RepositoryActionRequest,
   RepositorySummary,
@@ -64,6 +65,58 @@ function editorCommand(requestedCommand: string | undefined) {
   }
 
   return command
+}
+
+function remoteBrowserUrl(remoteUrl: string) {
+  const trimmedRemoteUrl = remoteUrl.trim()
+
+  if (!trimmedRemoteUrl) {
+    return null
+  }
+
+  if (/^https?:\/\//i.test(trimmedRemoteUrl)) {
+    return trimmedRemoteUrl.replace(/\.git\/?$/, '').replace(/\/+$/, '')
+  }
+
+  try {
+    const parsedUrl = new URL(trimmedRemoteUrl)
+
+    if (parsedUrl.hostname && parsedUrl.pathname) {
+      return `https://${parsedUrl.hostname}${parsedUrl.pathname}`.replace(/\.git\/?$/, '').replace(/\/+$/, '')
+    }
+  } catch {
+    // Fall through to scp-like SSH remotes such as git@github.com:owner/repo.git.
+  }
+
+  const scpLikeMatch = trimmedRemoteUrl.match(/^(?:[^@]+@)?([^:]+):(.+)$/)
+
+  if (!scpLikeMatch) {
+    return null
+  }
+
+  const [, host, repositoryPath] = scpLikeMatch
+
+  return `https://${host}/${repositoryPath}`.replace(/\.git\/?$/, '').replace(/\/+$/, '')
+}
+
+function commitBrowserUrl(remoteUrl: string, hash: string) {
+  const browserUrl = remoteBrowserUrl(remoteUrl)
+
+  if (!browserUrl) {
+    return null
+  }
+
+  const hostname = new URL(browserUrl).hostname.toLowerCase()
+
+  if (hostname.includes('gitlab')) {
+    return `${browserUrl}/-/commit/${hash}`
+  }
+
+  if (hostname.includes('bitbucket')) {
+    return `${browserUrl}/commits/${hash}`
+  }
+
+  return `${browserUrl}/commit/${hash}`
 }
 
 async function openWindowsTerminal(normalizedPath: string) {
@@ -217,6 +270,34 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     }
 
     await launchDetached(process.env.TERMINAL || 'x-terminal-emulator', [], normalizedPath)
+    return true
+  }
+
+  async function openCommitInBrowser(request: OpenCommitInBrowserRequest) {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+    const hash = request.hash.trim()
+
+    if (!hash) {
+      throw new Error('Commit hash is required.')
+    }
+
+    const [remoteUrl, fullHash] = await Promise.all([
+      tryRunGit(normalizedPath, ['remote', 'get-url', 'origin']),
+      runGit(normalizedPath, ['rev-parse', '--verify', `${hash}^{commit}`]),
+    ])
+
+    if (!remoteUrl) {
+      throw new Error('No origin remote is configured for this repository.')
+    }
+
+    const browserUrl = commitBrowserUrl(remoteUrl, fullHash)
+
+    if (!browserUrl) {
+      throw new Error('Origin remote could not be converted to a browser URL.')
+    }
+
+    await shell.openExternal(browserUrl)
+
     return true
   }
 
@@ -562,6 +643,7 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     deleteBranch,
     diffFile,
     health,
+    openCommitInBrowser,
     readCommitDetails,
     listRepositories,
     openInEditor,

@@ -213,6 +213,11 @@ export interface CommitDetailsRequest {
   hash: string
 }
 
+export interface OpenCommitInBrowserRequest {
+  repoPath: string
+  hash: string
+}
+
 export interface CommitDetails extends GitLogEntry {
   fullHash: string
   body: string
@@ -291,6 +296,7 @@ export interface RepositoryApi {
   diffFile: (request: StatusFileDiffRequest) => Promise<StatusFileDiff>
   commitDetails: (request: CommitDetailsRequest) => Promise<CommitDetails>
   commit: (request: CommitRequest) => Promise<RepositoryDetails>
+  openCommitInBrowser: (request: OpenCommitInBrowserRequest) => Promise<boolean>
   openInFileManager: (request: RepositoryActionRequest) => Promise<boolean>
   openInEditor: (request: RepositoryActionRequest) => Promise<boolean>
   openInTerminal: (request: RepositoryActionRequest) => Promise<boolean>

@@ -8,6 +8,7 @@ import type {
   DeleteBranchRequest,
   DesktopMenuCommand,
   DesktopNotificationRequest,
+  OpenCommitInBrowserRequest,
   RepositoryActionRequest,
   ScriptOutput,
   GitCommandLogEntry,
@@ -332,6 +333,9 @@ function registerRepositoryHandlers() {
     repositoryService.readCommitDetails(request),
   )
   ipcMain.handle('repositories:commit', (_event, request: CommitRequest) => repositoryService.commit(request))
+  ipcMain.handle('repositories:open-commit-in-browser', (_event, request: OpenCommitInBrowserRequest) =>
+    repositoryService.openCommitInBrowser(request),
+  )
   ipcMain.handle('repositories:open-in-file-manager', (_event, request: RepositoryActionRequest) =>
     repositoryService.openInFileManager(request),
   )

@@ -42,6 +42,7 @@ const emit = defineEmits<{
   stopScript: [scriptName: string];
   restartScript: [scriptName: string];
   openTerminal: [scriptName: string];
+  openCommitInBrowser: [hash: string];
 }>();
 
 const commitMessage = ref("");
@@ -1033,7 +1034,16 @@ function triggerCommitConfetti() {
                   @keydown.space.prevent="openCommitDetails(entry)"
                 >
                   <td>
-                    <code>{{ entry.hash }}</code>
+                    <button
+                      type="button"
+                      class="commit-hash-button"
+                      :title="`Open commit ${entry.hash} in browser`"
+                      @click.stop="$emit('openCommitInBrowser', entry.hash)"
+                      @keydown.enter.stop
+                      @keydown.space.stop
+                    >
+                      <code>{{ entry.hash }}</code>
+                    </button>
                     <small v-if="commitDetailsLoadingHash === entry.hash">Loading...</small>
                   </td>
                   <td>

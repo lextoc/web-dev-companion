@@ -1248,6 +1248,22 @@
   background: color-mix(in srgb, var(--brand) 12%, var(--surface));
 }
 
+.commit-hash-button {
+  appearance: none;
+  border: 0;
+  border-radius: 5px;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.commit-hash-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand) 58%, transparent);
+  outline-offset: 2px;
+}
+
 .git-log-table code {
   display: inline-grid;
   min-height: 24px;

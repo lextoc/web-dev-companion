@@ -399,12 +399,12 @@
   --git-command-title: #eaf2f4;
   display: grid;
   min-height: 0;
-  max-height: 28vh;
+  max-height: 20vh;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 6px;
+  gap: 5px;
   overflow: hidden;
   border-top: 1px solid color-mix(in srgb, var(--git-command-border) 78%, transparent);
-  padding: 10px 16px 12px;
+  padding: 8px 16px 10px;
   background: var(--git-command-panel);
 }
 

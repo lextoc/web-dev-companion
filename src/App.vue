@@ -508,7 +508,9 @@ async function addRepositoryByPath() {
 async function openRepository(repository: RepositorySummary) {
   const historyState = currentHistoryState()
 
-  if (historyState?.view !== 'repository' || historyState.repoPath !== repository.path) {
+  if (historyState?.view === 'repository' && historyState.repoPath !== repository.path) {
+    replaceHistoryState({ view: 'repository', repoPath: repository.path })
+  } else if (historyState?.view !== 'repository' || historyState.repoPath !== repository.path) {
     pushHistoryState({ view: 'repository', repoPath: repository.path })
   }
 

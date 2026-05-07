@@ -183,17 +183,6 @@ const commandPaletteItems = computed(() => {
     keywords: ['preferences'],
   })
 
-  if (selectedPath.value) {
-    addItem({
-      id: 'action:back',
-      icon: 'arrow-left',
-      title: 'Back to repositories',
-      section: 'Navigation',
-      meta: 'Esc',
-      keywords: ['dashboard', 'home'],
-    })
-  }
-
   if (currentRepoPath) {
     addItem({
       id: 'action:open-files',
@@ -1099,11 +1088,6 @@ async function runCommandPaletteItem(itemId: string) {
 
   if (itemId === 'action:settings') {
     isSettingsOpen.value = true
-    return
-  }
-
-  if (itemId === 'action:back') {
-    closeDetails()
     return
   }
 

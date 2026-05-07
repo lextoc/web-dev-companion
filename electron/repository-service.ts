@@ -31,6 +31,10 @@ import {
   runGit,
   tryRunGit,
 } from './git'
+import {
+  checkProjectOutdatedDependencies,
+  readProjectHealth,
+} from './project-health'
 
 type ElectronShell = typeof import('electron').shell
 
@@ -214,6 +218,18 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
 
     await launchDetached(process.env.TERMINAL || 'x-terminal-emulator', [], normalizedPath)
     return true
+  }
+
+  async function health(repoPath: string) {
+    const normalizedPath = await normalizeRepositoryPath(repoPath)
+
+    return readProjectHealth(normalizedPath)
+  }
+
+  async function checkOutdatedDependencies(repoPath: string) {
+    const normalizedPath = await normalizeRepositoryPath(repoPath)
+
+    return checkProjectOutdatedDependencies(normalizedPath)
   }
 
   async function deleteBranch(request: DeleteBranchRequest): Promise<RepositoryDetails> {
@@ -539,11 +555,13 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
 
   return {
     addRepository,
+    checkOutdatedDependencies,
     checkoutBranch,
     checkoutRemoteBranch,
     commit,
     deleteBranch,
     diffFile,
+    health,
     readCommitDetails,
     listRepositories,
     openInEditor,

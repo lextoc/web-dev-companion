@@ -341,6 +341,10 @@ function registerRepositoryHandlers() {
   ipcMain.handle('repositories:open-in-terminal', (_event, request: RepositoryActionRequest) =>
     repositoryService.openInTerminal(request),
   )
+  ipcMain.handle('repositories:health', (_event, repoPath: string) => repositoryService.health(repoPath))
+  ipcMain.handle('repositories:check-outdated-dependencies', (_event, repoPath: string) =>
+    repositoryService.checkOutdatedDependencies(repoPath),
+  )
   ipcMain.handle('repositories:start-script', (_event, request: ScriptRunRequest) => scriptRunner.startScript(request))
   ipcMain.handle('repositories:stop-script', (_event, runId: string) => scriptRunner.stopScript(runId))
   ipcMain.handle('repositories:choose-and-add', chooseAndAddRepository)

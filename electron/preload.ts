@@ -30,6 +30,9 @@ const repositories: RepositoryApi = {
   openInFileManager: (request) => ipcRenderer.invoke('repositories:open-in-file-manager', request),
   openInEditor: (request) => ipcRenderer.invoke('repositories:open-in-editor', request),
   openInTerminal: (request) => ipcRenderer.invoke('repositories:open-in-terminal', request),
+  health: (repoPath: string) => ipcRenderer.invoke('repositories:health', repoPath),
+  checkOutdatedDependencies: (repoPath: string) =>
+    ipcRenderer.invoke('repositories:check-outdated-dependencies', repoPath),
   startScript: (request) => ipcRenderer.invoke('repositories:start-script', request),
   stopScript: (runId: string) => ipcRenderer.invoke('repositories:stop-script', runId),
   stopScripts: (runIds: string[]) => ipcRenderer.send('repositories:stop-scripts', runIds),

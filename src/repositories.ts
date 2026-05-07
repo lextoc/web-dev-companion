@@ -78,6 +78,86 @@ export interface RepositoryDetails extends RepositorySummary {
   packageManager?: string
 }
 
+export type ProjectHealthStatus = 'ok' | 'warning' | 'error' | 'unknown'
+
+export type ProjectDependencyStatus = 'idle' | 'ok' | 'outdated' | 'failed' | 'skipped'
+
+export type ProjectScriptCheckStatus = 'idle' | 'passed' | 'failed' | 'skipped' | 'timed-out'
+
+export interface ProjectHealthMessage {
+  level: Exclude<ProjectHealthStatus, 'ok' | 'unknown'>
+  text: string
+}
+
+export interface ProjectPackageHealth {
+  detected?: string
+  declared?: string
+  lockfiles: string[]
+  status: ProjectHealthStatus
+  messages: ProjectHealthMessage[]
+}
+
+export interface ProjectNodeHealth {
+  current?: string
+  configured?: string
+  engineRange?: string
+  status: ProjectHealthStatus
+  messages: ProjectHealthMessage[]
+}
+
+export interface ProjectInstallHealth {
+  installed: boolean
+  status: ProjectHealthStatus
+  messages: ProjectHealthMessage[]
+}
+
+export interface ProjectLockfileHealth {
+  present: boolean
+  dirty: boolean
+  stale: boolean
+  status: ProjectHealthStatus
+  messages: ProjectHealthMessage[]
+}
+
+export interface ProjectOutdatedDependency {
+  name: string
+  current?: string
+  wanted?: string
+  latest?: string
+  type?: string
+}
+
+export interface ProjectDependencyHealth {
+  status: ProjectDependencyStatus
+  outdatedCount?: number
+  outdated?: ProjectOutdatedDependency[]
+  checkedAt?: string
+  error?: string
+}
+
+export interface ProjectScriptCheck {
+  name: string
+  command?: string
+  present: boolean
+  status: ProjectScriptCheckStatus
+  durationMs?: number
+  exitCode?: number | null
+  output?: string
+  error?: string
+}
+
+export interface ProjectHealth {
+  repoPath: string
+  checkedAt: string
+  packageJsonPresent: boolean
+  packageManager: ProjectPackageHealth
+  node: ProjectNodeHealth
+  install: ProjectInstallHealth
+  lockfile: ProjectLockfileHealth
+  dependencies: ProjectDependencyHealth
+  scripts: ProjectScriptCheck[]
+}
+
 export interface DeleteBranchRequest {
   repoPath: string
   branchName: string
@@ -212,6 +292,8 @@ export interface RepositoryApi {
   openInFileManager: (request: RepositoryActionRequest) => Promise<boolean>
   openInEditor: (request: RepositoryActionRequest) => Promise<boolean>
   openInTerminal: (request: RepositoryActionRequest) => Promise<boolean>
+  health: (repoPath: string) => Promise<ProjectHealth>
+  checkOutdatedDependencies: (repoPath: string) => Promise<ProjectDependencyHealth>
   startScript: (request: ScriptRunRequest) => Promise<ScriptRun>
   stopScript: (runId: string) => Promise<boolean>
   stopScripts: (runIds: string[]) => void

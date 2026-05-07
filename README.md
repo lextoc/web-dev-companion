@@ -58,6 +58,15 @@ The current app already covers the daily repository cockpit: saved projects, Git
 pnpm install
 ```
 
+This project allows pnpm to run the install scripts required by Electron and
+Vite's esbuild dependency. If Electron was installed before that setting was
+present and `pnpm run dev` reports that Electron failed to install correctly,
+run:
+
+```sh
+pnpm rebuild electron
+```
+
 ## Development
 
 ```sh

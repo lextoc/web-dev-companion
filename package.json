@@ -12,7 +12,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "test": "vue-tsc --noEmit",
+    "test": "vue-tsc --noEmit && vitest run --config vitest.config.ts",
+    "test:unit": "vitest run --config vitest.config.ts",
     "build": "vue-tsc && vite build && electron-builder --config.mac.identity=null",
     "release:alpha": "vue-tsc && vite build && electron-builder --mac --win --x64",
     "release:alpha:mac": "vue-tsc && vite build && electron-builder --mac",
@@ -29,14 +30,18 @@
     "vue": "^3.4.21"
   },
   "devDependencies": {
+    "@types/node": "20.19.39",
     "@vitejs/plugin-vue": "^5.0.4",
-    "typescript": "^5.2.2",
-    "vite": "^5.1.6",
-    "vue-tsc": "^2.0.26",
+    "@vue/test-utils": "^2.4.10",
     "electron": "^30.0.1",
     "electron-builder": "^24.13.3",
+    "jsdom": "^29.1.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.1.6",
     "vite-plugin-electron": "^0.28.6",
-    "vite-plugin-electron-renderer": "^0.14.5"
+    "vite-plugin-electron-renderer": "^0.14.5",
+    "vitest": "^2.1.9",
+    "vue-tsc": "^2.0.26"
   },
   "main": "dist-electron/main.js"
 }

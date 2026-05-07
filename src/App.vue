@@ -52,6 +52,7 @@ const statusActionLabel = ref<string | null>(null)
 const pendingStatusActionKey = ref<string | null>(null)
 const branchFeedbackMessages = ref<Record<string, string>>({})
 const commitClearToken = ref(0)
+const syncCelebrationToken = ref(0)
 const hasCommitDraft = ref(false)
 const pinnedRepositoryPaths = ref<string[]>([])
 const pinnedScripts = ref<PinnedScript[]>([])
@@ -765,11 +766,15 @@ async function syncBranch(branchName: string) {
   const repoPath = selectedDetails.value.path
 
   try {
-    selectedDetails.value = await window.repositories.syncBranch({
+    const syncResult = await window.repositories.syncBranch({
       repoPath,
       branchName,
     })
+    selectedDetails.value = syncResult.details
     await loadRepositories()
+    if (syncResult.pushed) {
+      syncCelebrationToken.value += 1
+    }
     showBranchFeedback(branchName, action.successLabel)
     showAppFeedback(`${action.toastVerb} branch ${branchName}.`)
   } catch (error) {
@@ -1397,6 +1402,7 @@ onBeforeUnmount(() => {
           :auto-refresh-label="autoRefreshLabel"
           :auto-refresh-progress="autoRefreshProgress"
           :commit-celebrations="appSettings.commitCelebrations"
+          :sync-celebration-token="syncCelebrationToken"
           :sync-shortcut-label="syncShortcutLabel"
           :syncing-branch-name="syncingBranchName"
           :deleting-branch-name="deletingBranchName"

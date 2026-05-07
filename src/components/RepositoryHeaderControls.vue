@@ -9,6 +9,7 @@ const props = defineProps<{
   autoRefreshLabel: string;
   autoRefreshProgress: number;
   commitCelebrations: boolean;
+  syncCelebrationToken: number;
   syncShortcutLabel: string;
   syncingBranchName: string | null;
   deletingBranchName: string | null;
@@ -35,10 +36,13 @@ const isBranchMenuOpen = ref(false);
 const branchMenuElement = ref<HTMLElement | null>(null);
 const refreshButtonElement = ref<HTMLElement | null>(null);
 const isRefreshIconSettling = ref(false);
+const syncConfettiBursts = ref<Array<{ id: number }>>([]);
 const refreshIconStartAngle = ref(0);
 const refreshIconEndAngle = ref(0);
 const refreshIconSettleDuration = ref(0);
 let refreshIconSettleTimer: number | undefined;
+let nextSyncConfettiBurstId = 0;
+const syncConfettiTimers = new Set<number>();
 
 const branchFilters = [
   { key: "all", label: "All" },
@@ -207,6 +211,31 @@ watch(
     }
   },
 );
+
+watch(
+  () => props.syncCelebrationToken,
+  (syncCelebrationToken) => {
+    if (syncCelebrationToken > 0) {
+      triggerSyncConfetti();
+    }
+  },
+);
+
+function triggerSyncConfetti() {
+  if (!props.commitCelebrations) {
+    return;
+  }
+
+  const id = nextSyncConfettiBurstId++;
+  syncConfettiBursts.value = [...syncConfettiBursts.value, { id }];
+
+  const timer = window.setTimeout(() => {
+    syncConfettiBursts.value = syncConfettiBursts.value.filter((burst) => burst.id !== id);
+    syncConfettiTimers.delete(timer);
+  }, 1200);
+
+  syncConfettiTimers.add(timer);
+}
 
 function branchSyncLabel(branch: RepositoryDetails["gitBranches"][number]) {
   if (!branch.upstream) {
@@ -391,6 +420,9 @@ onBeforeUnmount(() => {
   if (refreshIconSettleTimer !== undefined) {
     window.clearTimeout(refreshIconSettleTimer);
   }
+
+  syncConfettiTimers.forEach((timer) => window.clearTimeout(timer));
+  syncConfettiTimers.clear();
 });
 </script>
 
@@ -461,6 +493,14 @@ onBeforeUnmount(() => {
             <kbd class="shortcut-label branch-menu-sync-shortcut">{{ syncShortcutLabel }}</kbd>
             <span class="visually-hidden">{{ branchSyncActionLabel(currentBranch) }}</span>
           </button>
+          <div
+            v-for="burst in syncConfettiBursts"
+            :key="burst.id"
+            class="commit-confetti branch-sync-confetti"
+            aria-hidden="true"
+          >
+            <span v-for="index in 18" :key="index"></span>
+          </div>
         </div>
 
         <div

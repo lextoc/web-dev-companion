@@ -88,6 +88,11 @@ export interface SyncBranchRequest {
   branchName: string
 }
 
+export interface SyncBranchResult {
+  details: RepositoryDetails
+  pushed: boolean
+}
+
 export interface CheckoutBranchRequest {
   repoPath: string
   branchName: string
@@ -198,7 +203,7 @@ export interface RepositoryApi {
   checkoutBranch: (request: CheckoutBranchRequest) => Promise<RepositoryDetails>
   checkoutRemoteBranch: (request: CheckoutRemoteBranchRequest) => Promise<RepositoryDetails>
   deleteBranch: (request: DeleteBranchRequest) => Promise<RepositoryDetails>
-  syncBranch: (request: SyncBranchRequest) => Promise<RepositoryDetails>
+  syncBranch: (request: SyncBranchRequest) => Promise<SyncBranchResult>
   stageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
   unstageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
   diffFile: (request: StatusFileDiffRequest) => Promise<StatusFileDiff>

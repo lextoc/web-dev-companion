@@ -75,6 +75,7 @@
 
 .branch-menu-combo {
   display: inline-flex;
+  position: relative;
   min-width: 0;
   align-items: stretch;
 }
@@ -1698,6 +1699,12 @@ pre {
   --confetti-y: 46px;
   --confetti-rotate: -160deg;
   animation-delay: 50ms;
+}
+
+.branch-sync-confetti {
+  z-index: 4;
+  top: 50%;
+  right: 52px;
 }
 
 .commit-panel.ready .commit-submit:disabled {

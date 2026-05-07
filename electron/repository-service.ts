@@ -15,6 +15,7 @@ import type {
   StatusFileDiffRequest,
   StatusFileRequest,
   SyncBranchRequest,
+  SyncBranchResult,
 } from '../src/repositories'
 import {
   detectPackageManager,
@@ -302,7 +303,7 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     return readRepositoryDetails(normalizedPath)
   }
 
-  async function syncBranch(request: SyncBranchRequest): Promise<RepositoryDetails> {
+  async function syncBranch(request: SyncBranchRequest): Promise<SyncBranchResult> {
     const normalizedPath = await normalizeRepositoryPath(request.repoPath)
     const branchName = request.branchName.trim()
 
@@ -359,22 +360,34 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     const upstreamCommit = await runGit(normalizedPath, ['rev-parse', '--verify', `${branchName}@{upstream}`])
 
     if (localCommit === upstreamCommit) {
-      return readRepositoryDetails(normalizedPath)
+      return {
+        details: await readRepositoryDetails(normalizedPath),
+        pushed: false,
+      }
     }
 
     if (await isGitAncestor(normalizedPath, localCommit, upstreamCommit)) {
       if (refreshedBranch.current) {
         await runGit(normalizedPath, ['merge', '--ff-only', `${branchName}@{upstream}`], 120000)
-        return readRepositoryDetails(normalizedPath)
+        return {
+          details: await readRepositoryDetails(normalizedPath),
+          pushed: false,
+        }
       }
 
       await runGit(normalizedPath, ['update-ref', branchRef, upstreamCommit, localCommit], 120000)
-      return readRepositoryDetails(normalizedPath)
+      return {
+        details: await readRepositoryDetails(normalizedPath),
+        pushed: false,
+      }
     }
 
     if (await isGitAncestor(normalizedPath, upstreamCommit, localCommit)) {
       await runGit(normalizedPath, ['push', remoteName, `${branchRef}:${upstreamMergeRef}`], 120000)
-      return readRepositoryDetails(normalizedPath)
+      return {
+        details: await readRepositoryDetails(normalizedPath),
+        pushed: true,
+      }
     }
 
     throw new Error(`Branch "${branchName}" has both local and remote commits. Resolve it manually before syncing.`)

@@ -164,7 +164,6 @@ h2 {
 .active-terminals-heading,
 .active-terminal-list,
 .active-terminal-item,
-.toast-message,
 .settings-dialog,
 .settings-dialog .app-checkbox,
 .confirm-dialog,
@@ -387,12 +386,6 @@ h2 {
   .active-terminals {
     border-left: 0;
   }
-}
-
-.toast-message.success,
-.toast-message.info,
-.toast-message.error {
-  border: 0;
 }
 
 .remote-branch-dropdown-menu .app-dropdown-option {

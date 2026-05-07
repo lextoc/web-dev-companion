@@ -13,6 +13,8 @@ type AppButtonIcon =
   | "edit"
   | "folder"
   | "hide"
+  | "link"
+  | "merge"
   | "more-horizontal"
   | "panel-hide"
   | "pin"

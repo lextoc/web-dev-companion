@@ -162,6 +162,10 @@
   box-shadow: none;
 }
 
+.confirmation-backdrop {
+  z-index: 90;
+}
+
 .settings-dialog {
   display: grid;
   width: min(520px, 100%);

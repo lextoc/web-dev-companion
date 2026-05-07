@@ -1,5 +1,5 @@
 import { computed, ref, type Ref } from 'vue'
-import type { RepositoryDetails } from '../repositories'
+import type { MergeLinkedSubmoduleBranchRequest, RepositoryDetails } from '../repositories'
 import type { AppSettings } from '../settings'
 import type { AppFeedbackTone } from './useToasts'
 
@@ -35,7 +35,9 @@ export function useRepositoryBranchActions({
 }: UseRepositoryBranchActionsOptions) {
   const syncingBranchName = ref<string | null>(null)
   const deletingBranchName = ref<string | null>(null)
+  const deletingSubmoduleBranchName = ref<string | null>(null)
   const checkingOutBranchName = ref<string | null>(null)
+  const mergingLinkedBranchName = ref<string | null>(null)
   const branchFeedbackMessages = ref<Record<string, string>>({})
   const syncCelebrationToken = ref(0)
 
@@ -85,6 +87,42 @@ export function useRepositoryBranchActions({
       showRepositoryError(selectedDetails.value.path, `Could not remove branch "${branchName}"`, error)
     } finally {
       deletingBranchName.value = null
+      resetAutoRefreshTimer()
+    }
+  }
+
+  async function deleteSubmoduleBranch(submodulePath: string, branchName: string) {
+    if (!selectedDetails.value) {
+      return
+    }
+
+    const confirmed = await confirmAction({
+      title: 'Remove local submodule branch',
+      message: `Remove local branch "${branchName}" from submodule "${submodulePath}"? This does not delete a remote branch.`,
+      confirmLabel: 'Remove branch',
+      danger: true,
+    })
+
+    if (!confirmed) {
+      return
+    }
+
+    deletingSubmoduleBranchName.value = `${submodulePath}:${branchName}`
+    clearError()
+    const repoPath = selectedDetails.value.path
+
+    try {
+      selectedDetails.value = await window.repositories.deleteSubmoduleBranch({
+        repoPath,
+        submodulePath,
+        branchName,
+      })
+      await loadRepositories()
+      showAppFeedback(`Removed local submodule branch ${branchName}.`)
+    } catch (error) {
+      showRepositoryError(repoPath, `Could not remove submodule branch "${branchName}"`, error)
+    } finally {
+      deletingSubmoduleBranchName.value = null
       resetAutoRefreshTimer()
     }
   }
@@ -180,6 +218,41 @@ export function useRepositoryBranchActions({
     }
   }
 
+  async function mergeLinkedSubmoduleBranch(request: Omit<MergeLinkedSubmoduleBranchRequest, 'repoPath'>) {
+    if (!selectedDetails.value) {
+      return
+    }
+
+    const repoPath = selectedDetails.value.path
+    const confirmed = await confirmAction({
+      title: 'Merge linked branches',
+      message: `Switch to "${request.targetParentBranch}" and "${request.targetSubmoduleBranch}", then merge "${request.sourceParentBranch}" and "${request.sourceSubmoduleBranch}" into them?`,
+      confirmLabel: 'Merge branches',
+    })
+
+    if (!confirmed) {
+      return
+    }
+
+    mergingLinkedBranchName.value = request.targetParentBranch
+    clearError()
+
+    try {
+      selectedDetails.value = await window.repositories.mergeLinkedSubmoduleBranch({
+        repoPath,
+        ...request,
+      })
+      await loadRepositories()
+      showBranchFeedback(request.targetParentBranch, 'Merged linked branches')
+      showAppFeedback(`Merged ${request.sourceParentBranch} into ${request.targetParentBranch}.`)
+    } catch (error) {
+      showRepositoryError(repoPath, 'Could not merge linked branches', error)
+    } finally {
+      mergingLinkedBranchName.value = null
+      resetAutoRefreshTimer()
+    }
+  }
+
   function showBranchFeedback(branchName: string, message: string) {
     branchFeedbackMessages.value = {
       ...branchFeedbackMessages.value,
@@ -201,7 +274,11 @@ export function useRepositoryBranchActions({
     checkoutRemoteBranch,
     currentBranch,
     deletingBranchName,
+    deletingSubmoduleBranchName,
     deleteBranch,
+    deleteSubmoduleBranch,
+    mergeLinkedSubmoduleBranch,
+    mergingLinkedBranchName,
     syncBranch,
     syncCelebrationToken,
     syncingBranchName,

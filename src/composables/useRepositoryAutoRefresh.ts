@@ -11,11 +11,13 @@ type ReadableRef<T> = {
 interface UseRepositoryAutoRefreshOptions {
   appSettings: Ref<AppSettings>
   deletingBranchName: ReadableRef<string | null>
+  deletingSubmoduleBranchName: ReadableRef<string | null>
   hasCommitDraft: ReadableRef<boolean>
   hasRunningScripts: ReadableRef<boolean>
   isDetailLoading: ReadableRef<boolean>
   isLoading: ReadableRef<boolean>
   loadRepositories: () => Promise<void>
+  mergingLinkedBranchName: ReadableRef<string | null>
   pendingStatusActionKey: ReadableRef<string | null>
   refreshSelectedRepository: () => Promise<void>
   selectedPath: Ref<string | null>
@@ -25,11 +27,13 @@ interface UseRepositoryAutoRefreshOptions {
 export function useRepositoryAutoRefresh({
   appSettings,
   deletingBranchName,
+  deletingSubmoduleBranchName,
   hasCommitDraft,
   hasRunningScripts,
   isDetailLoading,
   isLoading,
   loadRepositories,
+  mergingLinkedBranchName,
   pendingStatusActionKey,
   refreshSelectedRepository,
   selectedPath,
@@ -65,6 +69,8 @@ export function useRepositoryAutoRefresh({
       pendingStatusActionKey.value ||
       syncingBranchName.value ||
       deletingBranchName.value ||
+      deletingSubmoduleBranchName.value ||
+      mergingLinkedBranchName.value ||
       hasRunningScripts.value ||
       hasCommitDraft.value
     ) {
@@ -94,7 +100,12 @@ export function useRepositoryAutoRefresh({
       return
     }
 
-    if (hasRunningScripts.value || hasCommitDraft.value) {
+    if (
+      hasRunningScripts.value ||
+      hasCommitDraft.value ||
+      deletingSubmoduleBranchName.value ||
+      mergingLinkedBranchName.value
+    ) {
       resetAutoRefreshTimer()
       return
     }

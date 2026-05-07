@@ -25,6 +25,23 @@
   .project-health-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .branch-menu-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  }
+
+  .branch-menu-panel {
+    overflow: hidden;
+  }
+
+  .branch-menu-side {
+    overflow: auto;
+  }
+
+  .branch-menu-main {
+    overflow: hidden;
+  }
 }
 
 @media (max-width: 760px) {
@@ -329,6 +346,29 @@
   .current-branch-action-card {
     grid-template-columns: 1fr;
     align-items: stretch;
+  }
+
+  .branch-menu-modal-backdrop {
+    padding: 16px;
+  }
+
+  .branch-menu-panel {
+    height: calc(100vh - 32px);
+    max-height: calc(100vh - 32px);
+    padding: 10px;
+  }
+
+  .branch-menu-panel .panel-heading,
+  .branch-menu-heading,
+  .linked-submodule-row,
+  .linked-submodule-grid,
+  .branch-search-input {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .branch-menu-heading-stats {
+    justify-content: flex-start;
   }
 
   .branch-primary-action {

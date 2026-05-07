@@ -80,6 +80,9 @@ const {
   recentCommandIds,
   rememberCommand,
   removePinnedScriptsForRepository,
+  removeRepositoryBranchLink,
+  repositoryBranchLinks,
+  saveRepositoryBranchLink,
   togglePinnedRepository,
   togglePinnedScript,
   unpinScript,
@@ -138,7 +141,11 @@ const {
   checkoutRemoteBranch,
   currentBranch,
   deletingBranchName,
+  deletingSubmoduleBranchName,
   deleteBranch,
+  deleteSubmoduleBranch,
+  mergeLinkedSubmoduleBranch,
+  mergingLinkedBranchName,
   syncBranch,
   syncCelebrationToken,
   syncingBranchName,
@@ -162,11 +169,13 @@ const {
 } = useRepositoryAutoRefresh({
   appSettings,
   deletingBranchName,
+  deletingSubmoduleBranchName,
   hasCommitDraft,
   hasRunningScripts,
   isDetailLoading,
   isLoading,
   loadRepositories,
+  mergingLinkedBranchName,
   pendingStatusActionKey,
   refreshSelectedRepository,
   selectedPath,
@@ -623,14 +632,21 @@ onBeforeUnmount(() => {
           :sync-shortcut-label="syncShortcutLabel"
           :syncing-branch-name="syncingBranchName"
           :deleting-branch-name="deletingBranchName"
+          :deleting-submodule-branch-name="deletingSubmoduleBranchName"
           :checking-out-branch-name="checkingOutBranchName"
+          :merging-linked-branch-name="mergingLinkedBranchName"
           :branch-feedback-messages="branchFeedbackMessages"
+          :repository-branch-links="repositoryBranchLinks"
           @back="closeDetails"
           @refresh="refreshSelectedRepository"
           @delete-branch="deleteBranch"
+          @delete-submodule-branch="deleteSubmoduleBranch"
           @checkout-branch="checkoutBranch"
           @checkout-remote-branch="checkoutRemoteBranch"
           @sync-branch="syncBranch"
+          @save-repository-branch-link="saveRepositoryBranchLink"
+          @remove-repository-branch-link="removeRepositoryBranchLink"
+          @merge-linked-submodule-branch="mergeLinkedSubmoduleBranch"
           @copy-path="copyRepositoryPath"
           @open-in-editor="openRepositoryInEditor"
           @open-in-file-manager="openRepositoryInFileManager"
@@ -726,7 +742,7 @@ onBeforeUnmount(() => {
 
     <div
       v-if="confirmationDialog"
-      class="modal-backdrop"
+      class="modal-backdrop confirmation-backdrop"
       role="presentation"
       @click.self="closeConfirmation(false)"
     >

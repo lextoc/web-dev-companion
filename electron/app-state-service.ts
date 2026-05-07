@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import type { PersistedAppState } from '../src/app-state'
+import type { PersistedAppState, RepositoryBranchLink } from '../src/app-state'
 import type { PinnedScript } from '../src/repositories'
 import { normalizeAppSettings, type AppSettings } from '../src/settings'
 
@@ -25,12 +25,31 @@ function isPinnedScriptList(value: unknown): value is PinnedScript[] {
   return Array.isArray(value) && value.every(isPinnedScript)
 }
 
+function isRepositoryBranchLink(link: unknown): link is RepositoryBranchLink {
+  return (
+    typeof link === 'object' &&
+    link !== null &&
+    typeof (link as Pick<RepositoryBranchLink, 'repoPath'>).repoPath === 'string' &&
+    typeof (link as Pick<RepositoryBranchLink, 'parentBranch'>).parentBranch === 'string' &&
+    typeof (link as Pick<RepositoryBranchLink, 'submodulePath'>).submodulePath === 'string' &&
+    typeof (link as Pick<RepositoryBranchLink, 'submoduleBranch'>).submoduleBranch === 'string' &&
+    typeof (link as Pick<RepositoryBranchLink, 'updatedAt'>).updatedAt === 'string'
+  )
+}
+
+function isRepositoryBranchLinkList(value: unknown): value is RepositoryBranchLink[] {
+  return Array.isArray(value) && value.every(isRepositoryBranchLink)
+}
+
 function normalizeAppState(state: Partial<PersistedAppState>): PersistedAppState {
   return {
     settings: normalizeAppSettings(state.settings ?? {}),
     pinnedRepositoryPaths: isStringArray(state.pinnedRepositoryPaths) ? state.pinnedRepositoryPaths : [],
     pinnedScripts: isPinnedScriptList(state.pinnedScripts) ? state.pinnedScripts : [],
     recentCommandIds: isStringArray(state.recentCommandIds) ? state.recentCommandIds : [],
+    repositoryBranchLinks: isRepositoryBranchLinkList(state.repositoryBranchLinks)
+      ? state.repositoryBranchLinks
+      : [],
   }
 }
 
@@ -118,11 +137,21 @@ export function createAppStateService(appStateFilePath: () => string) {
     return nextState.recentCommandIds
   }
 
+  async function saveRepositoryBranchLinks(links: RepositoryBranchLink[]) {
+    const nextState = await updateAppState((state) => ({
+      ...state,
+      repositoryBranchLinks: links,
+    }))
+
+    return nextState.repositoryBranchLinks
+  }
+
   return {
     read: readAppState,
     saveSettings,
     savePinnedRepositoryPaths,
     savePinnedScripts,
     saveRecentCommandIds,
+    saveRepositoryBranchLinks,
   }
 }

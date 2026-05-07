@@ -8,6 +8,8 @@ defineProps<{
     | "edit"
     | "folder"
     | "hide"
+    | "link"
+    | "merge"
     | "more-horizontal"
     | "panel-hide"
     | "pin"
@@ -83,6 +85,17 @@ defineProps<{
         d="M10.6 5.2A9.8 9.8 0 0 1 12 5c5 0 8 5 8 7a8.2 8.2 0 0 1-2.1 3.1"
       />
       <path d="M6.2 6.8C4.8 8 4 10.1 4 12c0 2 3 7 8 7 1.1 0 2.1-.2 3-.6" />
+    </g>
+    <g v-else-if="name === 'link'">
+      <path d="M10 13a5 5 0 0 0 7.1 0l1.4-1.4a5 5 0 0 0-7.1-7.1L10.6 5.3" />
+      <path d="M14 11a5 5 0 0 0-7.1 0l-1.4 1.4a5 5 0 0 0 7.1 7.1l.8-.8" />
+    </g>
+    <g v-else-if="name === 'merge'">
+      <path d="M7 4v6a4 4 0 0 0 4 4h6" />
+      <path d="M7 20V4" />
+      <path d="M14 11l3 3-3 3" />
+      <circle cx="7" cy="4" r="2" />
+      <circle cx="7" cy="20" r="2" />
     </g>
     <g v-else-if="name === 'more-horizontal'">
       <circle cx="5" cy="12" r="1.25" class="app-icon-fill" />

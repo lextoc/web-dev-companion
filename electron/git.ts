@@ -10,6 +10,7 @@ import type {
   GitRemoteBranchEntry,
   GitStatusEntry,
   GitStatusSummary,
+  GitSubmoduleEntry,
 } from '../src/repositories'
 import { childProcessEnv } from './process-env'
 
@@ -463,4 +464,77 @@ export async function readGitRemoteBranches(
         hasLocalBranch: localBranchNames.has(localName),
       }
     })
+}
+
+export async function readGitSubmodules(repoPath: string): Promise<GitSubmoduleEntry[]> {
+  try {
+    await fs.access(path.join(repoPath, '.gitmodules'))
+  } catch {
+    return []
+  }
+
+  const output = await tryRunGit(repoPath, [
+    'config',
+    '--file',
+    '.gitmodules',
+    '--get-regexp',
+    '^submodule\\..*\\.path$',
+  ])
+
+  if (!output) {
+    return []
+  }
+
+  const submoduleEntries = output
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [key = '', ...pathParts] = line.split(/\s+/)
+      const submodulePath = pathParts.join(' ')
+      const name = key.replace(/^submodule\./, '').replace(/\.path$/, '').replace(/^"|"$/g, '')
+
+      return {
+        name,
+        path: submodulePath,
+      }
+    })
+    .filter((entry) => entry.path)
+
+  return Promise.all(
+    submoduleEntries.map(async (entry) => {
+      const submodulePath = path.join(repoPath, entry.path)
+      const [branch, status, branches] = await Promise.all([
+        tryRunGit(submodulePath, ['branch', '--show-current']),
+        tryRunGit(submodulePath, ['status', '--porcelain=v1']),
+        tryRunGit(submodulePath, [
+          'for-each-ref',
+          'refs/heads',
+          '--format=%(HEAD)%00%(refname:short)',
+          '--sort=refname',
+        ]),
+      ])
+
+      return {
+        ...entry,
+        branch: branch || 'detached',
+        dirty: status.length > 0,
+        branches: branches
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((line) => {
+            const [head = '', name = ''] = line.split('\0')
+            const current = head === '*'
+
+            return {
+              name,
+              current,
+              canDelete: !current,
+              deleteReason: current ? 'Current submodule branch cannot be deleted.' : undefined,
+            }
+          }),
+      }
+    }),
+  )
 }

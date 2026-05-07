@@ -6,8 +6,10 @@ import type {
   CommitDetailsRequest,
   CommitRequest,
   DeleteBranchRequest,
+  DeleteSubmoduleBranchRequest,
   DesktopMenuCommand,
   DesktopNotificationRequest,
+  MergeLinkedSubmoduleBranchRequest,
   OpenCommitInBrowserRequest,
   RepositoryActionRequest,
   ScriptOutput,
@@ -301,6 +303,9 @@ function registerAppStateHandlers() {
   ipcMain.handle('app-state:save-recent-command-ids', (_event, commandIds) =>
     appStateService.saveRecentCommandIds(commandIds),
   )
+  ipcMain.handle('app-state:save-repository-branch-links', (_event, links) =>
+    appStateService.saveRepositoryBranchLinks(links),
+  )
 }
 
 function registerRepositoryHandlers() {
@@ -316,6 +321,12 @@ function registerRepositoryHandlers() {
   )
   ipcMain.handle('repositories:delete-branch', (_event, request: DeleteBranchRequest) =>
     repositoryService.deleteBranch(request),
+  )
+  ipcMain.handle('repositories:delete-submodule-branch', (_event, request: DeleteSubmoduleBranchRequest) =>
+    repositoryService.deleteSubmoduleBranch(request),
+  )
+  ipcMain.handle('repositories:merge-linked-submodule-branch', (_event, request: MergeLinkedSubmoduleBranchRequest) =>
+    repositoryService.mergeLinkedSubmoduleBranch(request),
   )
   ipcMain.handle('repositories:sync-branch', (_event, request: SyncBranchRequest) =>
     repositoryService.syncBranch(request),

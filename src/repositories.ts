@@ -68,11 +68,27 @@ export interface GitRemoteBranchEntry {
   hasLocalBranch: boolean
 }
 
+export interface GitSubmoduleBranchEntry {
+  name: string
+  current: boolean
+  canDelete: boolean
+  deleteReason?: string
+}
+
+export interface GitSubmoduleEntry {
+  name: string
+  path: string
+  branch: string
+  dirty: boolean
+  branches: GitSubmoduleBranchEntry[]
+}
+
 export interface RepositoryDetails extends RepositorySummary {
   gitLog: GitLogEntry[]
   gitStatus: GitStatusSummary
   gitBranches: GitBranchEntry[]
   gitRemoteBranches: GitRemoteBranchEntry[]
+  gitSubmodules: GitSubmoduleEntry[]
   remotes: string
   npmScripts: Record<string, string>
   packageManager?: string
@@ -163,6 +179,12 @@ export interface DeleteBranchRequest {
   branchName: string
 }
 
+export interface DeleteSubmoduleBranchRequest {
+  repoPath: string
+  submodulePath: string
+  branchName: string
+}
+
 export interface SyncBranchRequest {
   repoPath: string
   branchName: string
@@ -171,6 +193,15 @@ export interface SyncBranchRequest {
 export interface SyncBranchResult {
   details: RepositoryDetails
   pushed: boolean
+}
+
+export interface MergeLinkedSubmoduleBranchRequest {
+  repoPath: string
+  sourceParentBranch: string
+  targetParentBranch: string
+  submodulePath: string
+  sourceSubmoduleBranch: string
+  targetSubmoduleBranch: string
 }
 
 export interface CheckoutBranchRequest {
@@ -290,6 +321,8 @@ export interface RepositoryApi {
   checkoutBranch: (request: CheckoutBranchRequest) => Promise<RepositoryDetails>
   checkoutRemoteBranch: (request: CheckoutRemoteBranchRequest) => Promise<RepositoryDetails>
   deleteBranch: (request: DeleteBranchRequest) => Promise<RepositoryDetails>
+  deleteSubmoduleBranch: (request: DeleteSubmoduleBranchRequest) => Promise<RepositoryDetails>
+  mergeLinkedSubmoduleBranch: (request: MergeLinkedSubmoduleBranchRequest) => Promise<RepositoryDetails>
   syncBranch: (request: SyncBranchRequest) => Promise<SyncBranchResult>
   stageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
   unstageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>

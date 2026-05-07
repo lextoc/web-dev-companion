@@ -10,6 +10,7 @@ const appState: AppStateApi = {
   savePinnedRepositoryPaths: (repoPaths) => ipcRenderer.invoke('app-state:save-pinned-repository-paths', repoPaths),
   savePinnedScripts: (scripts) => ipcRenderer.invoke('app-state:save-pinned-scripts', scripts),
   saveRecentCommandIds: (commandIds) => ipcRenderer.invoke('app-state:save-recent-command-ids', commandIds),
+  saveRepositoryBranchLinks: (links) => ipcRenderer.invoke('app-state:save-repository-branch-links', links),
 }
 
 const repositories: RepositoryApi = {
@@ -21,6 +22,8 @@ const repositories: RepositoryApi = {
   checkoutBranch: (request) => ipcRenderer.invoke('repositories:checkout-branch', request),
   checkoutRemoteBranch: (request) => ipcRenderer.invoke('repositories:checkout-remote-branch', request),
   deleteBranch: (request) => ipcRenderer.invoke('repositories:delete-branch', request),
+  deleteSubmoduleBranch: (request) => ipcRenderer.invoke('repositories:delete-submodule-branch', request),
+  mergeLinkedSubmoduleBranch: (request) => ipcRenderer.invoke('repositories:merge-linked-submodule-branch', request),
   syncBranch: (request) => ipcRenderer.invoke('repositories:sync-branch', request),
   stageFiles: (request) => ipcRenderer.invoke('repositories:stage-files', request),
   unstageFiles: (request) => ipcRenderer.invoke('repositories:unstage-files', request),

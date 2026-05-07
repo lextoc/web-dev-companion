@@ -1,4 +1,5 @@
 import { computed, ref, type Ref } from 'vue'
+import type { RepositoryBranchLink } from '../app-state'
 import type { PinnedScript, RepositoryDetails, RepositorySummary } from '../repositories'
 import type { AppFeedbackTone } from './useToasts'
 
@@ -25,6 +26,7 @@ export function usePersistedAppState({
   const pinnedRepositoryPaths = ref<string[]>([])
   const pinnedScripts = ref<PinnedScript[]>([])
   const recentCommandIds = ref<string[]>([])
+  const repositoryBranchLinks = ref<RepositoryBranchLink[]>([])
 
   const pinnedScriptNamesForSelectedRepo = computed(() => {
     if (!selectedDetails.value) {
@@ -41,6 +43,7 @@ export function usePersistedAppState({
     pinnedRepositoryPaths.value = persistedState.pinnedRepositoryPaths
     pinnedScripts.value = persistedState.pinnedScripts
     recentCommandIds.value = persistedState.recentCommandIds.slice(0, MAX_RECENT_COMMANDS)
+    repositoryBranchLinks.value = persistedState.repositoryBranchLinks
   }
 
   function savePinnedRepositories(repoPaths: string[]) {
@@ -56,6 +59,40 @@ export function usePersistedAppState({
   function saveRecentCommands(commandIds: string[]) {
     recentCommandIds.value = commandIds.slice(0, MAX_RECENT_COMMANDS)
     void window.appState.saveRecentCommandIds(recentCommandIds.value).catch(showError)
+  }
+
+  function saveRepositoryBranchLinks(links: RepositoryBranchLink[]) {
+    repositoryBranchLinks.value = links
+    void window.appState.saveRepositoryBranchLinks(links).catch(showError)
+  }
+
+  function saveRepositoryBranchLink(link: Omit<RepositoryBranchLink, 'updatedAt'>) {
+    const savedLink: RepositoryBranchLink = {
+      ...link,
+      updatedAt: new Date().toISOString(),
+    }
+    const nextLinks = [
+      savedLink,
+      ...repositoryBranchLinks.value.filter((existingLink) =>
+        existingLink.repoPath !== savedLink.repoPath ||
+        existingLink.parentBranch !== savedLink.parentBranch ||
+        existingLink.submodulePath !== savedLink.submodulePath
+      ),
+    ]
+
+    saveRepositoryBranchLinks(nextLinks)
+    showAppFeedback(`Linked ${savedLink.parentBranch} to ${savedLink.submoduleBranch}.`, 'info')
+  }
+
+  function removeRepositoryBranchLink(linkToRemove: Pick<RepositoryBranchLink, 'repoPath' | 'parentBranch' | 'submodulePath'>) {
+    saveRepositoryBranchLinks(
+      repositoryBranchLinks.value.filter((existingLink) =>
+        existingLink.repoPath !== linkToRemove.repoPath ||
+        existingLink.parentBranch !== linkToRemove.parentBranch ||
+        existingLink.submodulePath !== linkToRemove.submodulePath
+      ),
+    )
+    showAppFeedback(`Removed link for ${linkToRemove.parentBranch}.`, 'info')
   }
 
   function rememberCommand(commandId: string) {
@@ -126,6 +163,9 @@ export function usePersistedAppState({
     recentCommandIds,
     rememberCommand,
     removePinnedScriptsForRepository,
+    removeRepositoryBranchLink,
+    repositoryBranchLinks,
+    saveRepositoryBranchLink,
     togglePinnedRepository,
     togglePinnedScript,
     unpinScript,

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import type { RepositoryDetails } from "../../repositories";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
+import type { RepositoryBranchLink } from "../../app-state";
+import type { MergeLinkedSubmoduleBranchRequest, RepositoryDetails } from "../../repositories";
 import { AppActionMenu, AppButton, AppDropdown, AppIcon, AppMenuItem } from "../ui";
 
 const props = defineProps<{
@@ -13,17 +14,24 @@ const props = defineProps<{
   syncShortcutLabel: string;
   syncingBranchName: string | null;
   deletingBranchName: string | null;
+  deletingSubmoduleBranchName: string | null;
   checkingOutBranchName: string | null;
+  mergingLinkedBranchName: string | null;
   branchFeedbackMessages: Record<string, string>;
+  repositoryBranchLinks: RepositoryBranchLink[];
 }>();
 
 const emit = defineEmits<{
   back: [];
   refresh: [];
   deleteBranch: [branchName: string];
+  deleteSubmoduleBranch: [submodulePath: string, branchName: string];
   checkoutBranch: [branchName: string];
   checkoutRemoteBranch: [remoteBranchName: string];
   syncBranch: [branchName: string];
+  saveRepositoryBranchLink: [link: Omit<RepositoryBranchLink, "updatedAt">];
+  removeRepositoryBranchLink: [link: Pick<RepositoryBranchLink, "repoPath" | "parentBranch" | "submodulePath">];
+  mergeLinkedSubmoduleBranch: [request: Omit<MergeLinkedSubmoduleBranchRequest, "repoPath">];
   copyPath: [repoPath: string];
   openInEditor: [repoPath: string];
   openInFileManager: [repoPath: string];
@@ -31,9 +39,14 @@ const emit = defineEmits<{
 }>();
 
 const branchFilter = ref("all");
+const branchSearchQuery = ref("");
 const selectedRemoteBranchName = ref("");
+const selectedSubmodulePath = ref("");
+const targetParentBranchName = ref("");
+const targetSubmoduleBranchName = ref("");
 const isBranchMenuOpen = ref(false);
-const branchMenuElement = ref<HTMLElement | null>(null);
+const isSubmoduleLinkManagerOpen = ref(false);
+const isSubmoduleBranchManagerOpen = ref(false);
 const refreshButtonElement = ref<HTMLElement | null>(null);
 const isRefreshIconSettling = ref(false);
 const syncConfettiBursts = ref<Array<{ id: number }>>([]);
@@ -50,7 +63,9 @@ const branchFilters = [
   { key: "ahead", label: "Ahead" },
   { key: "no-upstream", label: "No upstream" },
   { key: "in-sync", label: "In sync" },
-];
+] as const;
+
+type BranchFilterKey = (typeof branchFilters)[number]["key"];
 
 const sortedBranches = computed(() => {
   const branches = props.selectedDetails?.gitBranches ?? [];
@@ -64,26 +79,23 @@ const sortedBranches = computed(() => {
   });
 });
 
+const normalizedBranchSearchQuery = computed(() => branchSearchQuery.value.trim().toLowerCase());
+
+const branchesMatchingSearch = computed(() =>
+  sortedBranches.value.filter((branch) => branchMatchesSearch(branch, normalizedBranchSearchQuery.value)),
+);
+
+const branchFilterOptions = computed(() =>
+  branchFilters.map((filter) => ({
+    ...filter,
+    count: branchesMatchingSearch.value.filter((branch) => branchMatchesFilter(branch, filter.key)).length,
+  })),
+);
+
 const filteredBranches = computed(() =>
-  sortedBranches.value.filter((branch) => {
-    if (branchFilter.value === "behind") {
-      return branch.behind > 0;
-    }
-
-    if (branchFilter.value === "ahead") {
-      return branch.ahead > 0;
-    }
-
-    if (branchFilter.value === "no-upstream") {
-      return !branch.upstream;
-    }
-
-    if (branchFilter.value === "in-sync") {
-      return branch.inSyncWithRemote;
-    }
-
-    return true;
-  }),
+  branchesMatchingSearch.value.filter((branch) =>
+    branchMatchesFilter(branch, branchFilter.value as BranchFilterKey),
+  ),
 );
 
 const remoteBranchesToCreate = computed(() =>
@@ -98,9 +110,128 @@ const remoteBranchOptions = computed(() =>
     value: branch.name,
   })),
 );
+const submoduleOptions = computed(() =>
+  (props.selectedDetails?.gitSubmodules ?? []).map((submodule) => ({
+    label: `${submodule.path} (${submodule.branch})`,
+    value: submodule.path,
+  })),
+);
+const selectedSubmodule = computed(() =>
+  props.selectedDetails?.gitSubmodules.find((submodule) => submodule.path === selectedSubmodulePath.value),
+);
 const currentBranch = computed(() =>
   props.selectedDetails?.gitBranches.find((branch) => branch.current),
 );
+const savedLinksForSelectedRepository = computed(() => {
+  const repoPath = props.selectedDetails?.path;
+
+  if (!repoPath) {
+    return [];
+  }
+
+  return props.repositoryBranchLinks.filter((link) => link.repoPath === repoPath);
+});
+const currentBranchSubmoduleLink = computed(() => {
+  if (!props.selectedDetails || !selectedSubmodulePath.value) {
+    return undefined;
+  }
+
+  return findSavedSubmoduleLink(props.selectedDetails.branch);
+});
+const currentSubmoduleLinkLabel = computed(() =>
+  currentBranchSubmoduleLink.value
+    ? `${currentBranchSubmoduleLink.value.parentBranch} -> ${currentBranchSubmoduleLink.value.submoduleBranch}`
+    : "No link for current branch",
+);
+const submoduleLinkDropdownOptions = computed(() => [
+  { label: "No link", value: "" },
+  ...(selectedSubmodule.value?.branches ?? []).map((branch) => ({
+    label: branch.name,
+    value: branch.name,
+  })),
+]);
+const submoduleLinkTableRows = computed(() =>
+  sortedBranches.value.map((branch) => {
+    const savedSubmoduleBranch = findSavedSubmoduleLink(branch.name)?.submoduleBranch ?? "";
+    const submoduleBranchExists = submoduleLinkDropdownOptions.value.some((option) =>
+      option.value === savedSubmoduleBranch
+    );
+
+    return {
+      current: branch.current,
+      parentBranch: branch.name,
+      submoduleBranch: submoduleBranchExists ? savedSubmoduleBranch : "",
+    };
+  }),
+);
+const linkedSubmoduleBranchCount = computed(() =>
+  submoduleLinkTableRows.value.filter((row) => row.submoduleBranch).length,
+);
+const targetParentBranchOptions = computed(() =>
+  sortedBranches.value
+    .filter((branch) => !branch.current)
+    .map((branch) => ({
+      label: branch.name,
+      value: branch.name,
+    })),
+);
+const targetSubmoduleBranchOptions = computed(() =>
+  (selectedSubmodule.value?.branches ?? [])
+    .filter((branch) => branch.name !== selectedSubmodule.value?.branch)
+    .map((branch) => ({
+      label: branch.name,
+      value: branch.name,
+    })),
+);
+const linkedSubmoduleRouteLabel = computed(() => {
+  if (!props.selectedDetails || !selectedSubmodule.value) {
+    return "";
+  }
+
+  return [
+    `${props.selectedDetails.branch} -> ${targetParentBranchName.value || "target"}`,
+    `${selectedSubmodule.value.branch} -> ${targetSubmoduleBranchName.value || "target"}`,
+  ].join(" | ");
+});
+const linkedBranchMergeDisabledReason = computed(() => {
+  if (!props.selectedDetails) {
+    return "No repository selected.";
+  }
+
+  if (!selectedSubmodule.value) {
+    return "Choose a submodule.";
+  }
+
+  if (!currentBranch.value) {
+    return "No current parent branch was found.";
+  }
+
+  if (props.selectedDetails.gitStatus.conflicted.length > 0 || !props.selectedDetails.gitStatus.clean) {
+    return "Commit, stash, or discard parent repository changes before merging.";
+  }
+
+  if (selectedSubmodule.value.dirty) {
+    return "Commit, stash, or discard submodule changes before merging.";
+  }
+
+  if (!targetParentBranchName.value || !targetSubmoduleBranchName.value) {
+    return "Choose target branches.";
+  }
+
+  if (targetParentBranchName.value === props.selectedDetails.branch) {
+    return "Choose a different parent target branch.";
+  }
+
+  if (targetSubmoduleBranchName.value === selectedSubmodule.value.branch) {
+    return "Choose a different submodule target branch.";
+  }
+
+  if (props.mergingLinkedBranchName) {
+    return "Linked branch merge is already running.";
+  }
+
+  return "";
+});
 const currentBranchSyncLabel = computed(() =>
   currentBranch.value ? branchSyncLabel(currentBranch.value) : "No branch details",
 );
@@ -145,8 +276,22 @@ const scriptCountLabel = computed(() => {
 watch(
   () => props.selectedDetails?.path,
   () => {
+    branchSearchQuery.value = "";
     selectedRemoteBranchName.value = "";
+    selectedSubmodulePath.value = "";
+    targetParentBranchName.value = "";
+    targetSubmoduleBranchName.value = "";
+    isSubmoduleLinkManagerOpen.value = false;
+    isSubmoduleBranchManagerOpen.value = false;
     isBranchMenuOpen.value = false;
+  },
+);
+
+watch(
+  selectedSubmodulePath,
+  () => {
+    isSubmoduleLinkManagerOpen.value = false;
+    isSubmoduleBranchManagerOpen.value = false;
   },
 );
 
@@ -158,6 +303,59 @@ watch(
     }
   },
   { immediate: true },
+);
+
+watch(
+  submoduleOptions,
+  (options) => {
+    if (!options.some((option) => option.value === selectedSubmodulePath.value)) {
+      selectedSubmodulePath.value = options[0]?.value ?? "";
+    }
+  },
+  { immediate: true },
+);
+
+watch(
+  [selectedSubmodule, currentBranch, savedLinksForSelectedRepository],
+  () => {
+    if (!props.selectedDetails || !selectedSubmodule.value) {
+      targetParentBranchName.value = "";
+      targetSubmoduleBranchName.value = "";
+      return;
+    }
+
+    const inferredParentBranch = inferNextNumberedBranch(
+      props.selectedDetails.branch,
+      props.selectedDetails.gitBranches.map((branch) => branch.name),
+    );
+
+    if (!targetParentBranchName.value || targetParentBranchName.value === props.selectedDetails.branch) {
+      targetParentBranchName.value = inferredParentBranch || targetParentBranchOptions.value[0]?.value || "";
+    }
+
+    if (!targetSubmoduleBranchName.value || targetSubmoduleBranchName.value === selectedSubmodule.value.branch) {
+      targetSubmoduleBranchName.value =
+        findSavedTargetSubmoduleBranch(targetParentBranchName.value) ||
+        inferNextNumberedBranch(
+          selectedSubmodule.value.branch,
+          selectedSubmodule.value.branches.map((branch) => branch.name),
+        ) ||
+        targetSubmoduleBranchOptions.value[0]?.value ||
+        "";
+    }
+  },
+  { immediate: true },
+);
+
+watch(
+  targetParentBranchName,
+  (parentBranchName) => {
+    const linkedSubmoduleBranch = findSavedTargetSubmoduleBranch(parentBranchName);
+
+    if (linkedSubmoduleBranch) {
+      targetSubmoduleBranchName.value = linkedSubmoduleBranch;
+    }
+  },
 );
 
 function currentRefreshIconAngle() {
@@ -177,6 +375,134 @@ function currentRefreshIconAngle() {
   const angle = Math.atan2(matrix.b, matrix.a) * (180 / Math.PI);
 
   return (angle + 360) % 360;
+}
+
+function branchMatchesSearch(
+  branch: RepositoryDetails["gitBranches"][number],
+  normalizedQuery: string,
+) {
+  if (!normalizedQuery) {
+    return true;
+  }
+
+  return [branch.name, branch.upstream ?? ""].some((value) =>
+    value.toLowerCase().includes(normalizedQuery),
+  );
+}
+
+function branchMatchesFilter(
+  branch: RepositoryDetails["gitBranches"][number],
+  filterKey: BranchFilterKey,
+) {
+  if (filterKey === "behind") {
+    return branch.behind > 0;
+  }
+
+  if (filterKey === "ahead") {
+    return branch.ahead > 0;
+  }
+
+  if (filterKey === "no-upstream") {
+    return !branch.upstream;
+  }
+
+  if (filterKey === "in-sync") {
+    return branch.inSyncWithRemote;
+  }
+
+  return true;
+}
+
+function inferNextNumberedBranch(currentBranchName: string, branchNames: string[]) {
+  const match = currentBranchName.match(/^(.*?)(\d+)$/);
+
+  if (!match) {
+    return "";
+  }
+
+  const [, prefix, numberText] = match;
+  const nextNumber = String(Number(numberText) + 1).padStart(numberText.length, "0");
+  const nextBranchName = `${prefix}${nextNumber}`;
+
+  return branchNames.includes(nextBranchName) ? nextBranchName : "";
+}
+
+function findSavedSubmoduleLink(parentBranch: string) {
+  if (!selectedSubmodulePath.value) {
+    return undefined;
+  }
+
+  return savedLinksForSelectedRepository.value.find((link) =>
+    link.parentBranch === parentBranch &&
+    link.submodulePath === selectedSubmodulePath.value
+  );
+}
+
+function findSavedTargetSubmoduleBranch(parentBranch: string) {
+  const linkedSubmoduleBranch = findSavedSubmoduleLink(parentBranch)?.submoduleBranch;
+
+  if (!linkedSubmoduleBranch) {
+    return "";
+  }
+
+  return targetSubmoduleBranchOptions.value.some((option) => option.value === linkedSubmoduleBranch)
+    ? linkedSubmoduleBranch
+    : "";
+}
+
+function updateSubmoduleBranchLink(parentBranch: string, submoduleBranchValue: string | number) {
+  if (!props.selectedDetails || !selectedSubmodule.value) {
+    return;
+  }
+
+  const submoduleBranch = String(submoduleBranchValue);
+
+  if (!submoduleBranch) {
+    emit("removeRepositoryBranchLink", {
+      repoPath: props.selectedDetails.path,
+      parentBranch,
+      submodulePath: selectedSubmodule.value.path,
+    });
+    return;
+  }
+
+  emit("saveRepositoryBranchLink", {
+    repoPath: props.selectedDetails.path,
+    parentBranch,
+    submodulePath: selectedSubmodule.value.path,
+    submoduleBranch,
+  });
+
+  if (parentBranch === targetParentBranchName.value) {
+    targetSubmoduleBranchName.value = submoduleBranch;
+  }
+}
+
+function closeBranchMenu() {
+  isSubmoduleLinkManagerOpen.value = false;
+  isBranchMenuOpen.value = false;
+}
+
+function mergeLinkedBranches() {
+  if (!props.selectedDetails || !selectedSubmodule.value || linkedBranchMergeDisabledReason.value) {
+    return;
+  }
+
+  emit("mergeLinkedSubmoduleBranch", {
+    sourceParentBranch: props.selectedDetails.branch,
+    targetParentBranch: targetParentBranchName.value,
+    submodulePath: selectedSubmodule.value.path,
+    sourceSubmoduleBranch: selectedSubmodule.value.branch,
+    targetSubmoduleBranch: targetSubmoduleBranchName.value,
+  });
+}
+
+function isDeletingSubmoduleBranch(submodulePath: string, branchName: string) {
+  return props.deletingSubmoduleBranchName === `${submodulePath}:${branchName}`;
+}
+
+function clearBranchSearch() {
+  branchSearchQuery.value = "";
 }
 
 function prepareRefreshIconSettle() {
@@ -398,25 +724,7 @@ function checkoutSelectedRemoteBranch() {
   emit("checkoutRemoteBranch", selectedRemoteBranchName.value);
 }
 
-function handleDocumentPointerDown(event: PointerEvent) {
-  const target = event.target as Node;
-
-  if (target instanceof Element && target.closest(".app-dropdown-menu")) {
-    return;
-  }
-
-  if (!branchMenuElement.value?.contains(target)) {
-    isBranchMenuOpen.value = false;
-  }
-}
-
-onMounted(() => {
-  document.addEventListener("pointerdown", handleDocumentPointerDown);
-});
-
 onBeforeUnmount(() => {
-  document.removeEventListener("pointerdown", handleDocumentPointerDown);
-
   if (refreshIconSettleTimer !== undefined) {
     window.clearTimeout(refreshIconSettleTimer);
   }
@@ -444,7 +752,7 @@ onBeforeUnmount(() => {
     </nav>
 
     <div v-if="selectedDetails" class="detail-repository-tools" aria-label="Repository actions">
-      <div ref="branchMenuElement" class="branch-menu">
+      <div class="branch-menu">
         <div class="branch-menu-combo">
           <button
             type="button"
@@ -503,19 +811,32 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div
-          v-if="isBranchMenuOpen"
-          id="branch-management-menu"
-          class="branch-menu-popover"
-          role="dialog"
-          aria-label="Branch management"
-          @keydown.esc.stop.prevent="isBranchMenuOpen = false"
-        >
-          <section class="branch-menu-panel">
-            <div class="panel-heading">
+        <Teleport to="body">
+          <div
+            v-if="isBranchMenuOpen"
+            class="modal-backdrop branch-menu-modal-backdrop"
+            role="presentation"
+            @click.self="closeBranchMenu"
+          >
+            <section
+              id="branch-management-menu"
+              class="branch-menu-panel"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="branch-management-title"
+              @keydown.esc.stop.prevent="closeBranchMenu"
+            >
+            <div class="panel-heading branch-menu-heading">
               <div>
-                <h3>Branches</h3>
-                <span class="panel-subtitle">{{ selectedDetails.branch }} - {{ currentBranchSyncLabel }}</span>
+                <h3 id="branch-management-title">Branch management</h3>
+                <span class="panel-subtitle">{{ selectedDetails.name }} - {{ selectedDetails.branch }}</span>
+              </div>
+              <div class="branch-menu-heading-stats" aria-label="Branch counts">
+                <span>{{ selectedDetails.gitBranches.length }} local</span>
+                <span>{{ remoteBranchesToCreate.length }} remote new</span>
+                <span v-if="selectedDetails.gitSubmodules.length > 0">
+                  {{ selectedDetails.gitSubmodules.length }} submodule
+                </span>
               </div>
               <AppButton
                 variant="secondary"
@@ -524,220 +845,499 @@ onBeforeUnmount(() => {
                 class="branch-menu-close"
                 aria-label="Close branch menu"
                 title="Close"
-                @click="isBranchMenuOpen = false"
+                @click="closeBranchMenu"
               >
                 Close
               </AppButton>
             </div>
 
-            <section
-              v-if="currentBranch"
-              class="current-branch-action-card"
-              aria-label="Current branch sync action"
-            >
-              <div class="current-branch-action-copy">
-                <span class="current-branch-action-kicker">Current branch</span>
-                <strong>{{ currentBranch.name }}</strong>
-                <small>{{ currentBranch.upstream ?? "No upstream configured" }}</small>
-                <span class="branch-sync" :class="{ synced: currentBranch.inSyncWithRemote }">
-                  {{ branchSyncLabel(currentBranch) }}
-                </span>
-              </div>
-              <button
-                v-if="!currentBranch.inSyncWithRemote"
-                type="button"
-                class="branch-primary-action"
-                :class="{ pending: isSyncingBranch(currentBranch.name, syncingBranchName) }"
-                :disabled="
-                  Boolean(branchSyncDisabledReason(currentBranch, selectedDetails.gitStatus)) ||
-                  Boolean(syncingBranchName) ||
-                  Boolean(deletingBranchName)
-                "
-                :title="branchSyncTitle(currentBranch, selectedDetails.gitStatus, syncingBranchName)"
-                :aria-busy="isSyncingBranch(currentBranch.name, syncingBranchName)"
-                @click="$emit('syncBranch', currentBranch.name)"
-              >
-                <AppIcon name="restart" class="button-icon" />
-                <span>
-                  {{
-                    isSyncingBranch(currentBranch.name, syncingBranchName)
-                      ? `${branchSyncActionLabel(currentBranch)}ing...`
-                      : branchSyncActionLabel(currentBranch)
-                  }}
-                </span>
-              </button>
-              <p v-if="branchFeedbackMessages[currentBranch.name]" class="branch-feedback">
-                {{ branchFeedbackMessages[currentBranch.name] }}
-              </p>
-              <p
-                v-else-if="
-                  !currentBranch.inSyncWithRemote &&
-                  branchSyncDisabledReason(currentBranch, selectedDetails.gitStatus)
-                "
-                class="branch-safety"
-              >
-                {{ branchSyncDisabledReason(currentBranch, selectedDetails.gitStatus) }}
-              </p>
-            </section>
-
-            <div class="git-branches">
-              <form
-                v-if="remoteBranchesToCreate.length > 0"
-                class="remote-branch-checkout"
-                @submit.prevent="checkoutSelectedRemoteBranch"
-              >
-                <label for="remote-branch-select">
-                  Create from remote
-                </label>
-                <div class="remote-branch-create-row">
-                  <AppDropdown
-                    id="remote-branch-select"
-                    v-model="selectedRemoteBranchName"
-                    menu-class="remote-branch-dropdown-menu"
-                    :options="remoteBranchOptions"
-                    :disabled="
-                      Boolean(checkingOutBranchName) ||
-                      Boolean(syncingBranchName) ||
-                      Boolean(deletingBranchName) ||
-                      Boolean(branchCheckoutDisabledReason(selectedDetails.gitStatus))
-                    "
-                  />
-                  <button
-                    type="submit"
-                    class="secondary branch-action"
-                    :disabled="
-                      !selectedRemoteBranchName ||
-                      Boolean(checkingOutBranchName) ||
-                      Boolean(syncingBranchName) ||
-                      Boolean(deletingBranchName) ||
-                      Boolean(branchCheckoutDisabledReason(selectedDetails.gitStatus))
-                    "
-                    :title="branchCheckoutDisabledReason(selectedDetails.gitStatus) ?? 'Create and check out a local tracking branch'"
-                  >
-                    {{
-                      checkingOutBranchName === selectedRemoteBranchName
-                        ? "Creating..."
-                        : "Create"
-                    }}
-                  </button>
-                </div>
-              </form>
-
-              <div class="branch-filters" aria-label="Branch filters">
-                <button
-                  v-for="filter in branchFilters"
-                  :key="filter.key"
-                  type="button"
-                  class="secondary"
-                  :class="{ active: branchFilter === filter.key }"
-                  @click="branchFilter = filter.key"
-                >
-                  {{ filter.label }}
-                </button>
-              </div>
-
-              <p v-if="syncingBranchName" class="branch-pending">
-                Syncing {{ syncingBranchName }}...
-              </p>
-              <p v-else-if="checkingOutBranchName" class="branch-pending">
-                Switching to {{ checkingOutBranchName }}...
-              </p>
-
-              <ul v-if="filteredBranches.length > 0" class="git-branch-list">
-                <li
-                  v-for="branch in filteredBranches"
-                  :key="branch.name"
-                  :class="{ current: branch.current }"
-                >
+            <div class="branch-menu-layout">
+              <div class="branch-menu-side">
+                <div class="branch-menu-section-heading">
                   <div>
-                    <strong>{{ branch.name }}</strong>
-                    <small>
-                      {{ branch.upstream ?? "No upstream" }}
-                    </small>
-                    <small v-if="branch.current" class="branch-current-marker">Current branch</small>
-                    <span class="branch-health">
-                      <span v-if="branch.ahead > 0">{{ branch.ahead }} ahead</span>
-                      <span v-if="branch.behind > 0">{{ branch.behind }} behind</span>
-                      <span v-if="branch.remoteGone">Remote gone</span>
-                      <span v-if="branch.inSyncWithRemote">In sync</span>
-                    </span>
+                    <h4>Current branch</h4>
+                    <span>{{ currentBranchSyncLabel }}</span>
                   </div>
-                  <p v-if="branchFeedbackMessages[branch.name]" class="branch-feedback">
-                    {{ branchFeedbackMessages[branch.name] }}
+                </div>
+
+                <section
+                  v-if="currentBranch"
+                  class="current-branch-action-card"
+                  aria-label="Current branch sync action"
+                >
+                  <div class="current-branch-action-copy">
+                    <span class="current-branch-action-kicker">Checked out</span>
+                    <strong>{{ currentBranch.name }}</strong>
+                    <small>{{ currentBranch.upstream ?? "No upstream configured" }}</small>
+                  </div>
+                  <AppButton
+                    v-if="!currentBranch.inSyncWithRemote"
+                    :icon="branchSyncActionIcon(currentBranch, syncingBranchName)"
+                    class="branch-primary-action"
+                    :class="{ pending: isSyncingBranch(currentBranch.name, syncingBranchName) }"
+                    :disabled="
+                      Boolean(branchSyncDisabledReason(currentBranch, selectedDetails.gitStatus)) ||
+                      Boolean(syncingBranchName) ||
+                      Boolean(deletingBranchName)
+                    "
+                    :title="branchSyncTitle(currentBranch, selectedDetails.gitStatus, syncingBranchName)"
+                    :aria-busy="isSyncingBranch(currentBranch.name, syncingBranchName)"
+                    @click="$emit('syncBranch', currentBranch.name)"
+                  >
+                    <span>
+                      {{
+                        isSyncingBranch(currentBranch.name, syncingBranchName)
+                          ? `${branchSyncActionLabel(currentBranch)}ing...`
+                          : branchSyncActionLabel(currentBranch)
+                      }}
+                    </span>
+                  </AppButton>
+                  <span v-else class="branch-sync synced">In sync</span>
+                  <p v-if="branchFeedbackMessages[currentBranch.name]" class="branch-feedback">
+                    {{ branchFeedbackMessages[currentBranch.name] }}
                   </p>
                   <p
-                    v-else-if="branchSafetyNotes(branch, selectedDetails.gitStatus).length > 0"
+                    v-else-if="
+                      !currentBranch.inSyncWithRemote &&
+                      branchSyncDisabledReason(currentBranch, selectedDetails.gitStatus)
+                    "
                     class="branch-safety"
                   >
-                    {{ branchSafetyNotes(branch, selectedDetails.gitStatus).join(" ") }}
+                    {{ branchSyncDisabledReason(currentBranch, selectedDetails.gitStatus) }}
                   </p>
-                  <div class="branch-controls">
-                    <span class="branch-sync" :class="{ synced: branch.inSyncWithRemote }">
-                      {{ branchSyncLabel(branch) }}
-                    </span>
-                    <button
-                      v-if="!branch.current"
-                      type="button"
-                      class="secondary branch-action"
-                      :class="{ pending: isCheckingOutBranch(branch.name, checkingOutBranchName) }"
-                      :disabled="
-                        Boolean(branchCheckoutDisabledReason(selectedDetails.gitStatus)) ||
-                        Boolean(checkingOutBranchName) ||
-                        Boolean(syncingBranchName) ||
-                        Boolean(deletingBranchName)
-                      "
-                      :title="branchCheckoutDisabledReason(selectedDetails.gitStatus) ?? 'Switch to this local branch'"
-                      @click="$emit('checkoutBranch', branch.name)"
-                    >
-                      {{ isCheckingOutBranch(branch.name, checkingOutBranchName) ? "Switching..." : "Switch" }}
-                    </button>
-                    <AppActionMenu
-                      v-if="!branch.inSyncWithRemote || !branch.current"
-                      :label="`More actions for ${branch.name}`"
-                    >
-                      <AppMenuItem
-                        v-if="!branch.inSyncWithRemote"
-                        icon="restart"
-                        :class="{ pending: isSyncingBranch(branch.name, syncingBranchName) }"
-                        :disabled="
-                          Boolean(branchSyncDisabledReason(branch, selectedDetails.gitStatus)) ||
-                          Boolean(syncingBranchName) ||
-                          Boolean(deletingBranchName)
-                        "
-                        :title="branchSyncTitle(branch, selectedDetails.gitStatus, syncingBranchName)"
-                        :aria-busy="isSyncingBranch(branch.name, syncingBranchName)"
-                        @click="$emit('syncBranch', branch.name)"
-                      >
-                        {{
-                          isSyncingBranch(branch.name, syncingBranchName)
-                            ? `${branchSyncActionLabel(branch)}ing...`
-                            : branchSyncActionLabel(branch)
-                        }}
-                      </AppMenuItem>
-                      <AppMenuItem
-                        v-if="!branch.current"
-                        icon="trash"
-                        tone="danger"
-                        :class="{ pending: isDeletingBranch(branch.name, deletingBranchName) }"
-                        :disabled="
-                          !branch.canDelete || Boolean(syncingBranchName) || Boolean(deletingBranchName)
-                        "
-                        :title="branch.deleteReason ?? 'Delete local branch'"
-                        @click="$emit('deleteBranch', branch.name)"
-                      >
-                        {{ isDeletingBranch(branch.name, deletingBranchName) ? "Removing..." : "Remove branch" }}
-                      </AppMenuItem>
-                    </AppActionMenu>
+                </section>
+
+                <section
+                  v-if="selectedDetails.gitSubmodules.length > 0"
+                  class="linked-submodule-branch-card"
+                  :class="{ 'local-branch-manager-open': isSubmoduleBranchManagerOpen }"
+                  aria-label="Linked submodule branches"
+                >
+                  <div class="branch-menu-section-heading">
+                    <div>
+                      <h4>Linked submodule</h4>
+                      <span>{{ selectedSubmodule?.branch ?? "No submodule selected" }}</span>
+                    </div>
                   </div>
-                </li>
-              </ul>
 
-              <p v-else>No branches match this filter.</p>
+                  <div class="linked-submodule-link-group">
+                    <div class="linked-submodule-grid compact">
+                      <label for="linked-submodule-select">Submodule</label>
+                      <AppDropdown
+                        id="linked-submodule-select"
+                        v-model="selectedSubmodulePath"
+                        menu-class="remote-branch-dropdown-menu"
+                        :options="submoduleOptions"
+                      />
+                    </div>
+
+                    <div class="linked-submodule-row">
+                      <div class="linked-submodule-summary">
+                        <span class="current-branch-action-kicker">Branch links</span>
+                        <strong>{{ linkedSubmoduleBranchCount }} saved</strong>
+                        <small>{{ currentSubmoduleLinkLabel }}</small>
+                      </div>
+                      <div class="linked-submodule-actions">
+                        <AppButton
+                          variant="secondary"
+                          icon="link"
+                          class="branch-action"
+                          :active="isSubmoduleLinkManagerOpen"
+                          :disabled="!selectedSubmodule"
+                          :aria-expanded="isSubmoduleLinkManagerOpen"
+                          aria-haspopup="dialog"
+                          aria-controls="submodule-branch-link-modal"
+                          title="Manage repository to submodule branch links"
+                          @click="isSubmoduleLinkManagerOpen = !isSubmoduleLinkManagerOpen"
+                        >
+                          Manage
+                        </AppButton>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="linked-submodule-merge-group">
+                    <div class="linked-submodule-grid">
+                      <label for="target-parent-branch-select">Repository target</label>
+                      <AppDropdown
+                        id="target-parent-branch-select"
+                        v-model="targetParentBranchName"
+                        menu-class="remote-branch-dropdown-menu"
+                        :options="targetParentBranchOptions"
+                      />
+
+                      <label for="target-submodule-branch-select">Submodule target</label>
+                      <AppDropdown
+                        id="target-submodule-branch-select"
+                        v-model="targetSubmoduleBranchName"
+                        menu-class="remote-branch-dropdown-menu"
+                        :options="targetSubmoduleBranchOptions"
+                      />
+                    </div>
+
+                    <AppButton
+                      icon="merge"
+                      class="branch-primary-action linked-submodule-merge"
+                      :class="{ pending: Boolean(mergingLinkedBranchName) }"
+                      :disabled="Boolean(linkedBranchMergeDisabledReason)"
+                      :title="linkedBranchMergeDisabledReason || linkedSubmoduleRouteLabel || 'Merge linked branches into target branches'"
+                      @click="mergeLinkedBranches"
+                    >
+                      <span>
+                        {{
+                          mergingLinkedBranchName
+                            ? `Merging into ${mergingLinkedBranchName}...`
+                            : "Merge down"
+                        }}
+                      </span>
+                    </AppButton>
+                  </div>
+                  <p v-if="!selectedSubmodule && linkedBranchMergeDisabledReason" class="branch-safety">
+                    {{ linkedBranchMergeDisabledReason }}
+                  </p>
+
+                  <div
+                    v-if="selectedSubmodule"
+                    class="submodule-branch-controls"
+                    :class="{ open: isSubmoduleBranchManagerOpen }"
+                  >
+                    <div class="submodule-branch-heading">
+                      <div>
+                        <span class="current-branch-action-kicker">Local branches</span>
+                        <small>Clean up local-only branches.</small>
+                      </div>
+                      <span>{{ selectedSubmodule.branches.length }}</span>
+                      <AppButton
+                        variant="secondary"
+                        class="submodule-branch-toggle"
+                        :active="isSubmoduleBranchManagerOpen"
+                        :aria-expanded="isSubmoduleBranchManagerOpen"
+                        aria-controls="submodule-local-branches"
+                        @click="isSubmoduleBranchManagerOpen = !isSubmoduleBranchManagerOpen"
+                      >
+                        {{ isSubmoduleBranchManagerOpen ? "Hide" : "Manage" }}
+                      </AppButton>
+                    </div>
+
+                    <ul
+                      v-if="isSubmoduleBranchManagerOpen && selectedSubmodule.branches.length > 0"
+                      id="submodule-local-branches"
+                      class="submodule-branch-list"
+                    >
+                      <li
+                        v-for="branch in selectedSubmodule.branches"
+                        :key="`${selectedSubmodule.path}:${branch.name}`"
+                        :class="{ current: branch.current }"
+                      >
+                        <div>
+                          <strong>{{ branch.name }}</strong>
+                          <small>{{ branch.current ? "Current branch" : "Local branch" }}</small>
+                        </div>
+                        <AppActionMenu
+                          v-if="!branch.current"
+                          :label="`More actions for submodule branch ${branch.name}`"
+                        >
+                          <AppMenuItem
+                            icon="trash"
+                            tone="danger"
+                            :class="{ pending: isDeletingSubmoduleBranch(selectedSubmodule.path, branch.name) }"
+                            :disabled="
+                              !branch.canDelete ||
+                              Boolean(deletingSubmoduleBranchName) ||
+                              Boolean(mergingLinkedBranchName)
+                            "
+                            :title="branch.deleteReason ?? 'Remove local submodule branch'"
+                            @click="$emit('deleteSubmoduleBranch', selectedSubmodule.path, branch.name)"
+                          >
+                            {{
+                              isDeletingSubmoduleBranch(selectedSubmodule.path, branch.name)
+                                ? "Removing..."
+                                : "Remove local branch"
+                            }}
+                          </AppMenuItem>
+                        </AppActionMenu>
+                      </li>
+                    </ul>
+                    <p
+                      v-else-if="isSubmoduleBranchManagerOpen"
+                      id="submodule-local-branches"
+                      class="branch-empty-state"
+                    >
+                      No local branches found for this submodule.
+                    </p>
+                  </div>
+                </section>
+              </div>
+
+              <div class="branch-menu-main">
+                <div class="git-branches">
+                  <div class="branch-list-toolbar">
+                    <div class="branch-menu-section-heading branch-list-heading">
+                      <div>
+                      <h4>Repository branches</h4>
+                        <span>
+                          {{ filteredBranches.length }} shown
+                          <template v-if="normalizedBranchSearchQuery">
+                            from {{ branchesMatchingSearch.length }} matches
+                          </template>
+                        </span>
+                      </div>
+                    </div>
+
+                    <label class="branch-search-control">
+                      <span>Search branches</span>
+                      <div class="branch-search-input">
+                        <input
+                          v-model="branchSearchQuery"
+                          type="search"
+                          placeholder="Branch or upstream"
+                          autocomplete="off"
+                        />
+                        <AppButton
+                          v-if="branchSearchQuery"
+                          variant="secondary"
+                          size="icon"
+                          icon="close"
+                          class="branch-search-clear"
+                          aria-label="Clear branch search"
+                          title="Clear search"
+                          @click="clearBranchSearch"
+                        >
+                          Clear search
+                        </AppButton>
+                      </div>
+                    </label>
+
+                    <form
+                      v-if="remoteBranchesToCreate.length > 0"
+                      class="remote-branch-checkout"
+                      @submit.prevent="checkoutSelectedRemoteBranch"
+                    >
+                      <label for="remote-branch-select">
+                        Create from remote
+                      </label>
+                      <div class="remote-branch-create-row">
+                        <AppDropdown
+                          id="remote-branch-select"
+                          v-model="selectedRemoteBranchName"
+                          menu-class="remote-branch-dropdown-menu"
+                          :options="remoteBranchOptions"
+                          :disabled="
+                            Boolean(checkingOutBranchName) ||
+                            Boolean(syncingBranchName) ||
+                            Boolean(deletingBranchName) ||
+                            Boolean(branchCheckoutDisabledReason(selectedDetails.gitStatus))
+                          "
+                        />
+                        <AppButton
+                          type="submit"
+                          variant="secondary"
+                          class="branch-action"
+                          :disabled="
+                            !selectedRemoteBranchName ||
+                            Boolean(checkingOutBranchName) ||
+                            Boolean(syncingBranchName) ||
+                            Boolean(deletingBranchName) ||
+                            Boolean(branchCheckoutDisabledReason(selectedDetails.gitStatus))
+                          "
+                          :title="branchCheckoutDisabledReason(selectedDetails.gitStatus) ?? 'Create and check out a local tracking branch'"
+                        >
+                          {{
+                            checkingOutBranchName === selectedRemoteBranchName
+                              ? "Creating..."
+                              : "Create"
+                          }}
+                        </AppButton>
+                      </div>
+                    </form>
+
+                    <div class="branch-filters" aria-label="Branch filters">
+                      <AppButton
+                        v-for="filter in branchFilterOptions"
+                        :key="filter.key"
+                        type="button"
+                        variant="secondary"
+                        :active="branchFilter === filter.key"
+                        @click="branchFilter = filter.key"
+                      >
+                        <span>{{ filter.label }}</span>
+                        <span class="branch-filter-count">{{ filter.count }}</span>
+                      </AppButton>
+                    </div>
+                  </div>
+
+                  <p v-if="syncingBranchName" class="branch-pending">
+                    Syncing {{ syncingBranchName }}...
+                  </p>
+                  <p v-else-if="checkingOutBranchName" class="branch-pending">
+                    Switching to {{ checkingOutBranchName }}...
+                  </p>
+
+                  <ul v-if="filteredBranches.length > 0" class="git-branch-list">
+                    <li
+                      v-for="branch in filteredBranches"
+                      :key="branch.name"
+                      :class="{ current: branch.current }"
+                    >
+                      <div>
+                        <span class="branch-row-title">
+                          <strong>{{ branch.name }}</strong>
+                          <small v-if="branch.current" class="branch-current-marker">Current</small>
+                        </span>
+                        <small>
+                          {{ branch.upstream ?? "No upstream" }}
+                        </small>
+                        <span class="branch-health">
+                          <span v-if="branch.ahead > 0">{{ branch.ahead }} ahead</span>
+                          <span v-if="branch.behind > 0">{{ branch.behind }} behind</span>
+                          <span v-if="branch.remoteGone">Remote gone</span>
+                          <span v-if="branch.inSyncWithRemote">In sync</span>
+                        </span>
+                      </div>
+                      <p v-if="branchFeedbackMessages[branch.name]" class="branch-feedback">
+                        {{ branchFeedbackMessages[branch.name] }}
+                      </p>
+                      <p
+                        v-else-if="branchSafetyNotes(branch, selectedDetails.gitStatus).length > 0"
+                        class="branch-safety"
+                      >
+                        {{ branchSafetyNotes(branch, selectedDetails.gitStatus).join(" ") }}
+                      </p>
+                      <div class="branch-controls">
+                        <span class="branch-sync" :class="{ synced: branch.inSyncWithRemote }">
+                          {{ branchSyncLabel(branch) }}
+                        </span>
+                        <AppButton
+                          v-if="!branch.current"
+                          variant="secondary"
+                          class="branch-action"
+                          :class="{ pending: isCheckingOutBranch(branch.name, checkingOutBranchName) }"
+                          :disabled="
+                            Boolean(branchCheckoutDisabledReason(selectedDetails.gitStatus)) ||
+                            Boolean(checkingOutBranchName) ||
+                            Boolean(syncingBranchName) ||
+                            Boolean(deletingBranchName)
+                          "
+                          :title="branchCheckoutDisabledReason(selectedDetails.gitStatus) ?? 'Switch to this local branch'"
+                          @click="$emit('checkoutBranch', branch.name)"
+                        >
+                          {{ isCheckingOutBranch(branch.name, checkingOutBranchName) ? "Switching..." : "Switch" }}
+                        </AppButton>
+                        <AppActionMenu
+                          v-if="!branch.inSyncWithRemote || !branch.current"
+                          :label="`More actions for ${branch.name}`"
+                        >
+                          <AppMenuItem
+                            v-if="!branch.inSyncWithRemote"
+                            icon="restart"
+                            :class="{ pending: isSyncingBranch(branch.name, syncingBranchName) }"
+                            :disabled="
+                              Boolean(branchSyncDisabledReason(branch, selectedDetails.gitStatus)) ||
+                              Boolean(syncingBranchName) ||
+                              Boolean(deletingBranchName)
+                            "
+                            :title="branchSyncTitle(branch, selectedDetails.gitStatus, syncingBranchName)"
+                            :aria-busy="isSyncingBranch(branch.name, syncingBranchName)"
+                            @click="$emit('syncBranch', branch.name)"
+                          >
+                            {{
+                              isSyncingBranch(branch.name, syncingBranchName)
+                                ? `${branchSyncActionLabel(branch)}ing...`
+                                : branchSyncActionLabel(branch)
+                            }}
+                          </AppMenuItem>
+                          <AppMenuItem
+                            v-if="!branch.current"
+                            icon="trash"
+                            tone="danger"
+                            :class="{ pending: isDeletingBranch(branch.name, deletingBranchName) }"
+                            :disabled="
+                              !branch.canDelete || Boolean(syncingBranchName) || Boolean(deletingBranchName)
+                            "
+                            :title="branch.deleteReason ?? 'Delete local branch'"
+                            @click="$emit('deleteBranch', branch.name)"
+                          >
+                            {{ isDeletingBranch(branch.name, deletingBranchName) ? "Removing..." : "Remove branch" }}
+                          </AppMenuItem>
+                        </AppActionMenu>
+                      </div>
+                    </li>
+                  </ul>
+
+                  <p v-else>No branches match this filter.</p>
+                </div>
+              </div>
             </div>
-          </section>
-        </div>
-      </div>
+            </section>
+          </div>
+        </Teleport>
 
+        <Teleport to="body">
+          <div
+            v-if="isSubmoduleLinkManagerOpen && selectedSubmodule"
+            class="modal-backdrop submodule-link-modal-backdrop"
+            role="presentation"
+            @click.self="isSubmoduleLinkManagerOpen = false"
+          >
+            <section
+              id="submodule-branch-link-modal"
+              class="submodule-link-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="submodule-branch-link-title"
+              @keydown.esc.stop.prevent="isSubmoduleLinkManagerOpen = false"
+            >
+              <div class="panel-heading submodule-link-modal-heading">
+                <div>
+                  <h3 id="submodule-branch-link-title">Branch links</h3>
+                  <span class="panel-subtitle">{{ selectedDetails.name }} - {{ selectedSubmodule.path }}</span>
+                </div>
+                <AppButton
+                  variant="secondary"
+                  size="icon"
+                  icon="close"
+                  class="branch-menu-close"
+                  aria-label="Close branch links"
+                  title="Close"
+                  @click="isSubmoduleLinkManagerOpen = false"
+                >
+                  Close
+                </AppButton>
+              </div>
+
+              <div
+                id="submodule-branch-link-table"
+                class="submodule-link-table"
+                role="table"
+                aria-label="Repository branch links"
+              >
+                <div class="submodule-link-table-head" role="row">
+                  <span role="columnheader">Repository branch</span>
+                  <span role="columnheader">Submodule branch</span>
+                </div>
+                <div
+                  v-for="row in submoduleLinkTableRows"
+                  :key="`${selectedSubmodulePath}:${row.parentBranch}`"
+                  class="submodule-link-table-row"
+                  :class="{ current: row.current }"
+                  role="row"
+                >
+                  <div class="submodule-link-parent-cell" role="cell">
+                    <strong>{{ row.parentBranch }}</strong>
+                    <small>{{ row.current ? "Current branch" : "Repository branch" }}</small>
+                  </div>
+                  <AppDropdown
+                    :model-value="row.submoduleBranch"
+                    menu-class="remote-branch-dropdown-menu submodule-link-dropdown-menu"
+                    :options="submoduleLinkDropdownOptions"
+                    @update:model-value="updateSubmoduleBranchLink(row.parentBranch, $event)"
+                  />
+                </div>
+              </div>
+            </section>
+          </div>
+        </Teleport>
+      </div>
       <div class="detail-quick-actions" aria-label="Repository quick actions">
         <AppButton
           variant="secondary"

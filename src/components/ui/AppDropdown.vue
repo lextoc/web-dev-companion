@@ -53,8 +53,8 @@ function toggleDropdown() {
 }
 
 function selectOption(option: AppDropdownOption) {
-  emit('update:modelValue', option.value)
   closeDropdown()
+  emit('update:modelValue', option.value)
 }
 
 function selectHighlightedOption() {

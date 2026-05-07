@@ -10,6 +10,7 @@ import type {
   DesktopNotificationRequest,
   RepositoryActionRequest,
   ScriptOutput,
+  GitCommandLogEntry,
   ScriptRunRequest,
   StatusFileDiffRequest,
   StatusFileRequest,
@@ -18,6 +19,7 @@ import type {
 import { createAppStateService } from './app-state-service'
 import { createRepositoryService } from './repository-service'
 import { createScriptRunner } from './script-runner'
+import { onGitCommandLog } from './git'
 
 const {
   app,
@@ -99,6 +101,18 @@ function sendScriptOutput(output: ScriptOutput) {
     win.webContents.send('repositories:script-output', output)
   } catch {
     // Renderer reloads can dispose the frame while script output is still arriving.
+  }
+}
+
+function sendGitCommandLog(entry: GitCommandLogEntry) {
+  if (!win || win.isDestroyed() || win.webContents.isDestroyed()) {
+    return
+  }
+
+  try {
+    win.webContents.send('repositories:git-command', entry)
+  } catch {
+    // Renderer reloads can dispose the frame while git commands are still completing.
   }
 }
 
@@ -274,6 +288,7 @@ function configureApplicationMenu() {
 const repositoryService = createRepositoryService(repositoriesFilePath, shell)
 const appStateService = createAppStateService(appStateFilePath)
 const scriptRunner = createScriptRunner({ sendOutput: sendScriptOutput })
+onGitCommandLog(sendGitCommandLog)
 
 function registerAppStateHandlers() {
   ipcMain.handle('app-state:read', appStateService.read)

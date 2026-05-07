@@ -44,6 +44,17 @@ const repositories: RepositoryApi = {
       ipcRenderer.off('repositories:script-output', wrappedListener)
     }
   },
+  onGitCommand: (listener) => {
+    const wrappedListener = (_event: Electron.IpcRendererEvent, entry: Parameters<typeof listener>[0]) => {
+      listener(entry)
+    }
+
+    ipcRenderer.on('repositories:git-command', wrappedListener)
+
+    return () => {
+      ipcRenderer.off('repositories:git-command', wrappedListener)
+    }
+  },
   onWindowFocus: (listener) => {
     const wrappedListener = () => {
       listener()

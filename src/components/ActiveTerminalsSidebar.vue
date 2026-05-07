@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { plainTerminalText } from '../output-formatting'
-import type { PinnedScript, ScriptTerminal } from '../repositories'
+import type { GitCommandLogEntry, PinnedScript, ScriptTerminal } from '../repositories'
 import { AppButton } from './ui'
 
 interface TerminalGroup {
@@ -27,7 +27,10 @@ type TerminalGroupMap = Map<string, TerminalEntry[]>
 const props = defineProps<{
   terminals: ScriptTerminal[]
   pinnedScripts: PinnedScript[]
+  gitCommandLog: GitCommandLogEntry[]
 }>()
+
+const gitCommandLogElement = ref<HTMLElement | null>(null)
 
 defineEmits<{
   stop: [runId: string]
@@ -98,6 +101,28 @@ const pinnedIdleCount = computed(() => {
 
 const sidebarScriptCount = computed(() => props.terminals.length + pinnedIdleCount.value)
 
+function scrollGitCommandLogToBottom() {
+  void nextTick(() => {
+    window.requestAnimationFrame(() => {
+      if (!gitCommandLogElement.value) {
+        return
+      }
+
+      gitCommandLogElement.value.scrollTop = gitCommandLogElement.value.scrollHeight
+    })
+  })
+}
+
+watch(
+  () => props.gitCommandLog.at(-1)?.id,
+  () => {
+    scrollGitCommandLogToBottom()
+  },
+  { flush: 'post' },
+)
+
+onMounted(scrollGitCommandLogToBottom)
+
 function createGroup(repoName: string, entries: TerminalEntry[]) {
   const sortedEntries = [...entries].sort(compareTerminalEntries)
 
@@ -144,6 +169,14 @@ function getTerminalPreview(terminal: ScriptTerminal) {
   }
 
   return 'No output captured.'
+}
+
+function formatCommandTime(startedAt: string) {
+  return new Date(startedAt).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
 }
 </script>
 
@@ -269,5 +302,36 @@ function getTerminalPreview(terminal: ScriptTerminal) {
     </div>
 
     <p v-else class="active-terminals-empty">No active or pinned scripts.</p>
+
+    <section class="git-command-pane" aria-label="Git command history">
+      <div class="git-command-pane-heading">
+        <div>
+          <h3>Terminal</h3>
+          <span>Git commands this session</span>
+        </div>
+      </div>
+
+      <div
+        v-show="gitCommandLog.length"
+        ref="gitCommandLogElement"
+        class="git-command-log"
+        role="log"
+        aria-live="polite"
+      >
+        <article
+          v-for="entry in gitCommandLog"
+          :key="entry.id"
+          class="git-command-entry"
+          :class="{ failed: !entry.ok }"
+        >
+          <time :datetime="entry.startedAt">{{ formatCommandTime(entry.startedAt) }}</time>
+          <code>
+            <span class="git-command-prompt" aria-hidden="true">$</span>
+            <span class="git-command-text">{{ entry.command }}</span>
+          </code>
+        </article>
+      </div>
+      <p v-if="!gitCommandLog.length" class="git-command-empty">No git commands recorded yet.</p>
+    </section>
   </aside>
 </template>

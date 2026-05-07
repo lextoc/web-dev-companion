@@ -160,6 +160,16 @@ export interface ScriptOutput {
   done?: boolean
 }
 
+export interface GitCommandLogEntry {
+  id: string
+  command: string
+  repoPath: string
+  startedAt: string
+  durationMs: number
+  ok: boolean
+  error?: string
+}
+
 export interface ScriptTerminal {
   runId: string
   repoPath: string
@@ -201,6 +211,7 @@ export interface RepositoryApi {
   stopScript: (runId: string) => Promise<boolean>
   stopScripts: (runIds: string[]) => void
   onScriptOutput: (listener: (output: ScriptOutput) => void) => () => void
+  onGitCommand: (listener: (entry: GitCommandLogEntry) => void) => () => void
   onWindowFocus: (listener: () => void) => () => void
 }
 

@@ -390,6 +390,122 @@
   font-size: var(--font-size-heading);
 }
 
+.git-command-pane {
+  --git-command-border: #2a3946;
+  --git-command-muted: #95a3ad;
+  --git-command-panel: #0c1116;
+  --git-command-surface: #0e151c;
+  --git-command-text: #d4dee3;
+  --git-command-title: #eaf2f4;
+  display: grid;
+  min-height: 0;
+  max-height: 28vh;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 6px;
+  overflow: hidden;
+  border-top: 1px solid color-mix(in srgb, var(--git-command-border) 78%, transparent);
+  padding: 10px 16px 12px;
+  background: var(--git-command-panel);
+}
+
+.git-command-pane-heading {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.git-command-pane-heading > div {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.git-command-pane-heading h3 {
+  margin: 0;
+  color: var(--git-command-title);
+  font-size: var(--font-size-base);
+  line-height: 1.2;
+}
+
+.git-command-pane-heading span {
+  display: block;
+  color: var(--git-command-muted);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.git-command-log {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.git-command-entry {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 7px;
+  border-left: 2px solid var(--success-text);
+  border-radius: 4px;
+  padding: 3px 6px 3px 7px;
+  background: color-mix(in srgb, var(--git-command-surface) 40%, transparent);
+}
+
+.git-command-entry:nth-child(even) {
+  background: color-mix(in srgb, var(--git-command-surface) 72%, transparent);
+}
+
+.git-command-entry.failed {
+  border-left-color: var(--danger-text);
+}
+
+.git-command-entry time {
+  color: var(--git-command-muted);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.git-command-entry code {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1ch;
+  align-items: baseline;
+  min-width: 0;
+  color: var(--git-command-text);
+  font-size: var(--font-size-compact);
+  line-height: 1.25;
+}
+
+.git-command-prompt {
+  white-space: nowrap;
+}
+
+.git-command-text {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.git-command-entry p,
+.git-command-empty {
+  margin: 0;
+  color: var(--danger-text);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+}
+
+.git-command-empty {
+  color: var(--git-command-muted);
+}
+
 .repo-grid {
   display: grid;
   grid-template-columns: 1fr;

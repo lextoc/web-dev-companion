@@ -15,6 +15,7 @@ import { useTerminals } from './composables/useTerminals'
 import { useToasts } from './composables/useToasts'
 import type {
   DesktopMenuCommand,
+  GitCommandLogEntry,
   PinnedScript,
   RepositoryDetails,
   RepositorySummary,
@@ -22,6 +23,7 @@ import type {
 import type { AppSettings } from './settings'
 
 const FOCUS_REFRESH_THROTTLE_MS = 2000
+const MAX_GIT_COMMAND_LOG_ENTRIES = 80
 const MAX_RECENT_COMMANDS = 6
 const FEEDBACK_DISMISS_MS = 4000
 const AUTO_REFRESH_TICK_MS = 1000
@@ -56,8 +58,10 @@ const pinnedScripts = ref<PinnedScript[]>([])
 const lastRepositoryListRefreshAt = ref<Date | null>(null)
 const isCommandPaletteOpen = ref(false)
 const isMacPlatform = ref(false)
+const gitCommandLog = ref<GitCommandLogEntry[]>([])
 const recentCommandIds = ref<string[]>([])
 let removeScriptOutputListener: (() => void) | undefined
+let removeGitCommandListener: (() => void) | undefined
 let removeWindowFocusListener: (() => void) | undefined
 let removeMenuCommandListener: (() => void) | undefined
 let autoRefreshTickTimer: number | undefined
@@ -1217,6 +1221,10 @@ function handlePageExit() {
   stopOwnedScripts()
 }
 
+function handleGitCommandLog(entry: GitCommandLogEntry) {
+  gitCommandLog.value = [...gitCommandLog.value, entry].slice(-MAX_GIT_COMMAND_LOG_ENTRIES)
+}
+
 function handleHistoryNavigation(event: PopStateEvent) {
   void applyHistoryState(event.state as AppHistoryState | undefined)
 }
@@ -1321,6 +1329,7 @@ onMounted(async () => {
     showError(error)
   }
   removeScriptOutputListener = window.repositories.onScriptOutput(handleScriptOutput)
+  removeGitCommandListener = window.repositories.onGitCommand(handleGitCommandLog)
   removeWindowFocusListener = window.repositories.onWindowFocus(() => {
     void refreshOnWindowFocus()
   })
@@ -1341,6 +1350,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
   handlePageExit()
   removeScriptOutputListener?.()
+  removeGitCommandListener?.()
   removeWindowFocusListener?.()
   removeMenuCommandListener?.()
 })
@@ -1434,6 +1444,7 @@ onBeforeUnmount(() => {
       <ActiveTerminalsSidebar
         :terminals="activeTerminals"
         :pinned-scripts="pinnedScripts"
+        :git-command-log="gitCommandLog"
         @stop="stopTerminal"
         @restart="restartTerminal"
         @open="openTerminal"

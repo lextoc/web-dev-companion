@@ -4,6 +4,7 @@ import path from 'node:path'
 import { promisify } from 'node:util'
 import type {
   GitBranchEntry,
+  GitCommandLogEntry,
   CommitChangedFile,
   GitLogEntry,
   GitRemoteBranchEntry,
@@ -13,8 +14,37 @@ import type {
 import { childProcessEnv } from './process-env'
 
 const execFileAsync = promisify(execFile)
+let nextGitCommandLogId = 0
+let gitCommandLogListener: ((entry: GitCommandLogEntry) => void) | undefined
+
+export function onGitCommandLog(listener: (entry: GitCommandLogEntry) => void) {
+  gitCommandLogListener = listener
+}
+
+function quoteGitArg(arg: string) {
+  if (/^[A-Za-z0-9_./:=@{}+-]+$/.test(arg)) {
+    return arg
+  }
+
+  return `'${arg.replace(/'/g, "'\\''")}'`
+}
+
+function commandText(args: string[]) {
+  return ['git', ...args.map(quoteGitArg)].join(' ')
+}
+
+function emitGitCommandLog(entry: Omit<GitCommandLogEntry, 'id'>) {
+  gitCommandLogListener?.({
+    ...entry,
+    id: `git-command-${Date.now()}-${nextGitCommandLogId++}`,
+  })
+}
 
 export async function runGit(repoPath: string, args: string[], timeout = 5000) {
+  const startedAtMs = Date.now()
+  const startedAt = new Date(startedAtMs).toISOString()
+  const command = commandText(args)
+
   try {
     const { stdout } = await execFileAsync('git', args, {
       cwd: repoPath,
@@ -23,8 +53,27 @@ export async function runGit(repoPath: string, args: string[], timeout = 5000) {
       timeout,
     })
 
+    emitGitCommandLog({
+      command,
+      durationMs: Date.now() - startedAtMs,
+      ok: true,
+      repoPath,
+      startedAt,
+    })
+
     return stdout.trim()
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Git command failed.'
+
+    emitGitCommandLog({
+      command,
+      durationMs: Date.now() - startedAtMs,
+      error: message,
+      ok: false,
+      repoPath,
+      startedAt,
+    })
+
     if (error instanceof Error) {
       throw new Error(error.message)
     }

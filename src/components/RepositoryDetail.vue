@@ -49,6 +49,7 @@ const detailTabs: AppTabItem[] = [
   { key: "log", label: "Git log" },
   { key: "scripts", label: "NPM scripts" },
 ];
+const statusLineStats = ref<Record<string, { additions: number; deletions: number }>>({});
 const selectedStatusDiff = ref<StatusFileDiff | null>(null);
 const statusDiffLoadingKey = ref<string | null>(null);
 const statusDiffError = ref<string | null>(null);
@@ -112,6 +113,8 @@ const selectedCommitDiffSections = computed(() => {
 let nextConfettiBurstId = 0;
 let nextCommitDetailsRequestId = 0;
 let activeCommitDetailsRequestId = 0;
+let nextStatusLineStatsRequestId = 0;
+let activeStatusLineStatsRequestId = 0;
 const logDateFormatter = new Intl.DateTimeFormat(undefined, {
   month: "short",
   day: "numeric",
@@ -137,6 +140,14 @@ watch(
     commitDetailsLoadingHash.value = null;
     commitDetailsError.value = null;
   },
+);
+
+watch(
+  () => [props.selectedDetails?.path, props.selectedDetails?.gitStatus.raw] as const,
+  () => {
+    void loadStatusLineStats();
+  },
+  { immediate: true },
 );
 
 watch(commitMessage, (message) => {
@@ -346,6 +357,72 @@ function statusDiffType(groupKey: string): StatusFileDiffType {
 
 function statusDiffKey(groupKey: string, entry: GitStatusEntry) {
   return `${groupKey}:${entry.path}`;
+}
+
+function parseStatusLineStats(content: string) {
+  let additions = 0;
+  let deletions = 0;
+
+  for (const line of content.split(/\r?\n/)) {
+    if (line.startsWith("+++") || line.startsWith("---")) {
+      continue;
+    }
+
+    if (line.startsWith("+")) {
+      additions += 1;
+    } else if (line.startsWith("-")) {
+      deletions += 1;
+    }
+  }
+
+  return { additions, deletions };
+}
+
+function statusLineStatsFor(groupKey: string, entry: GitStatusEntry) {
+  return statusLineStats.value[statusDiffKey(groupKey, entry)];
+}
+
+function statusLineStatRequests(gitStatus: RepositoryDetails["gitStatus"]) {
+  return [
+    ...gitStatus.staged.map((entry) => ({ entry, groupKey: "staged" })),
+    ...statusGroups(gitStatus).flatMap((group) =>
+      group.entries.map((entry) => ({ entry, groupKey: group.key })),
+    ),
+  ];
+}
+
+async function loadStatusLineStats() {
+  const selectedDetails = props.selectedDetails;
+  const requestId = ++nextStatusLineStatsRequestId;
+  activeStatusLineStatsRequestId = requestId;
+  statusLineStats.value = {};
+
+  if (!selectedDetails) {
+    return;
+  }
+
+  for (const { entry, groupKey } of statusLineStatRequests(selectedDetails.gitStatus)) {
+    try {
+      const diff = await window.repositories.diffFile({
+        repoPath: selectedDetails.path,
+        path: entry.path,
+        diffType: statusDiffType(groupKey),
+      });
+
+      if (activeStatusLineStatsRequestId !== requestId) {
+        return;
+      }
+
+      statusLineStats.value = {
+        ...statusLineStats.value,
+        [statusDiffKey(groupKey, entry)]: parseStatusLineStats(diff.content),
+      };
+    } catch {
+      if (activeStatusLineStatsRequestId !== requestId) {
+        return;
+      }
+    }
+  }
 }
 
 async function openStatusDiff(groupKey: string, entry: GitStatusEntry) {
@@ -588,12 +665,20 @@ function triggerCommitConfetti() {
                           @click="openStatusDiff('staged', entry)"
                         >
                           <span>{{ entry.path }}</span>
-                          <small>
-                            {{
-                              statusDiffLoadingKey === statusDiffKey('staged', entry)
-                                ? "Loading changes..."
-                                : "View changes"
-                            }}
+                          <small v-if="statusDiffLoadingKey === statusDiffKey('staged', entry)">
+                            Loading changes...
+                          </small>
+                          <small v-else class="status-line-meta">
+                            <template v-if="statusLineStatsFor('staged', entry)">
+                              <span class="status-line-additions">
+                                +{{ statusLineStatsFor('staged', entry)?.additions }}
+                              </span>
+                              <span class="status-line-deletions">
+                                -{{ statusLineStatsFor('staged', entry)?.deletions }}
+                              </span>
+                              <span aria-hidden="true">·</span>
+                            </template>
+                            <span>View changes</span>
                           </small>
                         </button>
                         <button
@@ -669,12 +754,22 @@ function triggerCommitConfetti() {
                             <small v-if="entry.originalPath">
                               from {{ entry.originalPath }}
                             </small>
-                            <small>
-                              {{
-                                statusDiffLoadingKey === statusDiffKey(group.key, entry)
-                                  ? "Loading changes..."
-                                  : `${entry.label} · View changes`
-                              }}
+                            <small v-if="statusDiffLoadingKey === statusDiffKey(group.key, entry)">
+                              Loading changes...
+                            </small>
+                            <small v-else class="status-line-meta">
+                              <template v-if="statusLineStatsFor(group.key, entry)">
+                                <span class="status-line-additions">
+                                  +{{ statusLineStatsFor(group.key, entry)?.additions }}
+                                </span>
+                                <span class="status-line-deletions">
+                                  -{{ statusLineStatsFor(group.key, entry)?.deletions }}
+                                </span>
+                                <span aria-hidden="true">·</span>
+                              </template>
+                              <span>{{ entry.label }}</span>
+                              <span aria-hidden="true">·</span>
+                              <span>View changes</span>
                             </small>
                           </button>
                           <button

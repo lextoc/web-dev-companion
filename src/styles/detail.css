@@ -2029,7 +2029,7 @@ pre {
   font-weight: 900;
 }
 
-.staged-preview-file span {
+.staged-preview-file > span {
   min-width: 0;
   direction: rtl;
   overflow: hidden;
@@ -2049,6 +2049,21 @@ pre {
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.staged-preview-file small.status-line-meta,
+.status-file-button small.status-line-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-line-additions {
+  color: var(--success-text);
+}
+
+.status-line-deletions {
+  color: var(--danger-text);
 }
 
 .commit-form button:not(.commit-submit) {

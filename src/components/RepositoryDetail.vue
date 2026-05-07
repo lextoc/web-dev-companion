@@ -13,7 +13,7 @@ import type {
   StatusFileDiff,
   StatusFileDiffType,
 } from "../repositories";
-import { NpmScriptsPanel, ProjectHealthPanel, RunProjectScriptsButton } from "./smart";
+import { NpmScriptsPanel, ProjectHealthPanel, RunProjectHealthScriptsButton } from "./smart";
 import { AppTabs, type AppTabItem } from "./ui";
 
 const props = defineProps<{
@@ -743,7 +743,7 @@ function triggerCommitConfetti() {
                   ></textarea>
                 </div>
 
-                <RunProjectScriptsButton
+                <RunProjectHealthScriptsButton
                   class="secondary commit-run-scripts"
                   :health="projectHealth"
                   :loading="projectHealthLoading"

@@ -6,7 +6,7 @@ import type {
   ProjectScriptCheck,
   ScriptTerminal,
 } from "../../repositories";
-import RunProjectScriptsButton from "./RunProjectScriptsButton.vue";
+import RunProjectHealthScriptsButton from "./RunProjectHealthScriptsButton.vue";
 
 const props = defineProps<{
   health: ProjectHealth | null;
@@ -507,7 +507,7 @@ function missingProjectScriptSummary(health: ProjectHealth) {
             <h4>{{ availableProjectScripts(health).length }} available</h4>
           </div>
           <div class="project-health-section-actions">
-            <RunProjectScriptsButton
+            <RunProjectHealthScriptsButton
               :health="health"
               :loading="loading"
               :script-terminals-by-script="scriptTerminalsByScript"

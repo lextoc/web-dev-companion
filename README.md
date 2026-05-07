@@ -11,6 +11,7 @@ Web Dev Companion is an Electron, Vue 3, and TypeScript app for keeping local pr
 - Review branch, remote, dirty state, file status details, diffs, and recent commits.
 - Stage and unstage files, write commits, and inspect commit details from the repository view.
 - Sync, switch, create tracking branches from remotes, and remove safe local branches.
+- Manage submodule branch links, merge linked parent/submodule branches downward, and remove safe local-only submodule branches.
 - Review project health, including package manager detection, Node configuration, lockfile and install state, outdated dependencies, and common script checks.
 - Run available health scripts from the health panel or before committing.
 - Open repositories in the file manager, configured editor, or terminal.
@@ -18,6 +19,19 @@ Web Dev Companion is an Electron, Vue 3, and TypeScript app for keeping local pr
 - Auto-refresh repository state, including refresh-on-focus for the active repository.
 - Use the command palette, recent commands, keyboard shortcuts, and desktop menu shortcuts for common actions.
 - Configure theme, editor command, refresh interval, sync confirmation behavior, and commit celebration effects.
+
+## Branch And Submodule Workflow
+
+The branch management modal keeps repository branch work and submodule branch work together:
+
+- Switch local branches, create local tracking branches from remotes, sync branches, and remove safe local branches.
+- Select a submodule and manage saved branch links in a small branch-link modal.
+- Link repository branches to their matching submodule branches, for example `release/31 -> mono-31` and `release/32 -> mono-32`.
+- When you change the repository merge target, the matching saved submodule target is applied automatically when that branch exists locally.
+- Use **Merge down** to switch to the target repository branch and target submodule branch, merge the current repository branch into the target repository branch, merge the current submodule branch into the target submodule branch, and stage the submodule pointer update.
+- Clean up unused local-only submodule branches from the same branch management flow. Remote branches are not deleted by this action.
+
+Branch links are persisted in the app state, so the app can remember repository/submodule branch pairs across launches.
 
 ## Feature Ideas
 
@@ -29,7 +43,7 @@ The current app already covers the daily repository cockpit: saved projects, Git
 - **Script presets**: save multi-script launch profiles such as `dev + api + storybook` and start or stop them together from the dashboard or command palette.
 - **Pull request context**: show the current branch's PR link, review state, checks, and mergeability when the repository has a GitHub remote.
 - **Commit assistant**: draft a conventional commit message from staged diffs, with editable suggestions before committing.
-- **Branch cleanup view**: list stale, merged, gone, or local-only branches across repositories and offer safe cleanup actions.
+- **Cross-repository branch cleanup view**: list stale, merged, gone, or local-only branches across repositories and offer safe cleanup actions.
 - **Repository notes**: keep small local notes per repository for setup steps, ports, credentials location, or recurring commands.
 - **Port and server monitor**: detect running dev servers, show their local URLs, and open or stop the owning process.
 
@@ -78,7 +92,7 @@ pnpm rebuild electron
 pnpm run dev
 ```
 
-The app stores its saved repository list in Electron's per-user app data directory.
+The app stores saved repositories, pinned scripts, settings, recent commands, and repository/submodule branch links in Electron's per-user app data directory.
 
 ## Verification
 

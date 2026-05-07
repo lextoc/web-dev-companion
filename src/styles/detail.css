@@ -998,7 +998,13 @@
 }
 
 .commit-file-list li {
+  min-width: 0;
+}
+
+.commit-file-button {
   display: grid;
+  width: 100%;
+  min-height: 0;
   grid-template-columns: 74px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
@@ -1006,6 +1012,20 @@
   border-radius: 7px;
   padding: 8px;
   background: color-mix(in srgb, var(--surface) 66%, transparent);
+  color: var(--text);
+  text-align: left;
+}
+
+.commit-file-button:hover:not(:disabled),
+.commit-file-button.active {
+  border-color: color-mix(in srgb, var(--brand) 54%, var(--border-soft));
+  background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+  color: var(--text);
+}
+
+.commit-file-button:disabled {
+  cursor: default;
+  opacity: 1;
 }
 
 .commit-file-path {
@@ -1032,7 +1052,7 @@
   font-weight: 800;
 }
 
-.commit-file-list code {
+.commit-file-button code {
   color: var(--muted-strong);
   font-size: var(--font-size-compact);
   font-weight: 900;
@@ -1041,13 +1061,15 @@
 
 .git-status-card,
 .commit-detail-scroll,
-.commit-file-list {
+.commit-file-list,
+.commit-diff-file-list {
   scrollbar-color: color-mix(in srgb, var(--muted) 58%, transparent) transparent;
 }
 
 .git-status-card::-webkit-scrollbar,
 .commit-detail-scroll::-webkit-scrollbar,
-.commit-file-list::-webkit-scrollbar {
+.commit-file-list::-webkit-scrollbar,
+.commit-diff-file-list::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
@@ -1055,15 +1077,18 @@
 .git-status-card::-webkit-scrollbar-track,
 .commit-detail-scroll::-webkit-scrollbar-track,
 .commit-file-list::-webkit-scrollbar-track,
+.commit-diff-file-list::-webkit-scrollbar-track,
 .git-status-card::-webkit-scrollbar-corner,
 .commit-detail-scroll::-webkit-scrollbar-corner,
-.commit-file-list::-webkit-scrollbar-corner {
+.commit-file-list::-webkit-scrollbar-corner,
+.commit-diff-file-list::-webkit-scrollbar-corner {
   background: transparent;
 }
 
 .git-status-card::-webkit-scrollbar-thumb,
 .commit-detail-scroll::-webkit-scrollbar-thumb,
-.commit-file-list::-webkit-scrollbar-thumb {
+.commit-file-list::-webkit-scrollbar-thumb,
+.commit-diff-file-list::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   border-radius: 999px;
   background-color: color-mix(in srgb, var(--muted) 42%, transparent);
@@ -1072,13 +1097,68 @@
 
 .git-status-card::-webkit-scrollbar-thumb:hover,
 .commit-detail-scroll::-webkit-scrollbar-thumb:hover,
-.commit-file-list::-webkit-scrollbar-thumb:hover {
+.commit-file-list::-webkit-scrollbar-thumb:hover,
+.commit-diff-file-list::-webkit-scrollbar-thumb:hover {
   background-color: color-mix(in srgb, var(--muted-strong) 58%, transparent);
 }
 
-.commit-diff-output {
+.commit-diff-file-list {
+  display: grid;
   min-height: 220px;
   max-height: min(520px, 56vh);
+  gap: 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 6px;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}
+
+.commit-diff-file {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  scroll-margin-top: 6px;
+}
+
+.commit-diff-file.active .commit-diff-file-heading {
+  border-color: color-mix(in srgb, var(--brand) 52%, var(--border-soft));
+  background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+}
+
+.commit-diff-file-heading {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  border: 1px solid color-mix(in srgb, var(--border-soft) 76%, transparent);
+  border-radius: 7px;
+  padding: 7px 9px;
+  background: color-mix(in srgb, var(--surface) 66%, transparent);
+}
+
+.commit-diff-file-heading strong,
+.commit-diff-file-heading small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-diff-file-heading strong {
+  color: var(--text);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+}
+
+.commit-diff-file-heading small {
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+}
+
+.commit-diff-output {
+  min-height: 0;
+  max-height: none;
   border-radius: 7px;
 }
 

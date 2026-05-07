@@ -1968,6 +1968,12 @@ pre {
   gap: 10px;
 }
 
+.commit-queue-title {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
 .commit-queue-heading span {
   color: var(--muted-strong);
   font-size: var(--font-size-compact);
@@ -1979,6 +1985,10 @@ pre {
   color: var(--muted);
   font-size: var(--font-size-compact);
   font-weight: 900;
+}
+
+.commit-queue-action {
+  flex: 0 0 auto;
 }
 
 .commit-queue p {

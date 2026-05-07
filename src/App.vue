@@ -141,6 +141,9 @@ const commandShortcutLabel = computed(() =>
 const commitShortcutLabel = computed(() =>
   isMacPlatform.value ? '⌘↵' : 'Ctrl ↵',
 )
+const unstageAllShortcutLabel = computed(() =>
+  isMacPlatform.value ? '⌘⇧A' : 'Ctrl Shift A',
+)
 const syncShortcutLabel = computed(() =>
   isMacPlatform.value ? '⌘S' : 'Ctrl S',
 )
@@ -869,6 +872,24 @@ async function stageAllChanges() {
   }
 }
 
+async function unstageAllChanges() {
+  if (!selectedDetails.value || pendingStatusActionKey.value || isLoading.value || isDetailLoading.value) {
+    return
+  }
+
+  const paths = selectedDetails.value.gitStatus.staged.map((entry) => entry.path)
+  const uniquePaths = [...new Set(paths)]
+
+  if (uniquePaths.length === 0) {
+    return
+  }
+
+  await unstageFiles({
+    paths: uniquePaths,
+    actionKey: `unstage:${uniquePaths.join('\n')}`,
+  })
+}
+
 async function unstageFiles(request: { paths: string[]; actionKey: string }) {
   if (!selectedDetails.value) {
     return
@@ -1258,7 +1279,6 @@ function handleGlobalKeydown(event: KeyboardEvent) {
     (event.metaKey || event.ctrlKey) &&
     key === 'a' &&
     !event.altKey &&
-    !event.shiftKey &&
     !isEditableTarget(event.target)
   ) {
     if (
@@ -1269,7 +1289,11 @@ function handleGlobalKeydown(event: KeyboardEvent) {
       !isSettingsOpen.value
     ) {
       event.preventDefault()
-      void stageAllChanges()
+      if (event.shiftKey) {
+        void unstageAllChanges()
+      } else {
+        void stageAllChanges()
+      }
     }
 
     return
@@ -1425,6 +1449,7 @@ onBeforeUnmount(() => {
           :commit-clear-token="commitClearToken"
           :commit-celebrations="appSettings.commitCelebrations"
           :commit-shortcut-label="commitShortcutLabel"
+          :unstage-all-shortcut-label="unstageAllShortcutLabel"
           :npm-scripts="npmScripts"
           :pinned-script-names="pinnedScriptNamesForSelectedRepo"
           :script-terminals-by-script="currentRepoScriptTerminals"

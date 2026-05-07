@@ -23,6 +23,7 @@ const props = defineProps<{
   commitClearToken: number;
   commitCelebrations: boolean;
   commitShortcutLabel: string;
+  unstageAllShortcutLabel: string;
   npmScripts: [string, string][];
   pinnedScriptNames: string[];
   scriptTerminalsByScript: Record<string, ScriptTerminal>;
@@ -669,8 +670,25 @@ function triggerCommitConfetti() {
 
                   <div class="commit-queue">
                     <div class="commit-queue-heading">
-                      <span>Staged queue</span>
-                      <strong>{{ stagedFileLabel(selectedDetails.gitStatus) }}</strong>
+                      <div class="commit-queue-title">
+                        <span>Staged queue</span>
+                        <strong>{{ stagedFileLabel(selectedDetails.gitStatus) }}</strong>
+                      </div>
+                      <button
+                        v-if="stagedPreview.length > 0"
+                        type="button"
+                        class="secondary status-action commit-queue-action"
+                        :class="{ pending: isStatusActionPending('staged', stagedPreview) }"
+                        :disabled="Boolean(pendingStatusActionKey)"
+                        @click="emitStatusAction('staged', stagedPreview)"
+                      >
+                        {{
+                          isStatusActionPending('staged', stagedPreview)
+                            ? "Unstaging..."
+                            : "Unstage all"
+                        }}
+                        <kbd>{{ unstageAllShortcutLabel }}</kbd>
+                      </button>
                     </div>
                     <ul v-if="stagedPreview.length > 0" class="staged-preview">
                       <li v-for="entry in stagedPreview" :key="`staged-preview-${entry.path}`">

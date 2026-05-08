@@ -181,6 +181,7 @@ function sortEntriesByRepository(
 
 function compareTerminalEntries(entryA: TerminalEntry, entryB: TerminalEntry) {
   return (
+    Number(Boolean(entryB.pinnedScript)) - Number(Boolean(entryA.pinnedScript)) ||
     Number(Boolean(entryB.terminal?.isRunning)) -
       Number(Boolean(entryA.terminal?.isRunning)) ||
     Number(entryB.terminal ? getTerminalStatus(entryB.terminal) === "failed" : false) -

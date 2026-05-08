@@ -58,3 +58,37 @@ defineEmits<{
     </AppButton>
   </div>
 </template>
+
+<style scoped>
+.detail-quick-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.detail-quick-actions button {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: var(--font-size-compact);
+}
+
+.detail-quick-actions :deep(.action-menu-trigger),
+.branch-controls :deep(.action-menu-trigger) {
+  width: 36px;
+  min-height: 34px;
+  padding: 0;
+}
+
+.branch-menu-panel .branch-controls :deep(.action-menu-trigger) {
+  width: 32px;
+  min-height: 30px;
+}
+
+.detail-quick-actions .subtle-icon-button {
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
+}
+</style>

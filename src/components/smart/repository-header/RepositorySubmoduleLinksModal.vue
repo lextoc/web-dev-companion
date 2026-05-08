@@ -84,3 +84,151 @@ defineEmits<{
     </section>
   </div>
 </template>
+
+<style scoped>
+.submodule-link-modal-backdrop {
+  z-index: 62;
+  background: rgba(4, 8, 12, 0.42);
+}
+
+.branch-menu-panel {
+  display: grid;
+  width: min(1120px, 100%);
+  height: min(760px, calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-control);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.submodule-link-modal {
+  display: grid;
+  width: min(640px, 100%);
+  max-height: min(620px, calc(100vh - 80px));
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border-control);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.submodule-link-modal-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.submodule-link-modal .submodule-link-table {
+  max-height: none;
+  min-height: 0;
+}
+
+:deep(.submodule-link-dropdown-menu) {
+  z-index: 70;
+}
+
+.branch-menu-close {
+  width: 30px;
+  min-height: 30px;
+  padding: 0;
+}
+.submodule-link-table {
+  display: grid;
+  max-height: 220px;
+  gap: 5px;
+  overflow: auto;
+  border-radius: 7px;
+  padding: 6px;
+  background: color-mix(in srgb, var(--surface-soft) 76%, var(--surface));
+}
+
+.submodule-link-table-head,
+.submodule-link-table-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(128px, 1fr);
+  gap: 7px;
+  align-items: center;
+}
+
+.submodule-link-table-head {
+  padding: 0 4px 2px;
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.submodule-link-table-row {
+  border: 1px solid color-mix(in srgb, var(--border-control) 58%, transparent);
+  border-radius: 6px;
+  padding: 5px;
+  background: var(--surface);
+}
+
+.submodule-link-table-row.current {
+  border-color: color-mix(in srgb, var(--focus) 48%, var(--border-control));
+}
+
+.submodule-link-parent-cell {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.submodule-link-parent-cell strong,
+.submodule-link-parent-cell small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.submodule-link-parent-cell strong {
+  color: var(--text);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+}
+
+.submodule-link-parent-cell small {
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+}
+
+.submodule-link-table .app-dropdown {
+  min-width: 0;
+}
+
+.submodule-link-table :deep(.app-dropdown-button) {
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: var(--font-size-compact);
+}
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel-heading > div {
+  min-width: 0;
+}
+
+.panel-subtitle {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+}
+</style>

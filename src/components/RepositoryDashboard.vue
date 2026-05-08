@@ -401,6 +401,61 @@ onBeforeUnmount(() => {
     justify-self: end;
   }
 
+  .refresh-button {
+    display: inline-flex;
+    position: relative;
+    overflow: hidden;
+    min-height: 36px;
+    align-items: center;
+    gap: 7px;
+    padding: 0 12px 4px;
+  }
+
+  .refresh-button :deep(.button-icon) {
+    position: relative;
+    z-index: 1;
+    width: 15px;
+    height: 15px;
+    transform-origin: center;
+    transition: opacity 180ms ease;
+  }
+
+  .refresh-button-label {
+    position: relative;
+    z-index: 1;
+  }
+
+  .refresh-progress {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--border-soft);
+  }
+
+  .refresh-progress-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--brand);
+    transition: width 250ms linear;
+  }
+
+  .refresh-button:hover:not(:disabled) .refresh-progress-fill {
+    background: var(--brand-hover);
+  }
+
+  .refresh-button.pending :deep(.button-icon) {
+    animation: refresh-spin 900ms linear infinite;
+  }
+
+  .refresh-button.settling :deep(.button-icon) {
+    animation: refresh-settle var(--refresh-settle-duration, 220ms) linear
+      forwards;
+  }
+
   .dashboard-add-toggle.active {
     border-color: var(--brand);
     background: var(--surface-hover);
@@ -539,6 +594,22 @@ onBeforeUnmount(() => {
 
     100% {
       background-position: -120% 0;
+    }
+  }
+
+  @keyframes refresh-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes refresh-settle {
+    from {
+      transform: rotate(var(--refresh-start-angle, 0deg));
+    }
+
+    to {
+      transform: rotate(var(--refresh-end-angle, 0deg));
     }
   }
 </style>

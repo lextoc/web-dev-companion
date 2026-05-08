@@ -314,3 +314,386 @@ function scrollToCommitFile(file: CommitChangedFile, index: number) {
     </section>
   </div>
 </template>
+
+<style scoped>
+.commit-detail-backdrop {
+  z-index: 35;
+}
+
+.commit-detail-modal {
+  display: grid;
+  width: min(1120px, 100%);
+  height: min(760px, calc(100vh - 48px));
+  min-width: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: start;
+  gap: 14px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.commit-detail-header {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.commit-detail-title-row {
+  display: flex;
+  min-width: 0;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.commit-detail-title-row > div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.commit-detail-header span,
+.commit-detail-section-heading span,
+.commit-file-status {
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.commit-detail-header h2 {
+  min-width: 0;
+  overflow: hidden;
+  margin: 0;
+  color: var(--text);
+  font-size: var(--font-size-heading);
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-detail-header code {
+  overflow: hidden;
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-detail-body {
+  margin: 0;
+  border-radius: 7px;
+  padding: 10px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  color: var(--muted-strong);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.commit-detail-scroll {
+  display: grid;
+  min-height: 0;
+  align-content: start;
+  gap: 14px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.commit-detail-content {
+  display: grid;
+  align-items: start;
+  grid-template-columns: minmax(260px, 0.44fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.commit-detail-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.commit-detail-meta div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--border-soft) 76%, transparent);
+  border-radius: 7px;
+  padding: 9px;
+  background: color-mix(in srgb, var(--surface) 64%, transparent);
+}
+
+.commit-detail-meta dt {
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.commit-detail-meta dd {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+}
+
+.commit-detail-meta span,
+.commit-detail-meta time {
+  overflow: hidden;
+  color: var(--text);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-detail-meta small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-files-section,
+.commit-diff-section {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.commit-detail-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.commit-detail-section-heading h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--font-size-base);
+}
+
+.commit-detail-section-heading span {
+  display: grid;
+  min-width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+}
+
+.commit-file-list {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  max-height: clamp(180px, calc(100vh - 340px), 440px);
+  margin: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0;
+  padding-right: 6px;
+  list-style: none;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.commit-file-list li {
+  min-width: 0;
+}
+
+.commit-file-button {
+  display: grid;
+  width: 100%;
+  min-height: 0;
+  grid-template-columns: 74px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--border-soft) 76%, transparent);
+  border-radius: 7px;
+  padding: 8px;
+  background: color-mix(in srgb, var(--surface) 66%, transparent);
+  color: var(--text);
+  text-align: left;
+}
+
+.commit-file-button:hover:not(:disabled),
+.commit-file-button.active {
+  border-color: color-mix(in srgb, var(--brand) 54%, var(--border-soft));
+  background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+  color: var(--text);
+}
+
+.commit-file-button:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.commit-file-path {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.commit-file-path strong,
+.commit-file-path small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-file-path strong {
+  color: var(--text);
+  font-size: var(--font-size-base);
+}
+
+.commit-file-path small {
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+}
+
+.commit-file-button code {
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.git-status-card,
+.commit-detail-scroll,
+.commit-file-list,
+.commit-diff-file-list {
+  scrollbar-color: color-mix(in srgb, var(--muted) 58%, transparent) transparent;
+}
+
+.git-status-card::-webkit-scrollbar,
+.commit-detail-scroll::-webkit-scrollbar,
+.commit-file-list::-webkit-scrollbar,
+.commit-diff-file-list::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.git-status-card::-webkit-scrollbar-track,
+.commit-detail-scroll::-webkit-scrollbar-track,
+.commit-file-list::-webkit-scrollbar-track,
+.commit-diff-file-list::-webkit-scrollbar-track,
+.git-status-card::-webkit-scrollbar-corner,
+.commit-detail-scroll::-webkit-scrollbar-corner,
+.commit-file-list::-webkit-scrollbar-corner,
+.commit-diff-file-list::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.git-status-card::-webkit-scrollbar-thumb,
+.commit-detail-scroll::-webkit-scrollbar-thumb,
+.commit-file-list::-webkit-scrollbar-thumb,
+.commit-diff-file-list::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--muted) 42%, transparent);
+  background-clip: content-box;
+}
+
+.git-status-card::-webkit-scrollbar-thumb:hover,
+.commit-detail-scroll::-webkit-scrollbar-thumb:hover,
+.commit-file-list::-webkit-scrollbar-thumb:hover,
+.commit-diff-file-list::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--muted-strong) 58%, transparent);
+}
+
+.commit-diff-file-list {
+  display: grid;
+  min-height: 220px;
+  max-height: min(520px, 56vh);
+  gap: 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 6px;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}
+
+.commit-diff-file {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  scroll-margin-top: 6px;
+}
+
+.commit-diff-file.active .commit-diff-file-heading {
+  border-color: color-mix(in srgb, var(--brand) 52%, var(--border-soft));
+  background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+}
+
+.commit-diff-file-heading {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  border: 1px solid color-mix(in srgb, var(--border-soft) 76%, transparent);
+  border-radius: 7px;
+  padding: 7px 9px;
+  background: color-mix(in srgb, var(--surface) 66%, transparent);
+}
+
+.commit-diff-file-heading strong,
+.commit-diff-file-heading small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-diff-file-heading strong {
+  color: var(--text);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+}
+
+.commit-diff-file-heading small {
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+}
+
+.commit-diff-output {
+  min-height: 0;
+  max-height: none;
+  border-radius: 7px;
+}
+
+.commit-detail-empty {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  border: 1px dashed var(--border-soft);
+  border-radius: 8px;
+  padding: 18px;
+  color: var(--muted);
+  font-size: var(--font-size-base);
+  font-weight: 800;
+  text-align: center;
+}
+
+.commit-detail-empty.compact {
+  min-height: 0;
+  margin: 0;
+}
+
+.commit-detail-empty.error {
+  border-color: color-mix(in srgb, var(--danger) 34%, var(--border-soft));
+  color: var(--danger);
+}
+</style>

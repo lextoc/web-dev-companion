@@ -109,3 +109,140 @@ function isSelectedCommit(hash: string) {
     </div>
   </section>
 </template>
+
+<style scoped>
+.git-log-table-wrap {
+  max-height: none;
+  overflow: visible;
+}
+
+.git-log-table {
+  min-width: 640px;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.git-log-table th,
+.git-log-table td {
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--border-soft) 72%, transparent);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.git-log-table th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background: color-mix(in srgb, var(--surface) 92%, var(--surface-soft));
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.git-log-table th:nth-child(1),
+.git-log-table td:nth-child(1) {
+  width: 112px;
+}
+
+.git-log-table th:nth-child(3),
+.git-log-table td:nth-child(3) {
+  width: 190px;
+}
+
+.git-log-table th:nth-child(4),
+.git-log-table td:nth-child(4) {
+  width: 150px;
+}
+
+.git-log-table tbody tr {
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  cursor: pointer;
+}
+
+.git-log-table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--surface-soft) 54%, var(--surface));
+}
+
+.git-log-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.git-log-table tbody tr:focus-visible {
+  position: relative;
+  z-index: 2;
+  outline: 2px solid color-mix(in srgb, var(--brand) 58%, transparent);
+  outline-offset: -2px;
+}
+
+.git-log-table tbody tr.active {
+  background: color-mix(in srgb, var(--brand) 12%, var(--surface));
+}
+
+.commit-hash-button {
+  appearance: none;
+  border: 0;
+  border-radius: 5px;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.commit-hash-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand) 58%, transparent);
+  outline-offset: 2px;
+}
+
+.git-log-table code {
+  display: inline-grid;
+  min-height: 24px;
+  align-items: center;
+  border-radius: 5px;
+  padding: 0 7px;
+  background: color-mix(in srgb, var(--brand) 10%, var(--surface));
+  color: var(--brand-text-hover);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+}
+
+.git-log-table strong,
+.git-log-table span,
+.git-log-table time,
+.git-log-table small {
+  display: block;
+  min-width: 0;
+}
+
+.git-log-table strong {
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-size: var(--font-size-base);
+  line-height: 1.35;
+}
+
+.git-log-table span,
+.git-log-table time {
+  overflow: hidden;
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.git-log-table small {
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>

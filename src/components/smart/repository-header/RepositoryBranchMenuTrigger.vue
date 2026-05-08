@@ -12,6 +12,7 @@ import {
 
 defineProps<{
   branchMenuLabel: string;
+  branchShortcutLabel: string;
   commitCelebrations: boolean;
   currentBranch?: RepositoryDetails["gitBranches"][number];
   currentBranchSyncLabel: string;
@@ -48,6 +49,7 @@ defineEmits<{
         </span>
         <span class="branch-menu-meta">{{ currentBranchSyncLabel }}</span>
       </span>
+      <kbd class="shortcut-label branch-menu-shortcut">{{ branchShortcutLabel }}</kbd>
       <span class="panel-count">{{ selectedDetails.gitBranches.length }}</span>
     </button>
     <button

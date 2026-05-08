@@ -84,7 +84,7 @@
   display: grid;
   min-height: 34px;
   max-width: min(320px, 28vw);
-  grid-template-columns: 22px minmax(0, 1fr) auto;
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 7px;
   border-color: color-mix(in srgb, var(--border-control) 68%, transparent);
@@ -263,6 +263,10 @@
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.branch-menu-shortcut {
+  min-width: 34px;
 }
 
 .branch-menu-kicker,

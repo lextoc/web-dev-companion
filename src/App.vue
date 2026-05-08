@@ -33,6 +33,7 @@ const isRefreshingRepositories = ref(false)
 const lastRepositoryListRefreshAt = ref<Date | null>(null)
 const isMacPlatform = ref(false)
 const gitCommandLog = ref<GitCommandLogEntry[]>([])
+const branchShortcutTriggerToken = ref(0)
 let removeScriptOutputListener: (() => void) | undefined
 let removeGitCommandListener: (() => void) | undefined
 let removeWindowFocusListener: (() => void) | undefined
@@ -234,6 +235,9 @@ const lastRepositoryRefreshLabel = computed(() => {
 })
 const commandShortcutLabel = computed(() =>
   isMacPlatform.value ? '⌘K' : 'Ctrl K',
+)
+const branchShortcutLabel = computed(() =>
+  isMacPlatform.value ? '⌘B' : 'Ctrl B',
 )
 const commitShortcutLabel = computed(() =>
   isMacPlatform.value ? '⌘↵' : 'Ctrl ↵',
@@ -541,6 +545,27 @@ function handleGlobalKeydown(event: KeyboardEvent) {
     return
   }
 
+  if (
+    (event.metaKey || event.ctrlKey) &&
+    key === 'b' &&
+    !event.altKey &&
+    !event.shiftKey &&
+    !isEditableTarget(event.target)
+  ) {
+    if (
+      selectedDetails.value &&
+      !isCommandPaletteOpen.value &&
+      !selectedTerminal.value &&
+      !confirmationDialog.value &&
+      !isSettingsOpen.value
+    ) {
+      event.preventDefault()
+      branchShortcutTriggerToken.value += 1
+    }
+
+    return
+  }
+
   if (event.key === '/' && !isEditableTarget(event.target)) {
     event.preventDefault()
     openCommandPalette()
@@ -636,6 +661,8 @@ onBeforeUnmount(() => {
           :is-detail-loading="isDetailLoading"
           :auto-refresh-label="autoRefreshLabel"
           :auto-refresh-progress="autoRefreshProgress"
+          :branch-shortcut-label="branchShortcutLabel"
+          :branch-shortcut-trigger-token="branchShortcutTriggerToken"
           :commit-celebrations="appSettings.commitCelebrations"
           :sync-celebration-token="syncCelebrationToken"
           :sync-shortcut-label="syncShortcutLabel"

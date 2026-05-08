@@ -38,6 +38,8 @@ const props = defineProps<{
   isDetailLoading: boolean;
   autoRefreshLabel: string;
   autoRefreshProgress: number;
+  branchShortcutLabel: string;
+  branchShortcutTriggerToken: number;
   commitCelebrations: boolean;
   syncCelebrationToken: number;
   syncShortcutLabel: string;
@@ -360,6 +362,22 @@ watch(
 );
 
 watch(
+  () => props.branchShortcutTriggerToken,
+  (token) => {
+    if (token === 0 || !props.selectedDetails) {
+      return;
+    }
+
+    if (isBranchMenuOpen.value) {
+      closeBranchMenu();
+      return;
+    }
+
+    isBranchMenuOpen.value = true;
+  },
+);
+
+watch(
   selectedSubmodulePath,
   () => {
     isSubmoduleLinkManagerOpen.value = false;
@@ -603,6 +621,7 @@ onBeforeUnmount(() => {
       <div class="branch-menu">
         <RepositoryBranchMenuTrigger
           :branch-menu-label="branchMenuLabel"
+          :branch-shortcut-label="branchShortcutLabel"
           :commit-celebrations="commitCelebrations"
           :current-branch="currentBranch"
           :current-branch-sync-label="currentBranchSyncLabel"

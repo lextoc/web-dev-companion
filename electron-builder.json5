@@ -13,7 +13,13 @@
     "dist-electron"
   ],
   "mac": {
+    "category": "public.app-category.developer-tools",
+    "entitlements": "build/entitlements.mac.plist",
+    "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+    "forceCodeSigning": true,
+    "hardenedRuntime": true,
     "icon": "icon.icns",
+    "notarize": true,
     "target": [
       "dmg"
     ],

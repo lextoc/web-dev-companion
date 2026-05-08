@@ -1,8 +1,35 @@
-# Web Dev Companion
+<p align="center">
+  <img src="public/readme-hero.svg" alt="Web Dev Companion" width="100%">
+</p>
 
-Desktop companion for managing local web development repositories.
+<p align="center">
+  <a href="https://github.com/lextoc/web-dev-companion/releases/tag/v0.1.0-alpha.1"><img alt="Latest alpha" src="https://img.shields.io/badge/latest-0.1.0--alpha.1-2563EB"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-0F766E"></a>
+  <a href="https://www.paypal.com/donate/?hosted_button_id=TAA8FBL4REKV6"><img alt="Donate with PayPal" src="https://img.shields.io/badge/Donate-PayPal-F59E0B"></a>
+</p>
+
+<p align="center">
+  <strong>Ship, inspect, and operate local web projects from one focused desktop cockpit.</strong>
+</p>
 
 Web Dev Companion is an Electron, Vue 3, and TypeScript app for keeping local projects in view. It tracks saved repositories, shows Git status and branch details, opens projects in your editor or terminal, and runs project tasks from a focused desktop UI.
+
+## Alpha Release
+
+Latest alpha: `0.1.0-alpha.1`
+
+- macOS: signed and notarized alpha pending.
+- [Download for Windows](https://github.com/lextoc/web-dev-companion/releases/download/v0.1.0-alpha.1/Web.Dev.Companion-Windows-0.1.0-alpha.1-Setup.exe)
+
+macOS release artifacts must be signed with a Developer ID Application
+certificate and notarized by Apple before they are published.
+
+## Support
+
+Web Dev Companion is free software. If it saves you time and you want to support
+ongoing development, donations are welcome:
+
+[![Donate with PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate/?hosted_button_id=TAA8FBL4REKV6)
 
 ## Features
 
@@ -96,22 +123,6 @@ pnpm run dev
 
 The app stores saved repositories, pinned tasks, settings, recent commands, and repository/submodule branch links in Electron's per-user app data directory.
 
-## Downloads
-
-Latest alpha: `0.1.0-alpha.1`
-
-- [Download for macOS](https://github.com/lextoc/web-dev-companion/releases/download/v0.1.0-alpha.1/Web.Dev.Companion-Mac-0.1.0-alpha.1-Installer.dmg)
-- [Download for Windows](https://github.com/lextoc/web-dev-companion/releases/download/v0.1.0-alpha.1/Web.Dev.Companion-Windows-0.1.0-alpha.1-Setup.exe)
-
-The macOS alpha is not signed or notarized yet, so Gatekeeper may show
-`"Web Dev Companion" Not Opened` after installation. If you trust the downloaded
-alpha, open **System Settings > Privacy & Security** and choose **Open Anyway**
-for Web Dev Companion, or remove the quarantine attribute from the installed app:
-
-```sh
-xattr -dr com.apple.quarantine /Applications/Web\ Dev\ Companion.app
-```
-
 ## Verification
 
 ```sh
@@ -129,6 +140,14 @@ pnpm run build
 Local builds are packaged without macOS code signing, so a development machine's
 personal or expired Apple certificates do not affect `pnpm run build`.
 
+macOS release builds are different: `pnpm run release:alpha` and
+`pnpm run release:alpha:mac` run a preflight check and require a valid Developer
+ID Application certificate plus Apple notarization credentials. Provide either a
+certificate file through `CSC_LINK` and `CSC_KEY_PASSWORD`, or install the
+certificate in the local keychain. For notarization, provide
+`APPLE_API_KEY`/`APPLE_API_KEY_ID`/`APPLE_API_ISSUER`, or a notarytool keychain
+profile through `APPLE_KEYCHAIN_PROFILE`.
+
 Release helpers are also available:
 
 ```sh
@@ -139,14 +158,14 @@ pnpm run release:alpha:win
 
 Generated build output is intentionally ignored by Git. Commit source files, configuration, lockfiles, and assets instead.
 
-## Alpha Release
+## Release Flow
 
 Use this flow when preparing another alpha release:
 
 1. Start from a clean `main` branch that is up to date with `origin/main`.
 2. Bump the prerelease version in `package.json`, for example from `0.1.0-alpha.1` to `0.1.0-alpha.2`.
-3. Update the README download links to the new tag and generated artifact names, using the final asset names reported by GitHub.
-4. Update the macOS Gatekeeper note if the artifact is signed and notarized, or keep the unsigned-alpha workaround current.
+3. Update the README download links to the new tag and generated artifact names, using the final asset names reported by GitHub. Only link macOS artifacts after they are signed and notarized.
+4. Confirm macOS signing and notarization credentials are available.
 5. Run `pnpm test`.
 6. Run the relevant release build:
    - `pnpm run release:alpha` for macOS and Windows x64 artifacts.
@@ -168,13 +187,19 @@ Before pushing a new remote:
 3. Add a remote with `git remote add origin <repo-url>`.
 4. Push the current branch with `git push -u origin <branch-name>`.
 
+## Contributing
+
+Web Dev Companion is free to use, modify, and share under the MIT license. Pull
+requests that improve the app, fix bugs, refine documentation, or expand useful
+local development workflows are welcome.
+
+Before opening a pull request, keep the change focused, avoid committing
+generated build output or private local configuration, and run:
+
+```sh
+pnpm test
+```
+
 ## License
 
-Copyright (c) 2026 Alexander Claes. All rights reserved.
-
-This project is proprietary. You may not copy, modify, publish, distribute,
-sublicense, sell, or otherwise use this project without prior written permission
-from the copyright holder.
-
-Third-party components included with or used by this project remain governed by
-their own license terms. See [LICENSE](LICENSE) for details.
+MIT. See [LICENSE](LICENSE) for details.

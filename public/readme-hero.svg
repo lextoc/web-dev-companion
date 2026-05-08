@@ -1,0 +1,62 @@
+<svg width="1200" height="420" viewBox="0 0 1200 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="hero" x1="0" y1="0" x2="1200" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="0.45" stop-color="#174E63"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(930 105) rotate(135) scale(520 280)">
+      <stop stop-color="#FFFFFF" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#0F172A" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="420" rx="36" fill="url(#hero)"/>
+  <rect width="1200" height="420" rx="36" fill="url(#glow)"/>
+
+  <g opacity="0.18">
+    <path d="M80 86H1120" stroke="#FFFFFF"/>
+    <path d="M80 154H1120" stroke="#FFFFFF"/>
+    <path d="M80 222H1120" stroke="#FFFFFF"/>
+    <path d="M80 290H1120" stroke="#FFFFFF"/>
+    <path d="M160 46V374" stroke="#FFFFFF"/>
+    <path d="M320 46V374" stroke="#FFFFFF"/>
+    <path d="M480 46V374" stroke="#FFFFFF"/>
+    <path d="M640 46V374" stroke="#FFFFFF"/>
+    <path d="M800 46V374" stroke="#FFFFFF"/>
+    <path d="M960 46V374" stroke="#FFFFFF"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="705" y="86" width="340" height="238" rx="22" fill="#F8FAFC"/>
+    <rect x="733" y="118" width="284" height="28" rx="8" fill="#0F172A" fill-opacity="0.12"/>
+    <rect x="733" y="164" width="132" height="82" rx="14" fill="#0F766E"/>
+    <rect x="885" y="164" width="132" height="82" rx="14" fill="#2563EB"/>
+    <rect x="733" y="266" width="284" height="24" rx="8" fill="#F59E0B"/>
+    <circle cx="766" cy="205" r="12" fill="#FFFFFF" fill-opacity="0.82"/>
+    <circle cx="918" cy="205" r="12" fill="#FFFFFF" fill-opacity="0.82"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="92" y="92" width="154" height="154" rx="36" fill="#FFFFFF" fill-opacity="0.94"/>
+    <g transform="translate(119 119) scale(1.5625)">
+      <rect width="64" height="64" rx="14" fill="#235B55"/>
+      <path d="M14 20h36v24H14z" fill="#F9FBFC" opacity="0.96"/>
+      <path d="M14 20h36v8H14z" fill="#D67B3F"/>
+      <circle cx="20" cy="24" r="1.8" fill="#235B55"/>
+      <circle cx="26" cy="24" r="1.8" fill="#235B55"/>
+      <path d="m22 36 5-4-5-4" fill="none" stroke="#235B55" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M31 38h12" fill="none" stroke="#235B55" stroke-width="3" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <text x="92" y="304" fill="#FFFFFF" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="56" font-weight="800" letter-spacing="0">
+    Web Dev Companion
+  </text>
+  <text x="96" y="350" fill="#E5E7EB" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="25" font-weight="500" letter-spacing="0">
+    A focused desktop cockpit for local web development repositories.
+  </text>
+</svg>

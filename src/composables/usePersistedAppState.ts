@@ -24,6 +24,20 @@ function serializablePinnedScripts(scripts: PinnedScript[]) {
   return scripts.map(serializablePinnedScript)
 }
 
+function serializableRepositoryBranchLink(link: RepositoryBranchLink): RepositoryBranchLink {
+  return {
+    repoPath: link.repoPath,
+    parentBranch: link.parentBranch,
+    submodulePath: link.submodulePath,
+    submoduleBranch: link.submoduleBranch,
+    updatedAt: link.updatedAt,
+  }
+}
+
+function serializableRepositoryBranchLinks(links: RepositoryBranchLink[]) {
+  return links.map(serializableRepositoryBranchLink)
+}
+
 interface UsePersistedAppStateOptions {
   repositories: Ref<RepositorySummary[]>
   selectedDetails: Ref<RepositoryDetails | null>
@@ -99,12 +113,22 @@ export function usePersistedAppState({
       .catch(showError)
   }
 
-  function saveRepositoryBranchLinks(links: RepositoryBranchLink[]) {
-    repositoryBranchLinks.value = links
-    void window.appState.saveRepositoryBranchLinks(links).catch(showError)
+  async function saveRepositoryBranchLinks(links: RepositoryBranchLink[]) {
+    const previousLinks = serializableRepositoryBranchLinks(repositoryBranchLinks.value)
+    const savedLinks = serializableRepositoryBranchLinks(links)
+    repositoryBranchLinks.value = savedLinks
+
+    try {
+      repositoryBranchLinks.value = await window.appState.saveRepositoryBranchLinks(savedLinks)
+      return true
+    } catch (error) {
+      repositoryBranchLinks.value = previousLinks
+      showError(error)
+      return false
+    }
   }
 
-  function saveRepositoryBranchLink(link: Omit<RepositoryBranchLink, 'updatedAt'>) {
+  async function saveRepositoryBranchLink(link: Omit<RepositoryBranchLink, 'updatedAt'>) {
     const savedLink: RepositoryBranchLink = {
       ...link,
       updatedAt: new Date().toISOString(),
@@ -118,18 +142,30 @@ export function usePersistedAppState({
       ),
     ]
 
-    saveRepositoryBranchLinks(nextLinks)
+    const didSave = await saveRepositoryBranchLinks(nextLinks)
+
+    if (!didSave) {
+      return
+    }
+
     showAppFeedback(`Linked ${savedLink.parentBranch} to ${savedLink.submoduleBranch}.`, 'info')
   }
 
-  function removeRepositoryBranchLink(linkToRemove: Pick<RepositoryBranchLink, 'repoPath' | 'parentBranch' | 'submodulePath'>) {
-    saveRepositoryBranchLinks(
+  async function removeRepositoryBranchLink(
+    linkToRemove: Pick<RepositoryBranchLink, 'repoPath' | 'parentBranch' | 'submodulePath'>,
+  ) {
+    const didSave = await saveRepositoryBranchLinks(
       repositoryBranchLinks.value.filter((existingLink) =>
         existingLink.repoPath !== linkToRemove.repoPath ||
         existingLink.parentBranch !== linkToRemove.parentBranch ||
         existingLink.submodulePath !== linkToRemove.submodulePath
       ),
     )
+
+    if (!didSave) {
+      return
+    }
+
     showAppFeedback(`Removed link for ${linkToRemove.parentBranch}.`, 'info')
   }
 

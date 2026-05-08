@@ -199,7 +199,8 @@ onBeforeUnmount(() => {
           :aria-selected="option.value === modelValue"
           :data-option-index="index"
           @mouseenter="highlightedIndex = index"
-          @click="selectOption(option)"
+          @pointerdown.stop.prevent="selectOption(option)"
+          @click.stop.prevent="selectOption(option)"
         >
           <span class="app-dropdown-option-label">{{ option.label }}</span>
         </button>

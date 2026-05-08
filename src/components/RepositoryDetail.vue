@@ -932,3 +932,79 @@ function triggerCommitConfetti() {
     />
   </section>
 </template>
+
+<style scoped>
+.detail-view {
+  display: grid;
+  gap: 22px;
+}
+
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 8px;
+  padding: 40px 20px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.empty-state strong {
+  color: var(--text);
+}
+
+.empty-state span {
+  max-width: 520px;
+}
+
+.detail-skeleton {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.skeleton-card {
+  display: grid;
+  gap: 12px;
+  min-height: 196px;
+  overflow: hidden;
+  padding: 18px;
+}
+
+.skeleton-card span {
+  display: block;
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--surface-subtle),
+    var(--surface-soft),
+    var(--surface-subtle)
+  );
+  background-size: 220% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-card span:first-child {
+  width: 55%;
+}
+
+.skeleton-card span:nth-child(2) {
+  width: 82%;
+}
+
+.skeleton-card span:nth-child(3) {
+  width: 66%;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 120% 0;
+  }
+
+  100% {
+    background-position: -120% 0;
+  }
+}
+</style>

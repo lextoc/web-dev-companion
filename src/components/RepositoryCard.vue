@@ -115,3 +115,452 @@ defineEmits<{
     </div>
   </article>
 </template>
+
+<style scoped>
+.repo-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 8px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 94%, #fff),
+      color-mix(in srgb, var(--surface-soft) 34%, var(--surface))
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 56%, transparent),
+    0 1px 2px rgba(23, 32, 42, 0.08);
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+.repo-card::after {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 2px solid transparent;
+  border-radius: inherit;
+  pointer-events: none;
+  content: "";
+}
+
+.repo-card:hover,
+.repo-card:focus-within {
+  border-color: var(--brand);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 58%, transparent),
+    0 8px 18px rgba(23, 32, 42, 0.12);
+  transform: translateY(-1px);
+}
+
+.repo-card:hover::after,
+.repo-card:focus-within::after {
+  border-color: var(--brand);
+}
+
+.repo-card.has-error {
+  border-color: color-mix(in srgb, var(--danger-text) 22%, var(--border));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--danger-soft) 34%, var(--surface)),
+      color-mix(in srgb, var(--danger-soft) 18%, var(--surface))
+    );
+}
+
+.repo-card.has-changes {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--warning-soft) 48%, transparent),
+      transparent 46%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 94%, #fff),
+      color-mix(in srgb, var(--surface-soft) 34%, var(--surface))
+    );
+}
+
+.repo-card.pinned {
+  border-width: 2px;
+  border-color: var(--success-text);
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--success-soft) 36%, transparent),
+      transparent 46%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 94%, #fff),
+      color-mix(in srgb, var(--surface-soft) 34%, var(--surface))
+    );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--success-text) 30%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 56%, transparent),
+    0 1px 2px rgba(23, 32, 42, 0.08);
+}
+
+.repo-card.pinned::after {
+  border-color: var(--success-text);
+}
+
+.repo-card.pinned .repo-quick-actions {
+  border-left-color: color-mix(in srgb, var(--border-soft) 82%, var(--success-text));
+}
+
+.repo-card.pinned.has-changes {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--warning-soft) 48%, transparent),
+      transparent 46%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 94%, #fff),
+      color-mix(in srgb, var(--surface-soft) 34%, var(--surface))
+    );
+}
+
+.repo-card.pinned:hover,
+.repo-card.pinned:focus-within {
+  border-color: var(--success-text);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--success-text) 34%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 58%, transparent),
+    0 8px 18px rgba(23, 32, 42, 0.12);
+}
+
+.repo-card.pinned:hover::after,
+.repo-card.pinned:focus-within::after {
+  border-color: var(--success-text);
+}
+
+.repo-card.has-error:hover,
+.repo-card.has-error:focus-within {
+  border-color: var(--danger-text);
+}
+
+.repo-card.has-error:hover::after,
+.repo-card.has-error:focus-within::after {
+  border-color: var(--danger-text);
+}
+
+.repo-card.has-running-scripts::before {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 999px 999px 0;
+  background: var(--warning-text);
+  content: "";
+}
+
+.repo-card-main {
+  display: grid;
+  gap: 8px;
+  min-height: 102px;
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-weight: 400;
+  text-align: left;
+}
+
+.repo-card-main:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--surface-hover);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.repo-title-row {
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.repo-title-stack {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.repo-title-row strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--font-size-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.repo-path,
+.last-commit {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.repo-path {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+}
+
+.repo-card-badges {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+  max-width: min(520px, 52%);
+}
+
+.repo-open-indicator {
+  display: inline-grid;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--border-control) 72%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  color: var(--muted-strong);
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.repo-open-indicator :deep(.app-icon) {
+  width: 16px;
+  height: 16px;
+}
+
+.repo-card-main:hover:not(:disabled) .repo-open-indicator,
+.repo-card-main:focus-visible .repo-open-indicator {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--brand-contrast);
+  transform: translateX(2px);
+}
+
+.health-running {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 23px;
+  border: 1px solid color-mix(in srgb, var(--warning-text) 24%, transparent);
+  border-radius: 999px;
+  padding: 0 9px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 36%, transparent), transparent),
+    color-mix(in srgb, var(--warning-soft) 82%, var(--surface));
+  color: var(--warning-text);
+  font-size: 0.72rem;
+  font-weight: 720;
+  line-height: 23px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.health-running::before {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 12%, transparent);
+  content: "";
+}
+
+.last-commit {
+  color: var(--muted-strong);
+  font-size: var(--font-size-base);
+}
+
+.repo-health-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.health-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 23px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0 9px;
+  font-size: 0.72rem;
+  font-weight: 720;
+  line-height: 23px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.health-pill::before {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.72;
+  content: "";
+}
+
+.health-pill.error {
+  border-color: color-mix(in srgb, var(--danger-text) 20%, transparent);
+  background: color-mix(in srgb, var(--danger-soft) 86%, var(--surface));
+  color: var(--danger-text);
+}
+
+.health-pill.neutral {
+  border-color: color-mix(in srgb, var(--border) 72%, transparent);
+  background: color-mix(in srgb, var(--surface-subtle) 64%, var(--surface));
+  color: var(--muted-strong);
+}
+
+.repo-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 34px);
+  gap: 7px;
+  align-content: center;
+  align-items: center;
+  border-left: 1px solid color-mix(in srgb, var(--border-soft) 70%, transparent);
+  padding: 12px 14px 12px 8px;
+  background: color-mix(in srgb, var(--surface-soft) 48%, transparent);
+}
+
+.repo-quick-actions > button,
+.repo-quick-actions :deep(.action-menu-trigger) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: var(--font-size-compact);
+  white-space: nowrap;
+}
+
+.repo-quick-actions .repo-icon-action,
+.repo-quick-actions :deep(.action-menu-trigger) {
+  width: 34px;
+  padding: 0;
+}
+
+.repo-quick-actions :deep(.action-menu) {
+  min-width: 0;
+}
+
+.repo-quick-actions :deep(.action-menu-trigger) {
+  width: 100%;
+}
+
+.repo-quick-actions .pin-action.active {
+  border-color: var(--brand);
+  background: var(--surface-subtle);
+  color: var(--brand-text-hover);
+}
+
+.status-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  height: 23px;
+  border: 1px solid color-mix(in srgb, var(--success-text) 20%, transparent);
+  border-radius: 999px;
+  padding: 0 9px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 36%, transparent), transparent),
+    color-mix(in srgb, var(--success-soft) 86%, var(--surface));
+  color: var(--success-text);
+  font-size: 0.72rem;
+  font-weight: 720;
+  line-height: 23px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.status-pill::before {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 10%, transparent);
+  content: "";
+}
+
+.status-pill.dirty {
+  border-color: color-mix(in srgb, var(--warning-text) 24%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 36%, transparent), transparent),
+    color-mix(in srgb, var(--warning-soft) 86%, var(--surface));
+  color: var(--warning-text);
+}
+
+.branch-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 23px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 999px;
+  padding: 0 9px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff 34%, transparent), transparent),
+    color-mix(in srgb, var(--surface-subtle) 58%, var(--surface));
+  color: var(--muted-strong);
+  font-size: 0.72rem;
+  font-weight: 720;
+  line-height: 23px;
+  vertical-align: middle;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.branch-pill::before {
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted-strong) 76%, transparent);
+  content: "";
+}
+
+.branch-pill.branch-name {
+  color: color-mix(in srgb, var(--brand) 68%, var(--muted-strong));
+}
+
+.branch-pill.branch-name::before {
+  background: var(--brand);
+}
+
+.branch-pill.script-count {
+  color: color-mix(in srgb, var(--info-text) 68%, var(--muted-strong));
+}
+
+.branch-pill.script-count::before {
+  background: var(--info-text);
+}
+</style>

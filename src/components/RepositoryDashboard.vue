@@ -303,3 +303,242 @@ onBeforeUnmount(() => {
     </template>
   </section>
 </template>
+
+<style scoped>
+  .dashboard {
+    display: grid;
+    gap: 22px;
+  }
+
+  .add-repo {
+    display: grid;
+    gap: 9px;
+    border: 0;
+    border-radius: 8px;
+    padding: 12px;
+    background: var(--surface);
+    box-shadow: none;
+  }
+
+  .empty-add-repo {
+    width: min(860px, 100%);
+    box-shadow: none;
+  }
+
+  .add-repo label {
+    color: var(--muted-strong);
+    font-size: var(--font-size-compact);
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .add-row {
+    gap: 10px;
+  }
+
+  .add-row input {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid var(--border-control);
+    border-radius: 7px;
+    padding: 0 12px;
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .dashboard-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+    border: 0;
+    border-radius: 8px;
+    padding: 0;
+    background: transparent;
+  }
+
+  .dashboard-toolbar label,
+  .dashboard-toolbar-actions {
+    display: grid;
+    gap: 6px;
+  }
+
+  .dashboard-toolbar-actions {
+    grid-template-columns: minmax(180px, 240px) auto auto;
+    align-items: end;
+    gap: 12px;
+  }
+
+  .dashboard-toolbar span {
+    color: var(--muted-strong);
+    font-size: var(--font-size-compact);
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .dashboard-toolbar input {
+    width: 100%;
+    min-height: 36px;
+    border: 1px solid var(--border-control);
+    border-radius: 7px;
+    padding: 0 12px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: var(--font-size-base);
+  }
+
+  .dashboard-toolbar .app-dropdown {
+    width: 100%;
+  }
+
+  .dashboard-add-toggle {
+    min-height: 36px;
+    padding: 0 13px;
+    white-space: nowrap;
+  }
+
+  .dashboard-refresh-button {
+    justify-self: end;
+  }
+
+  .dashboard-add-toggle.active {
+    border-color: var(--brand);
+    background: var(--surface-hover);
+    color: var(--brand-text-hover);
+  }
+
+  .dashboard-repositories {
+    display: grid;
+    min-width: 0;
+    gap: 18px;
+  }
+
+  .empty-state {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    border: 0;
+    border-radius: 8px;
+    padding: 40px 20px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .empty-state strong {
+    color: var(--text);
+  }
+
+  .empty-state span {
+    max-width: 520px;
+  }
+
+  .repo-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .repo-sections {
+    display: grid;
+    gap: 16px;
+  }
+
+  .repo-section {
+    display: grid;
+    gap: 9px;
+  }
+
+  .repo-section-heading {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .repo-section-heading h2 {
+    margin: 0;
+    color: var(--muted-strong);
+    font-size: var(--font-size-base);
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .repo-section-heading span {
+    display: grid;
+    min-width: 24px;
+    height: 24px;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--surface-subtle);
+    color: var(--muted-strong);
+    font-size: var(--font-size-compact);
+    font-weight: 900;
+  }
+
+  .repo-skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .repo-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+    border-radius: 8px;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--surface) 94%, #fff),
+        color-mix(in srgb, var(--surface-soft) 34%, var(--surface))
+      );
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #fff 56%, transparent),
+      0 1px 2px rgba(23, 32, 42, 0.08);
+  }
+
+  .skeleton-card {
+    display: grid;
+    gap: 12px;
+    min-height: 196px;
+    overflow: hidden;
+    padding: 18px;
+  }
+
+  .skeleton-card span {
+    display: block;
+    height: 14px;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      var(--surface-subtle),
+      var(--surface-soft),
+      var(--surface-subtle)
+    );
+    background-size: 220% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  }
+
+  .skeleton-card span:first-child {
+    width: 55%;
+  }
+
+  .skeleton-card span:nth-child(2) {
+    width: 82%;
+  }
+
+  .skeleton-card span:nth-child(3) {
+    width: 66%;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% {
+      background-position: 120% 0;
+    }
+
+    100% {
+      background-position: -120% 0;
+    }
+  }
+</style>

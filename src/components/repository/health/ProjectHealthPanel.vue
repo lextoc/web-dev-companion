@@ -7,7 +7,10 @@ import type {
   ScriptTerminal,
 } from "../../../repositories";
 import JavaHealthSection from "./JavaHealthSection.vue";
+import { javaHealthSummary, hasJavaHealth as hasJavaEcosystemHealth } from "./javaHealthSummary";
 import NodeHealthSection from "./NodeHealthSection.vue";
+import { nodeHealthSummary, hasNodeHealth as hasNodeEcosystemHealth } from "./nodeHealthSummary";
+import { rubyHealthSummary, hasRubyHealth as hasRubyEcosystemHealth } from "./rubyHealthSummary";
 import RubyHealthSection from "./RubyHealthSection.vue";
 
 const props = defineProps<{
@@ -32,130 +35,47 @@ const javaTasks = computed(() => props.projectTasks.filter((task) => ["gradle", 
 const rubyTasks = computed(() => props.projectTasks.filter((task) => ["rails", "rake"].includes(task.source)));
 
 const hasNodeHealth = computed(() =>
-  nodeTasks.value.length > 0 ||
-  Boolean(props.health?.packageJsonPresent) ||
-  Boolean(props.health?.packageManager.detected) ||
-  Boolean(props.health?.node.configured) ||
-  Boolean(props.health?.node.engineRange),
+  props.health ? hasNodeEcosystemHealth(props.health, nodeTasks.value) : nodeTasks.value.length > 0,
 );
 const hasJavaHealth = computed(() =>
-  javaTasks.value.length > 0 ||
-  Boolean(props.health?.java.requiredRelease) ||
-  Boolean(props.health?.java.mavenWrapperPresent) ||
-  Boolean(props.health?.java.gradleWrapperPresent),
+  props.health ? hasJavaEcosystemHealth(props.health, javaTasks.value) : javaTasks.value.length > 0,
 );
-const supportedEcosystemCount = computed(() =>
-  Number(hasNodeHealth.value) + Number(hasJavaHealth.value) + Number(rubyTasks.value.length > 0),
+const hasRubyHealth = computed(() => hasRubyEcosystemHealth(rubyTasks.value));
+
+const ecosystemSummaries = computed(() => {
+  if (!props.health) {
+    return [];
+  }
+
+  return [
+    nodeHealthSummary(props.health, nodeTasks.value),
+    javaHealthSummary(props.health, javaTasks.value),
+    rubyHealthSummary(rubyTasks.value),
+  ].filter((summary) => summary.present);
+});
+const supportedEcosystemCount = computed(() => ecosystemSummaries.value.length);
+const projectHealthAttentionItems = computed(() =>
+  ecosystemSummaries.value.flatMap((summary) => summary.attentionItems),
 );
-
-function projectHealthIssueCount(health: ProjectHealth) {
-  return projectHealthAttentionItems(health).length;
-}
-
-function projectHealthAttentionItems(health: ProjectHealth) {
-  const groupedMessages = hasNodeHealth.value
-    ? [
-        { key: "package", title: "Package manager", messages: health.packageManager.messages },
-        { key: "node", title: "Node", messages: health.node.messages },
-        { key: "install", title: "Install state", messages: health.install.messages },
-        { key: "lockfile", title: "Lockfile", messages: health.lockfile.messages },
-      ]
-    : [];
-  const javaMessages = hasJavaHealth.value
-    ? [{ key: "java", title: "Java", messages: health.java.messages }]
-    : [];
-  const items = [...groupedMessages, ...javaMessages].flatMap((group) =>
-    group.messages.map((entry) => ({
-      key: `${group.key}-${entry.text}`,
-      level: entry.level,
-      title: group.title,
-      text: entry.text,
-    })),
-  );
-
-  if (hasNodeHealth.value && health.dependencies.status === "outdated") {
-    items.push({
-      key: "dependencies-outdated",
-      level: "warning",
-      title: "Dependencies",
-      text: `${health.dependencies.outdatedCount ?? 0} outdated dependencies found.`,
-    });
-  }
-
-  if (hasNodeHealth.value && health.dependencies.status === "failed") {
-    items.push({
-      key: "dependencies-failed",
-      level: "error",
-      title: "Dependencies",
-      text: health.dependencies.error ?? "Outdated dependency check failed.",
-    });
-  }
-
-  for (const script of hasNodeHealth.value ? health.scripts.filter((entry) => ["failed", "timed-out"].includes(entry.status)) : []) {
-    items.push({
-      key: `script-${script.name}`,
-      level: "error",
-      title: script.name,
-      text: script.error ?? "Common script failed.",
-    });
-  }
-
-  return items;
-}
-
-function projectHealthOverallStatus(health: ProjectHealth): ProjectHealthStatus {
-  const hasNodeError =
-    hasNodeHealth.value &&
-    (
-      health.packageManager.status === "error" ||
-      health.node.status === "error" ||
-      health.install.status === "error" ||
-      health.lockfile.status === "error" ||
-      health.dependencies.status === "failed" ||
-      health.scripts.some((script) => ["failed", "timed-out"].includes(script.status))
-    );
-  const hasNodeWarning =
-    hasNodeHealth.value &&
-    (
-      health.packageManager.status === "warning" ||
-      health.node.status === "warning" ||
-      health.install.status === "warning" ||
-      health.lockfile.status === "warning" ||
-      health.dependencies.status === "outdated"
-    );
-  const hasNodeUnknown =
-    hasNodeHealth.value &&
-    (
-      health.packageManager.status === "unknown" ||
-      health.node.status === "unknown" ||
-      health.install.status === "unknown" ||
-      health.lockfile.status === "unknown"
-    );
-
-  if (
-    hasNodeError ||
-    (hasJavaHealth.value && health.java.status === "error")
-  ) {
+const projectHealthIssueCount = computed(() => projectHealthAttentionItems.value.length);
+const projectHealthOverallStatus = computed<ProjectHealthStatus>(() => {
+  if (ecosystemSummaries.value.some((summary) => summary.status === "error")) {
     return "error";
   }
 
-  if (
-    hasNodeWarning ||
-    (hasJavaHealth.value && health.java.status === "warning")
-  ) {
+  if (ecosystemSummaries.value.some((summary) => summary.status === "warning")) {
     return "warning";
   }
 
   if (
-    supportedEcosystemCount.value === 0 ||
-    hasNodeUnknown ||
-    (hasJavaHealth.value && health.java.status === "unknown")
+    ecosystemSummaries.value.length === 0 ||
+    ecosystemSummaries.value.some((summary) => summary.status === "unknown")
   ) {
     return "unknown";
   }
 
   return "ok";
-}
+});
 
 function healthStatusLabel(status: ProjectHealthStatus) {
   if (status === "ok") {
@@ -199,7 +119,7 @@ function healthCheckedAtLabel(checkedAt?: string) {
         <h3>
           {{
             health
-              ? `${healthStatusLabel(projectHealthOverallStatus(health))} · ${projectHealthIssueCount(health)} issues`
+              ? `${healthStatusLabel(projectHealthOverallStatus)} · ${projectHealthIssueCount} issues`
               : "Checking project"
           }}
         </h3>
@@ -223,14 +143,14 @@ function healthCheckedAtLabel(checkedAt?: string) {
 
     <template v-else-if="health">
       <section
-        v-if="projectHealthAttentionItems(health).length > 0"
+        v-if="projectHealthAttentionItems.length > 0"
         class="project-health-attention"
         aria-label="Health items needing attention"
       >
         <span>Needs attention</span>
         <ul>
           <li
-            v-for="item in projectHealthAttentionItems(health)"
+            v-for="item in projectHealthAttentionItems"
             :key="item.key"
             :class="item.level"
           >
@@ -264,7 +184,7 @@ function healthCheckedAtLabel(checkedAt?: string) {
       />
 
       <RubyHealthSection
-        v-if="rubyTasks.length > 0"
+        v-if="hasRubyHealth"
         :tasks="rubyTasks"
         :task-terminals-by-task="taskTerminalsByTask"
         @run-task="$emit('runTask', $event)"

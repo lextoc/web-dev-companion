@@ -39,11 +39,13 @@ Use `pnpm` for all package commands.
 
 - Start from a clean `main` branch that is up to date with `origin/main`.
 - Bump the prerelease version in `package.json` before building, for example `0.1.0-alpha.1` to `0.1.0-alpha.2`.
+- Update the README download links for macOS and Windows to the new tag and generated artifact names, using the final asset names reported by GitHub.
 - Run `pnpm test` before release builds.
 - Run `pnpm run release:alpha` for macOS and Windows x64 artifacts, or use `pnpm run release:alpha:mac` / `pnpm run release:alpha:win` for a platform-specific alpha.
 - Commit the version and documentation changes after verification.
 - Create a matching Git tag named `v<version>`, for example `v0.1.0-alpha.2`.
 - Push both the branch and tag when publishing: `git push origin main` and `git push origin v<version>`.
+- Create or update the GitHub prerelease for that tag and upload the generated macOS and Windows artifacts so the README download links resolve.
 - Do not commit generated `release/<version>/`, `dist/`, or `dist-electron/` output.
 
 ## Final Response

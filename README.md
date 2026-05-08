@@ -96,6 +96,13 @@ pnpm run dev
 
 The app stores saved repositories, pinned tasks, settings, recent commands, and repository/submodule branch links in Electron's per-user app data directory.
 
+## Downloads
+
+Latest alpha: `0.1.0-alpha.1`
+
+- [Download for macOS](https://github.com/lextoc/web-dev-companion/releases/download/v0.1.0-alpha.1/Web.Dev.Companion-Mac-0.1.0-alpha.1-Installer.dmg)
+- [Download for Windows](https://github.com/lextoc/web-dev-companion/releases/download/v0.1.0-alpha.1/Web.Dev.Companion-Windows-0.1.0-alpha.1-Setup.exe)
+
 ## Verification
 
 ```sh
@@ -129,14 +136,16 @@ Use this flow when preparing another alpha release:
 
 1. Start from a clean `main` branch that is up to date with `origin/main`.
 2. Bump the prerelease version in `package.json`, for example from `0.1.0-alpha.1` to `0.1.0-alpha.2`.
-3. Run `pnpm test`.
-4. Run the relevant release build:
+3. Update the README download links to the new tag and generated artifact names, using the final asset names reported by GitHub.
+4. Run `pnpm test`.
+5. Run the relevant release build:
    - `pnpm run release:alpha` for macOS and Windows x64 artifacts.
    - `pnpm run release:alpha:mac` for only the macOS artifact.
    - `pnpm run release:alpha:win` for only the Windows x64 artifact.
-5. Review `git status`, then commit the version and documentation changes.
-6. Create a matching Git tag named `v<version>`, for example `v0.1.0-alpha.2`.
-7. Push the branch and tag with `git push origin main` and `git push origin v<version>`.
+6. Review `git status`, then commit the version and documentation changes.
+7. Create a matching Git tag named `v<version>`, for example `v0.1.0-alpha.2`.
+8. Push the branch and tag with `git push origin main` and `git push origin v<version>`.
+9. Create or update the GitHub prerelease for that tag and upload the generated macOS and Windows artifacts.
 
 The release artifacts are written to `release/<version>/` and are not committed.
 

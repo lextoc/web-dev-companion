@@ -71,6 +71,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 let win: BrowserWindowType | null
 let lastRefreshCommandAt = 0
+let isFlushingAppStateBeforeQuit = false
 
 function appStateFilePath() {
   return path.join(app.getPath('userData'), appStateFileName)
@@ -477,6 +478,23 @@ app.on('window-all-closed', () => {
     app.quit()
     win = null
   }
+})
+
+app.on('before-quit', (event) => {
+  if (isFlushingAppStateBeforeQuit) {
+    return
+  }
+
+  event.preventDefault()
+  isFlushingAppStateBeforeQuit = true
+
+  void appStateService.flush()
+    .catch((error) => {
+      console.error('Could not flush app state before quit.', error)
+    })
+    .finally(() => {
+      app.quit()
+    })
 })
 
 app.on('activate', () => {

@@ -4,10 +4,6 @@ import type { PersistedAppState, RepositoryBranchLink } from '../src/app-state'
 import type { PinnedScript } from '../src/repositories'
 import { normalizeAppSettings, type AppSettings } from '../src/settings'
 
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((entry): entry is string => typeof entry === 'string')
-}
-
 function isPinnedScript(script: unknown): script is PinnedScript {
   return (
     typeof script === 'object' &&
@@ -21,8 +17,12 @@ function isPinnedScript(script: unknown): script is PinnedScript {
   )
 }
 
-function isPinnedScriptList(value: unknown): value is PinnedScript[] {
-  return Array.isArray(value) && value.every(isPinnedScript)
+function normalizePinnedScripts(value: unknown): PinnedScript[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value.filter(isPinnedScript)
 }
 
 function isRepositoryBranchLink(link: unknown): link is RepositoryBranchLink {
@@ -37,19 +37,29 @@ function isRepositoryBranchLink(link: unknown): link is RepositoryBranchLink {
   )
 }
 
-function isRepositoryBranchLinkList(value: unknown): value is RepositoryBranchLink[] {
-  return Array.isArray(value) && value.every(isRepositoryBranchLink)
+function normalizeStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value.filter((entry): entry is string => typeof entry === 'string')
+}
+
+function normalizeRepositoryBranchLinks(value: unknown): RepositoryBranchLink[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value.filter(isRepositoryBranchLink)
 }
 
 function normalizeAppState(state: Partial<PersistedAppState>): PersistedAppState {
   return {
     settings: normalizeAppSettings(state.settings ?? {}),
-    pinnedRepositoryPaths: isStringArray(state.pinnedRepositoryPaths) ? state.pinnedRepositoryPaths : [],
-    pinnedScripts: isPinnedScriptList(state.pinnedScripts) ? state.pinnedScripts : [],
-    recentCommandIds: isStringArray(state.recentCommandIds) ? state.recentCommandIds : [],
-    repositoryBranchLinks: isRepositoryBranchLinkList(state.repositoryBranchLinks)
-      ? state.repositoryBranchLinks
-      : [],
+    pinnedRepositoryPaths: normalizeStringList(state.pinnedRepositoryPaths),
+    pinnedScripts: normalizePinnedScripts(state.pinnedScripts),
+    recentCommandIds: normalizeStringList(state.recentCommandIds),
+    repositoryBranchLinks: normalizeRepositoryBranchLinks(state.repositoryBranchLinks),
   }
 }
 
@@ -81,8 +91,12 @@ export function createAppStateService(appStateFilePath: () => string) {
   }
 
   async function writeAppState(state: PersistedAppState) {
-    await fs.mkdir(path.dirname(appStateFilePath()), { recursive: true })
-    await fs.writeFile(appStateFilePath(), JSON.stringify(normalizeAppState(state), null, 2))
+    const filePath = appStateFilePath()
+    const temporaryFilePath = `${filePath}.${process.pid}.tmp`
+
+    await fs.mkdir(path.dirname(filePath), { recursive: true })
+    await fs.writeFile(temporaryFilePath, JSON.stringify(normalizeAppState(state), null, 2))
+    await fs.rename(temporaryFilePath, filePath)
   }
 
   async function updateAppState(updater: (state: PersistedAppState) => PersistedAppState) {
@@ -146,7 +160,12 @@ export function createAppStateService(appStateFilePath: () => string) {
     return nextState.repositoryBranchLinks
   }
 
+  async function flush() {
+    await writeQueue
+  }
+
   return {
+    flush,
     read: readAppState,
     saveSettings,
     savePinnedRepositoryPaths,

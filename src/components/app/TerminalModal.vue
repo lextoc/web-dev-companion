@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
-import { parseAnsiOutput } from '../../output-formatting'
+import { parseAnsiOutput, plainTerminalText } from '../../output-formatting'
 import type { ScriptTerminal } from '../../repositories'
 import { AppButton } from '../ui'
 
@@ -17,6 +17,8 @@ defineEmits<{
 
 const outputElement = ref<HTMLPreElement | null>(null)
 const outputSegments = computed(() => parseAnsiOutput(props.terminal.output))
+const copyStatus = ref<'idle' | 'copied' | 'failed'>('idle')
+let copyStatusTimeout: number | undefined
 
 function setOutputElement(element: Element | ComponentPublicInstance | null) {
   outputElement.value = element instanceof HTMLPreElement ? element : null
@@ -40,6 +42,34 @@ watch(
   },
   { flush: 'post' },
 )
+
+function resetCopyStatusSoon() {
+  if (copyStatusTimeout !== undefined) {
+    window.clearTimeout(copyStatusTimeout)
+  }
+
+  copyStatusTimeout = window.setTimeout(() => {
+    copyStatus.value = 'idle'
+    copyStatusTimeout = undefined
+  }, 1800)
+}
+
+async function copyTerminalOutput() {
+  try {
+    await navigator.clipboard.writeText(plainTerminalText(props.terminal.output))
+    copyStatus.value = 'copied'
+  } catch {
+    copyStatus.value = 'failed'
+  }
+
+  resetCopyStatusSoon()
+}
+
+onBeforeUnmount(() => {
+  if (copyStatusTimeout !== undefined) {
+    window.clearTimeout(copyStatusTimeout)
+  }
+})
 
 const terminalStatus = computed(() => {
   if (props.terminal.isRunning) {
@@ -106,6 +136,12 @@ const terminalStatusLabel = computed(() => {
       ><span :class="segment.className">{{ segment.text }}</span></template></pre>
 
       <div class="terminal-modal-actions">
+        <span class="terminal-copy-status" aria-live="polite">
+          {{ copyStatus === 'copied' ? 'Copied output' : copyStatus === 'failed' ? 'Copy failed' : '' }}
+        </span>
+        <AppButton icon="copy" variant="secondary" @click="copyTerminalOutput">
+          Copy output
+        </AppButton>
         <AppButton variant="secondary" @click="$emit('close')">Hide</AppButton>
         <AppButton variant="secondary" @click="$emit('restart', terminal.runId)">
           Restart
@@ -149,6 +185,8 @@ const terminalStatusLabel = computed(() => {
   background: var(--terminal-panel);
   color: var(--terminal-text);
   box-shadow: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .terminal-modal-header {
@@ -206,13 +244,24 @@ const terminalStatusLabel = computed(() => {
   color: var(--terminal-text);
   font-size: var(--font-size-base);
   line-height: 1.55;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .terminal-modal-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
   justify-content: flex-end;
+}
+
+.terminal-copy-status {
+  min-width: 92px;
+  color: var(--muted);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  text-align: right;
 }
 
 .terminal-stop {

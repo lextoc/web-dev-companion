@@ -13,6 +13,7 @@ type AppButtonIcon =
   | "close"
   | "edit"
   | "folder"
+  | "home"
   | "hide"
   | "link"
   | "merge"

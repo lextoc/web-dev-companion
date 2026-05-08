@@ -236,6 +236,9 @@ const lastRepositoryRefreshLabel = computed(() => {
 const commandShortcutLabel = computed(() =>
   isMacPlatform.value ? '⌘K' : 'Ctrl K',
 )
+const dashboardShortcutLabel = computed(() =>
+  isMacPlatform.value ? '⌘1' : 'Ctrl 1',
+)
 const branchShortcutLabel = computed(() =>
   isMacPlatform.value ? '⌘B' : 'Ctrl B',
 )
@@ -417,7 +420,7 @@ async function handleMenuCommand(command: DesktopMenuCommand) {
     return
   }
 
-  if (command === 'back') {
+  if (command === 'dashboard') {
     if (selectedPath.value) {
       closeDetails()
     }
@@ -492,6 +495,22 @@ function handleGitCommandLog(entry: GitCommandLogEntry) {
 
 function handleGlobalKeydown(event: KeyboardEvent) {
   const key = event.key.toLowerCase()
+
+  if (
+    selectedPath.value &&
+    !isCommandPaletteOpen.value &&
+    !selectedTerminal.value &&
+    !confirmationDialog.value &&
+    !isSettingsOpen.value &&
+    (
+      (isMacPlatform.value && event.metaKey && key === '1' && !event.ctrlKey && !event.altKey && !event.shiftKey) ||
+      (!isMacPlatform.value && event.ctrlKey && key === '1' && !event.metaKey && !event.altKey && !event.shiftKey)
+    )
+  ) {
+    event.preventDefault()
+    closeDetails()
+    return
+  }
 
   if (
     (event.metaKey || event.ctrlKey) &&
@@ -661,6 +680,7 @@ onBeforeUnmount(() => {
           :is-detail-loading="isDetailLoading"
           :auto-refresh-label="autoRefreshLabel"
           :auto-refresh-progress="autoRefreshProgress"
+          :dashboard-shortcut-label="dashboardShortcutLabel"
           :branch-shortcut-label="branchShortcutLabel"
           :branch-shortcut-trigger-token="branchShortcutTriggerToken"
           :commit-celebrations="appSettings.commitCelebrations"
@@ -676,7 +696,7 @@ onBeforeUnmount(() => {
           :merging-linked-branch-name="mergingLinkedBranchName"
           :branch-feedback-messages="branchFeedbackMessages"
           :repository-branch-links="repositoryBranchLinks"
-          @back="closeDetails"
+          @dashboard="closeDetails"
           @refresh="refreshSelectedRepository"
           @delete-branch="deleteBranch"
           @delete-submodule-branch="deleteSubmoduleBranch"

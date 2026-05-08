@@ -27,7 +27,7 @@
   -webkit-app-region: no-drag;
 }
 
-.detail-back-button {
+.detail-dashboard-button {
   display: inline-flex;
   min-height: 34px;
   align-items: center;
@@ -38,15 +38,19 @@
   color: var(--muted-strong);
 }
 
-.detail-back-button:hover:not(:disabled) {
+.detail-dashboard-button:hover:not(:disabled) {
   border-color: transparent;
   background: var(--surface-subtle);
   color: var(--text);
 }
 
-.detail-back-button .button-icon {
+.detail-dashboard-button .button-icon {
   width: 16px;
   height: 16px;
+}
+
+.detail-dashboard-shortcut {
+  margin-left: 2px;
 }
 
 .detail-context-pills {

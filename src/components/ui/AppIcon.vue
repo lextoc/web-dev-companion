@@ -8,6 +8,7 @@ defineProps<{
     | "close"
     | "edit"
     | "folder"
+    | "home"
     | "hide"
     | "link"
     | "merge"
@@ -119,6 +120,11 @@ defineProps<{
       <path
         d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5z"
       />
+    </g>
+    <g v-else-if="name === 'home'">
+      <path d="M4 11.5 12 4l8 7.5" />
+      <path d="M6.5 10.5V20h11v-9.5" />
+      <path d="M10 20v-5h4v5" />
     </g>
     <g v-else-if="name === 'edit'">
       <path d="M4 20h4l11-11-4-4L4 16z" />

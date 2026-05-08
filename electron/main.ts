@@ -195,9 +195,9 @@ function configureApplicationMenu() {
           click: () => sendMenuCommand('add-repository'),
         },
         {
-          label: 'Back',
-          accelerator: isMac ? 'Command+[' : 'Alt+Left',
-          click: () => sendMenuCommand('back'),
+          label: 'Dashboard',
+          accelerator: isMac ? 'Command+1' : 'Ctrl+1',
+          click: () => sendMenuCommand('dashboard'),
         },
         ...(isMac
           ? []

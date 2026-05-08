@@ -38,6 +38,7 @@ const props = defineProps<{
   isDetailLoading: boolean;
   autoRefreshLabel: string;
   autoRefreshProgress: number;
+  dashboardShortcutLabel: string;
   branchShortcutLabel: string;
   branchShortcutTriggerToken: number;
   commitCelebrations: boolean;
@@ -56,7 +57,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  back: [];
+  dashboard: [];
   refresh: [];
   deleteBranch: [branchName: string];
   deleteSubmoduleBranch: [submodulePath: string, branchName: string];
@@ -607,8 +608,17 @@ onBeforeUnmount(() => {
 <template>
   <div class="detail-command-bar">
     <nav class="detail-nav" aria-label="Repository detail navigation">
-      <AppButton variant="secondary" icon="arrow-left" class="detail-back-button" @click="$emit('back')">
-        Back
+      <AppButton
+        variant="secondary"
+        icon="home"
+        class="detail-dashboard-button"
+        :title="`Dashboard (${dashboardShortcutLabel})`"
+        @click="$emit('dashboard')"
+      >
+        Dashboard
+        <template #trailing>
+          <kbd class="shortcut-label detail-dashboard-shortcut">{{ dashboardShortcutLabel }}</kbd>
+        </template>
       </AppButton>
 
       <RepositoryHeaderStateSummary

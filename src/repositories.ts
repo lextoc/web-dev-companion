@@ -376,7 +376,7 @@ export interface RepositoryApi {
 
 export type DesktopMenuCommand =
   | 'add-repository'
-  | 'back'
+  | 'dashboard'
   | 'open-in-editor'
   | 'open-in-file-manager'
   | 'open-in-terminal'

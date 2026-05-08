@@ -691,7 +691,9 @@ function scrollToCommitFile(file: CommitChangedFile, index: number) {
   --diff-removed-bg: #fff0ed;
   min-height: 0;
   max-height: none;
+  overflow: auto;
   border-color: var(--diff-border);
+  margin: 0;
   background: var(--diff-bg);
   color: var(--diff-text);
   font-size: var(--font-size-base);

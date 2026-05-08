@@ -215,6 +215,75 @@ const terminalStatusLabel = computed(() => {
   justify-content: flex-end;
 }
 
+.terminal-stop {
+  flex: 0 0 auto;
+  min-height: 30px;
+  border-color: var(--danger);
+  padding: 0 10px;
+  background: var(--danger);
+  color: var(--danger-contrast);
+}
+
+.terminal-stop:hover:not(:disabled) {
+  background: var(--danger-hover);
+  color: var(--danger-contrast);
+}
+
+.ansi-output {
+  color: var(--terminal-text);
+}
+
+.ansi-bold {
+  font-weight: 800;
+}
+
+.ansi-dim {
+  opacity: 0.68;
+}
+
+.ansi-fg-black {
+  color: var(--ansi-black);
+}
+
+.ansi-fg-red,
+.ansi-fg-bright-red {
+  color: var(--ansi-red);
+}
+
+.ansi-fg-green,
+.ansi-fg-bright-green {
+  color: var(--ansi-green);
+}
+
+.ansi-fg-yellow,
+.ansi-fg-bright-yellow {
+  color: var(--ansi-yellow);
+}
+
+.ansi-fg-blue,
+.ansi-fg-bright-blue {
+  color: var(--ansi-blue);
+}
+
+.ansi-fg-magenta,
+.ansi-fg-bright-magenta {
+  color: var(--ansi-magenta);
+}
+
+.ansi-fg-cyan,
+.ansi-fg-bright-cyan {
+  color: var(--ansi-cyan);
+}
+
+.ansi-fg-white,
+.ansi-fg-bright-white {
+  color: var(--ansi-white);
+}
+
+.ansi-fg-bright-black {
+  color: var(--ansi-bright-black);
+}
+
 @media (max-width: 760px) {
   .terminal-modal {
     height: calc(100vh - 32px);

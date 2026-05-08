@@ -725,6 +725,26 @@ function formatCommandTime(startedAt: string) {
   min-width: 72px;
 }
 
+.terminal-pin.active {
+  border-color: color-mix(in srgb, var(--success-text) 44%, transparent);
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.terminal-stop {
+  flex: 0 0 auto;
+  min-height: 30px;
+  border-color: var(--danger);
+  padding: 0 10px;
+  background: var(--danger);
+  color: var(--danger-contrast);
+}
+
+.terminal-stop:hover:not(:disabled) {
+  background: var(--danger-hover);
+  color: var(--danger-contrast);
+}
+
 .terminal-action-placeholder {
   display: none;
   width: 34px;

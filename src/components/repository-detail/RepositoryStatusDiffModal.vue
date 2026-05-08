@@ -64,6 +64,7 @@ const diffLines = computed(() => parseDiffOutput(props.statusDiff?.content ?? ""
   width: min(1120px, 100%);
   height: min(760px, calc(100vh - 48px));
   gap: 12px;
+  overflow: hidden;
   border: 0;
   border-radius: 8px;
   padding: 16px;
@@ -115,7 +116,9 @@ const diffLines = computed(() => parseDiffOutput(props.statusDiff?.content ?? ""
   --diff-removed-bg: #fff0ed;
   min-height: 0;
   max-height: none;
+  overflow: auto;
   border-color: var(--diff-border);
+  margin: 0;
   background: var(--diff-bg);
   color: var(--diff-text);
   font-size: var(--font-size-base);

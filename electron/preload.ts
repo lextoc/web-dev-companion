@@ -80,6 +80,7 @@ const repositories: RepositoryApi = {
 
 const desktop: DesktopApi = {
   notify: (request) => ipcRenderer.invoke('desktop:notify', request),
+  setMenuState: (state) => ipcRenderer.invoke('desktop:set-menu-state', state),
   onMenuCommand: (listener) => {
     const wrappedListener = (_event: Electron.IpcRendererEvent, command: Parameters<typeof listener>[0]) => {
       listener(command)

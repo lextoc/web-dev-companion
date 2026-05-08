@@ -9,6 +9,7 @@ import type {
   DeleteBranchRequest,
   DeleteSubmoduleBranchRequest,
   DesktopMenuCommand,
+  DesktopMenuState,
   DesktopNotificationRequest,
   MergeBranchRequest,
   MergeLinkedSubmoduleBranchRequest,
@@ -73,6 +74,17 @@ let win: BrowserWindowType | null
 let lastRefreshCommandAt = 0
 let isFlushingAppStateBeforeQuit = false
 let isExitingAfterSignal = false
+const desktopMenuState: DesktopMenuState = {
+  hasRepositoryDetail: false,
+  hasRunningScripts: false,
+}
+
+const repositoryDetailMenuItemIds = [
+  'menu-dashboard',
+  'menu-open-in-editor',
+  'menu-open-in-file-manager',
+  'menu-open-in-terminal',
+]
 
 function appStateFilePath() {
   return path.join(app.getPath('userData'), appStateFileName)
@@ -161,6 +173,30 @@ function isZoomShortcut(input: Electron.Input) {
   return ['+', '=', '-', '_', '0'].includes(input.key)
 }
 
+function setMenuItemEnabled(id: string, enabled: boolean) {
+  const item = Menu.getApplicationMenu()?.getMenuItemById(id)
+
+  if (item) {
+    item.enabled = enabled
+  }
+}
+
+function updateApplicationMenuState() {
+  for (const itemId of repositoryDetailMenuItemIds) {
+    setMenuItemEnabled(itemId, desktopMenuState.hasRepositoryDetail)
+  }
+
+  setMenuItemEnabled('menu-stop-scripts', desktopMenuState.hasRunningScripts)
+}
+
+function updateDesktopMenuState(state: DesktopMenuState) {
+  desktopMenuState.hasRepositoryDetail = state.hasRepositoryDetail
+  desktopMenuState.hasRunningScripts = state.hasRunningScripts
+  updateApplicationMenuState()
+
+  return { ...desktopMenuState }
+}
+
 function configureApplicationMenu() {
   const isMac = process.platform === 'darwin'
   const template: Electron.MenuItemConstructorOptions[] = [
@@ -197,8 +233,10 @@ function configureApplicationMenu() {
           click: () => sendMenuCommand('add-repository'),
         },
         {
+          id: 'menu-dashboard',
           label: 'Dashboard',
           accelerator: isMac ? 'Command+1' : 'Ctrl+1',
+          enabled: desktopMenuState.hasRepositoryDetail,
           click: () => sendMenuCommand('dashboard'),
         },
         ...(isMac
@@ -240,18 +278,24 @@ function configureApplicationMenu() {
         },
         { type: 'separator' },
         {
+          id: 'menu-open-in-editor',
           label: 'Open in Editor',
           accelerator: isMac ? 'Command+E' : 'Ctrl+E',
+          enabled: desktopMenuState.hasRepositoryDetail,
           click: () => sendMenuCommand('open-in-editor'),
         },
         {
+          id: 'menu-open-in-file-manager',
           label: 'Open in Files',
           accelerator: isMac ? 'Command+Shift+F' : 'Ctrl+Shift+F',
+          enabled: desktopMenuState.hasRepositoryDetail,
           click: () => sendMenuCommand('open-in-file-manager'),
         },
         {
+          id: 'menu-open-in-terminal',
           label: 'Open in Terminal',
           accelerator: isMac ? 'Command+`' : 'Ctrl+`',
+          enabled: desktopMenuState.hasRepositoryDetail,
           click: () => sendMenuCommand('open-in-terminal'),
         },
       ],
@@ -260,8 +304,10 @@ function configureApplicationMenu() {
       label: 'Scripts',
       submenu: [
         {
+          id: 'menu-stop-scripts',
           label: 'Stop Running Scripts',
           accelerator: isMac ? 'Command+Shift+S' : 'Ctrl+Shift+S',
+          enabled: desktopMenuState.hasRunningScripts,
           click: () => sendMenuCommand('stop-scripts'),
         },
       ],
@@ -301,6 +347,7 @@ function configureApplicationMenu() {
   ]
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+  updateApplicationMenuState()
 }
 
 const repositoryService = createRepositoryService(repositoriesFilePath, shell)
@@ -387,6 +434,7 @@ function registerRepositoryHandlers() {
   ipcMain.handle('repositories:start-script', (_event, request: ScriptRunRequest) => scriptRunner.startScript(request))
   ipcMain.handle('repositories:stop-script', (_event, runId: string) => scriptRunner.stopScript(runId))
   ipcMain.handle('repositories:choose-and-add', chooseAndAddRepository)
+  ipcMain.handle('desktop:set-menu-state', (_event, state: DesktopMenuState) => updateDesktopMenuState(state))
   ipcMain.handle('desktop:notify', (_event, request: DesktopNotificationRequest) => {
     if (!Notification.isSupported()) {
       return false

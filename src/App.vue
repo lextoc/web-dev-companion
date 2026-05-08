@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import RepositoryDashboard from './components/RepositoryDashboard.vue'
 import RepositoryDetail from './components/RepositoryDetail.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
@@ -506,6 +506,13 @@ async function handleMenuCommand(command: DesktopMenuCommand) {
   }
 }
 
+function syncDesktopMenuState() {
+  void window.desktop.setMenuState({
+    hasRepositoryDetail: Boolean(selectedPath.value),
+    hasRunningScripts: hasRunningScripts.value,
+  })
+}
+
 function isEditableTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
     return false
@@ -721,6 +728,8 @@ onMounted(async () => {
   window.addEventListener('keydown', handleGlobalKeydown)
   void loadRepositories()
 })
+
+watch([selectedPath, hasRunningScripts], syncDesktopMenuState, { immediate: true })
 
 onBeforeUnmount(() => {
   window.removeEventListener('popstate', handleHistoryNavigation)

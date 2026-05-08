@@ -390,7 +390,13 @@ export interface DesktopNotificationRequest {
   body: string
 }
 
+export interface DesktopMenuState {
+  hasRepositoryDetail: boolean
+  hasRunningScripts: boolean
+}
+
 export interface DesktopApi {
   notify: (request: DesktopNotificationRequest) => Promise<boolean>
+  setMenuState: (state: DesktopMenuState) => Promise<DesktopMenuState>
   onMenuCommand: (listener: (command: DesktopMenuCommand) => void) => () => void
 }

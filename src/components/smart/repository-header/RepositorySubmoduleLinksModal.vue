@@ -145,6 +145,36 @@ defineEmits<{
   z-index: 70;
 }
 
+:deep(.remote-branch-dropdown-menu .app-dropdown-option) {
+  display: flex;
+  width: 100%;
+  min-height: 34px;
+  align-items: center;
+  justify-content: flex-start;
+  border-color: transparent;
+  border-radius: 6px;
+  padding: 0 10px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font-size: var(--font-size-compact);
+  font-weight: 750;
+  line-height: 1.2;
+  text-align: left;
+}
+
+:deep(.remote-branch-dropdown-menu .app-dropdown-option:hover:not(:disabled)),
+:deep(.remote-branch-dropdown-menu .app-dropdown-option.highlighted) {
+  border-color: transparent;
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+:deep(.remote-branch-dropdown-menu .app-dropdown-option.active) {
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
 .branch-menu-close {
   width: 30px;
   min-height: 30px;

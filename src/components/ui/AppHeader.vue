@@ -64,3 +64,46 @@ defineEmits<{
     <slot name="repository-controls"></slot>
   </header>
 </template>
+
+<style scoped>
+.top-bar {
+  min-height: var(--top-bar-height);
+  border-bottom: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--app-bg) 88%, var(--surface));
+  box-shadow: none;
+}
+
+:global(:root[data-platform="mac"]) .top-bar {
+  min-height: 92px;
+}
+
+.brand-heading {
+  gap: 10px;
+}
+
+.brand-heading img {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.app-context-line {
+  margin-top: 0;
+  font-size: var(--font-size-compact);
+}
+
+h1 {
+  font-size: var(--font-size-display);
+}
+
+.state-chip {
+  height: 22px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 0.72rem;
+  font-weight: 720;
+  line-height: 22px;
+  vertical-align: middle;
+}
+</style>

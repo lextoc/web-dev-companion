@@ -1262,6 +1262,17 @@ onBeforeUnmount(() => {
   -webkit-app-region: no-drag;
 }
 
+.detail-command-bar {
+  border-top: 1px solid var(--border-soft);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-subtle) 82%, var(--app-bg)),
+      color-mix(in srgb, var(--surface-subtle) 62%, var(--app-bg))
+    );
+  box-shadow: none;
+}
+
 .detail-dashboard-button {
   display: inline-flex;
   min-height: 34px;
@@ -2229,14 +2240,36 @@ button.secondary.active .branch-filter-count {
 }
 
 :deep(.remote-branch-dropdown-menu .app-dropdown-option) {
+  display: flex;
+  width: 100%;
   min-height: 34px;
+  align-items: center;
+  justify-content: flex-start;
   overflow: hidden;
+  border-color: transparent;
+  border-radius: 6px;
   padding: 0 10px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
   font-size: var(--font-size-compact);
-  font-weight: 800;
-  line-height: 32px;
+  font-weight: 750;
+  line-height: 1.2;
+  text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+:deep(.remote-branch-dropdown-menu .app-dropdown-option:hover:not(:disabled)),
+:deep(.remote-branch-dropdown-menu .app-dropdown-option.highlighted) {
+  border-color: transparent;
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+:deep(.remote-branch-dropdown-menu .app-dropdown-option.active) {
+  background: var(--success-soft);
+  color: var(--success-text);
 }
 .status-feedback,
 .branch-feedback {

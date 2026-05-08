@@ -563,4 +563,164 @@ defineEmits<{
 .branch-pill.script-count::before {
   background: var(--info-text);
 }
+
+.repo-card {
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 86%, var(--app-bg)),
+      color-mix(in srgb, var(--surface-soft) 58%, var(--surface))
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 42%, transparent),
+    0 1px 2px rgba(23, 32, 42, 0.08);
+}
+
+.repo-card:hover,
+.repo-card:focus-within {
+  border-color: var(--brand);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 92%, var(--app-bg)),
+      color-mix(in srgb, var(--surface-hover) 42%, var(--surface))
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 44%, transparent),
+    0 8px 18px rgba(23, 32, 42, 0.12);
+}
+
+.repo-card.has-changes {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--warning-soft) 50%, transparent),
+      transparent 46%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 86%, var(--app-bg)),
+      color-mix(in srgb, var(--surface-soft) 58%, var(--surface))
+    );
+}
+
+.repo-card.pinned {
+  border-width: 2px;
+  border-color: var(--success-text);
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--success-soft) 42%, transparent),
+      transparent 46%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 86%, var(--app-bg)),
+      color-mix(in srgb, var(--surface-soft) 58%, var(--surface))
+    );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--success-text) 20%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 42%, transparent),
+    0 1px 2px rgba(23, 32, 42, 0.08);
+}
+
+.repo-card.pinned .repo-quick-actions {
+  border-left-color: color-mix(in srgb, var(--border-soft) 82%, var(--success-text));
+}
+
+.repo-card.pinned.has-changes {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--warning-soft) 50%, transparent),
+      transparent 46%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 86%, var(--app-bg)),
+      color-mix(in srgb, var(--surface-soft) 58%, var(--surface))
+    );
+}
+
+.repo-card.pinned:hover,
+.repo-card.pinned:focus-within {
+  border-color: var(--success-text);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--success-text) 24%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 44%, transparent),
+    0 8px 18px rgba(23, 32, 42, 0.12);
+}
+
+.repo-card.has-error {
+  border-color: color-mix(in srgb, var(--danger-text) 22%, var(--border));
+  background: color-mix(in srgb, var(--danger-soft) 32%, transparent);
+  box-shadow: none;
+}
+
+.repo-card.has-error:hover,
+.repo-card.has-error:focus-within {
+  border-color: var(--danger-text);
+}
+
+.repo-card-main {
+  min-height: 82px;
+  border-radius: 0;
+  gap: 6px;
+  padding: 10px 12px 10px 16px;
+}
+
+.repo-card-main:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--surface-hover) 68%, transparent);
+  box-shadow: none;
+}
+
+.repo-quick-actions {
+  gap: 6px;
+  border-left: 1px solid color-mix(in srgb, var(--border-soft) 62%, transparent);
+  padding: 0 12px 0 6px;
+  background: color-mix(in srgb, var(--surface-soft) 38%, transparent);
+  box-shadow: none;
+}
+
+.repo-quick-actions > button,
+.repo-quick-actions :deep(.action-menu-trigger) {
+  min-height: 32px;
+  padding: 0 9px;
+}
+
+.repo-quick-actions .repo-icon-action,
+.repo-quick-actions :deep(.action-menu-trigger) {
+  padding: 0;
+}
+
+.repo-card-badges {
+  gap: 5px;
+  max-width: min(360px, 44%);
+}
+
+.repo-path,
+.last-commit {
+  overflow: hidden;
+  font-size: var(--font-size-compact);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.branch-pill {
+  height: 22px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 0.72rem;
+  font-weight: 720;
+  line-height: 22px;
+  vertical-align: middle;
+}
+
+@media (max-width: 1180px) {
+  .repo-quick-actions {
+    border-top: 1px solid color-mix(in srgb, var(--border-soft) 62%, transparent);
+    border-left: 0;
+  }
+}
 </style>

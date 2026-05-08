@@ -307,7 +307,7 @@ onBeforeUnmount(() => {
 <style scoped>
   .dashboard {
     display: grid;
-    gap: 22px;
+    gap: 16px;
   }
 
   .add-repo {
@@ -316,7 +316,7 @@ onBeforeUnmount(() => {
     border: 0;
     border-radius: 8px;
     padding: 12px;
-    background: var(--surface);
+    background: color-mix(in srgb, var(--surface) 68%, var(--app-bg));
     box-shadow: none;
   }
 
@@ -495,7 +495,7 @@ onBeforeUnmount(() => {
 
   .repo-sections {
     display: grid;
-    gap: 16px;
+    gap: 14px;
   }
 
   .repo-section {

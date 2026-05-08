@@ -971,6 +971,15 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.app-shell {
+  --top-bar-gap: 0px;
+  --top-bar-height: 72px;
+}
+
+:global(:root[data-platform="mac"]) .app-shell {
+  --top-bar-height: 92px;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;

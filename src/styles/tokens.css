@@ -175,3 +175,38 @@
   --ansi-bright-black: #9aa9b5;
   --shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
 }
+
+:root {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter,
+    sans-serif;
+  --app-bg: #e6ebef;
+  --surface: #fbfcfd;
+  --surface-soft: #eef3f6;
+  --surface-subtle: #dfe7ed;
+  --surface-hover: #edf4f2;
+  --border: #c1ccd5;
+  --border-control: #aebbc6;
+  --shadow: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --app-bg: #0f1418;
+    --surface: #161d23;
+    --surface-soft: #192127;
+    --surface-subtle: #232d35;
+    --surface-hover: #1d2c2b;
+    --border: #2d3b45;
+    --border-control: #40505c;
+  }
+}
+
+:root[data-theme="dark"] {
+  --app-bg: #0f1418;
+  --surface: #161d23;
+  --surface-soft: #192127;
+  --surface-subtle: #232d35;
+  --surface-hover: #1d2c2b;
+  --border: #2d3b45;
+  --border-control: #40505c;
+}

@@ -936,7 +936,7 @@ function triggerCommitConfetti() {
 <style scoped>
 .detail-view {
   display: grid;
-  gap: 22px;
+  gap: 16px;
 }
 
 .empty-state {
@@ -947,6 +947,7 @@ function triggerCommitConfetti() {
   border-radius: 8px;
   padding: 40px 20px;
   color: var(--muted);
+  box-shadow: none;
   text-align: center;
 }
 
@@ -2298,5 +2299,95 @@ pre {
 .status-action.pending,
 .branch-action.pending {
   border-color: var(--focus);
+}
+
+.detail-panel {
+  border: 0;
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
+  box-shadow: none;
+}
+
+.commit-panel,
+.commit-panel.ready {
+  border: 0;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--brand) 7%, transparent),
+      transparent 46%
+    ),
+    color-mix(in srgb, var(--surface-soft) 78%, var(--app-bg));
+  box-shadow: none;
+}
+
+.commit-form,
+.commit-form-wide,
+.commit-queue,
+.clean-state,
+.git-branches,
+.git-status-group,
+.status-counts div,
+.staged-preview li {
+  border: 0;
+  background: color-mix(in srgb, var(--surface) 68%, var(--app-bg));
+  box-shadow: none;
+}
+
+.commit-panel.ready .commit-form-wide {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--success-soft) 74%, transparent),
+      color-mix(in srgb, var(--surface) 72%, transparent)
+    );
+}
+
+.commit-panel.ready .commit-queue,
+.commit-panel.ready .staged-preview li,
+.commit-panel.ready .commit-form-wide,
+.git-status-group,
+.git-status-group.staged,
+.git-status-group.unstaged,
+.git-status-group.untracked,
+.git-status-group.conflicted,
+.git-branch-list li.current {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.status-counts div.active,
+.status-counts div.staged.active {
+  background: color-mix(in srgb, var(--success-soft) 74%, var(--surface));
+}
+
+.status-counts div.unstaged.active {
+  background: color-mix(in srgb, var(--warning-soft) 78%, var(--surface));
+}
+
+.status-counts div.untracked.active {
+  background: color-mix(in srgb, var(--info-soft) 78%, var(--surface));
+}
+
+.status-counts div.conflicted.active {
+  background: color-mix(in srgb, var(--danger-soft) 78%, var(--surface));
+}
+
+.clean-state,
+.status-counts div,
+.staged-preview li {
+  background: color-mix(in srgb, var(--surface-soft) 46%, var(--surface));
+}
+
+.status-pill,
+.health-pill,
+.health-running,
+.panel-count {
+  height: 22px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 0.72rem;
+  font-weight: 720;
+  line-height: 22px;
+  vertical-align: middle;
 }
 </style>

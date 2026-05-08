@@ -683,6 +683,30 @@ watch(
   color: var(--ansi-bright-black);
 }
 
+.scripts-panel .script-row,
+.scripts-panel .script-terminal {
+  border: 0;
+  box-shadow: none;
+}
+
+.scripts-panel .script-row {
+  background: color-mix(in srgb, var(--surface) 68%, var(--app-bg));
+}
+
+.scripts-panel .script-row:hover:not(:disabled),
+.scripts-panel .script-terminal:hover {
+  background: color-mix(in srgb, var(--surface-hover) 58%, transparent);
+}
+
+.terminal-stop:not(.secondary) {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--danger) 90%, #fff),
+      var(--danger)
+    );
+}
+
 @media (max-width: 760px) {
   .script-list {
     grid-template-columns: 1fr;

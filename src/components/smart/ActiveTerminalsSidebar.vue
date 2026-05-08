@@ -886,4 +886,58 @@ function formatCommandTime(startedAt: string) {
 .git-command-empty {
   color: var(--git-command-muted);
 }
+
+.active-terminals {
+  border: 0;
+  border-left: 1px solid color-mix(in srgb, var(--border-soft) 78%, transparent);
+  background: color-mix(in srgb, var(--surface) 80%, var(--app-bg));
+  box-shadow: none;
+}
+
+.active-terminals-heading,
+.active-terminal-list,
+.active-terminal-item {
+  border: 0;
+  box-shadow: none;
+}
+
+.active-terminals-heading,
+.active-terminal-item {
+  background: transparent;
+}
+
+.active-terminal-item.pinned,
+.active-terminal-item:hover {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.active-terminal-item:hover {
+  background: color-mix(in srgb, var(--surface-hover) 68%, transparent);
+}
+
+.active-terminal-item + .active-terminal-item {
+  border-top: 1px solid color-mix(in srgb, var(--border-soft) 54%, transparent);
+}
+
+.active-terminal-item p {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.active-terminal-status {
+  height: 22px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 0.72rem;
+  font-weight: 720;
+  line-height: 22px;
+  vertical-align: middle;
+}
+
+@media (max-width: 1180px) {
+  .active-terminals {
+    border-left: 0;
+  }
+}
 </style>

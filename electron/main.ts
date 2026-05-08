@@ -72,6 +72,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let win: BrowserWindowType | null
 let lastRefreshCommandAt = 0
 let isFlushingAppStateBeforeQuit = false
+let isExitingAfterSignal = false
 
 function appStateFilePath() {
   return path.join(app.getPath('userData'), appStateFileName)
@@ -496,6 +497,27 @@ app.on('before-quit', (event) => {
       app.quit()
     })
 })
+
+function flushAppStateAndExitAfterSignal(signal: NodeJS.Signals) {
+  if (isExitingAfterSignal) {
+    return
+  }
+
+  isExitingAfterSignal = true
+  isFlushingAppStateBeforeQuit = true
+  scriptRunner.stopAllScripts()
+
+  void appStateService.flush()
+    .catch((error) => {
+      console.error(`Could not flush app state after ${signal}.`, error)
+    })
+    .finally(() => {
+      app.exit(0)
+    })
+}
+
+process.once('SIGINT', flushAppStateAndExitAfterSignal)
+process.once('SIGTERM', flushAppStateAndExitAfterSignal)
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {

@@ -10,6 +10,20 @@ export function scriptReferenceKey(script: Pick<PinnedScript, 'repoPath' | 'scri
   return `${script.repoPath}${SCRIPT_REFERENCE_SEPARATOR}${script.scriptName}`
 }
 
+function serializablePinnedScript(script: PinnedScript): PinnedScript {
+  return {
+    repoPath: script.repoPath,
+    repoName: script.repoName,
+    scriptName: script.scriptName,
+    command: script.command,
+    packageManager: script.packageManager,
+  }
+}
+
+function serializablePinnedScripts(scripts: PinnedScript[]) {
+  return scripts.map(serializablePinnedScript)
+}
+
 interface UsePersistedAppStateOptions {
   repositories: Ref<RepositorySummary[]>
   selectedDetails: Ref<RepositoryDetails | null>
@@ -46,14 +60,34 @@ export function usePersistedAppState({
     repositoryBranchLinks.value = persistedState.repositoryBranchLinks
   }
 
-  function savePinnedRepositories(repoPaths: string[]) {
-    pinnedRepositoryPaths.value = repoPaths
-    void window.appState.savePinnedRepositoryPaths(repoPaths).catch(showError)
+  async function savePinnedRepositories(repoPaths: string[]) {
+    const previousRepoPaths = [...pinnedRepositoryPaths.value]
+    const savedRepoPaths = [...repoPaths]
+    pinnedRepositoryPaths.value = savedRepoPaths
+
+    try {
+      pinnedRepositoryPaths.value = await window.appState.savePinnedRepositoryPaths(savedRepoPaths)
+      return true
+    } catch (error) {
+      pinnedRepositoryPaths.value = previousRepoPaths
+      showError(error)
+      return false
+    }
   }
 
-  function savePinnedScripts(scripts: PinnedScript[]) {
-    pinnedScripts.value = scripts
-    void window.appState.savePinnedScripts(scripts).catch(showError)
+  async function savePinnedScripts(scripts: PinnedScript[]) {
+    const previousScripts = serializablePinnedScripts(pinnedScripts.value)
+    const savedScripts = serializablePinnedScripts(scripts)
+    pinnedScripts.value = savedScripts
+
+    try {
+      pinnedScripts.value = await window.appState.savePinnedScripts(savedScripts)
+      return true
+    } catch (error) {
+      pinnedScripts.value = previousScripts
+      showError(error)
+      return false
+    }
   }
 
   function saveRecentCommands(commandIds: string[]) {
@@ -106,20 +140,24 @@ export function usePersistedAppState({
     ])
   }
 
-  function togglePinnedRepository(repoPath: string) {
+  async function togglePinnedRepository(repoPath: string) {
     const repository = repositories.value.find((savedRepository) => savedRepository.path === repoPath)
     const repositoryName = repository?.name ?? repoPath
     const isPinned = pinnedRepositoryPaths.value.includes(repoPath)
 
-    savePinnedRepositories(
+    const didSave = await savePinnedRepositories(
       isPinned
         ? pinnedRepositoryPaths.value.filter((pinnedPath) => pinnedPath !== repoPath)
         : [repoPath, ...pinnedRepositoryPaths.value],
     )
+    if (!didSave) {
+      return
+    }
+
     showAppFeedback(`${isPinned ? 'Unpinned' : 'Pinned'} ${repositoryName}.`, 'info')
   }
 
-  function togglePinnedScript(scriptName: string) {
+  async function togglePinnedScript(scriptName: string) {
     if (!selectedDetails.value) {
       return
     }
@@ -140,23 +178,31 @@ export function usePersistedAppState({
     const key = scriptReferenceKey(pinnedScript)
     const isPinned = pinnedScripts.value.some((script) => scriptReferenceKey(script) === key)
 
-    savePinnedScripts(
+    const didSave = await savePinnedScripts(
       isPinned
         ? pinnedScripts.value.filter((script) => scriptReferenceKey(script) !== key)
         : [pinnedScript, ...pinnedScripts.value],
     )
+    if (!didSave) {
+      return
+    }
+
     showAppFeedback(`${isPinned ? 'Unpinned' : 'Pinned'} ${scriptName}.`, 'info')
   }
 
-  function unpinScript(scriptToUnpin: PinnedScript) {
-    savePinnedScripts(
+  async function unpinScript(scriptToUnpin: PinnedScript) {
+    const didSave = await savePinnedScripts(
       pinnedScripts.value.filter((script) => scriptReferenceKey(script) !== scriptReferenceKey(scriptToUnpin)),
     )
+    if (!didSave) {
+      return
+    }
+
     showAppFeedback(`Unpinned ${scriptToUnpin.scriptName}.`, 'info')
   }
 
-  function removePinnedScriptsForRepository(repoPath: string) {
-    savePinnedScripts(pinnedScripts.value.filter((script) => script.repoPath !== repoPath))
+  async function removePinnedScriptsForRepository(repoPath: string) {
+    await savePinnedScripts(pinnedScripts.value.filter((script) => script.repoPath !== repoPath))
   }
 
   return {

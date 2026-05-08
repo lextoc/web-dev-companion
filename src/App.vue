@@ -384,7 +384,7 @@ async function removeRepository(repoPath: string) {
 
   try {
     repositories.value = await window.repositories.remove(repoPath)
-    removePinnedScriptsForRepository(repoPath)
+    await removePinnedScriptsForRepository(repoPath)
 
     if (selectedPath.value === repoPath) {
       selectedPath.value = null

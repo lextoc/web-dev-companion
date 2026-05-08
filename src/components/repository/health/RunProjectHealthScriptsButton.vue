@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { ProjectHealth, ScriptTerminal } from "../../repositories";
+import type { ProjectHealth, ScriptTerminal } from "../../../repositories";
 
 const props = defineProps<{
   health: ProjectHealth | null;

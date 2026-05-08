@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { parseDiffOutput } from "../../output-formatting";
-import type { CommitChangedFile, CommitDetails } from "../../repositories";
+import { parseDiffOutput } from "../../../output-formatting";
+import type { CommitChangedFile, CommitDetails } from "../../../repositories";
 
 const props = defineProps<{
   commitDetails: CommitDetails | null;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { RepositoryDetails } from "../../repositories";
+import type { RepositoryDetails } from "../../../repositories";
 
 const props = defineProps<{
   commitDetailsLoadingHash: string | null;

@@ -10,12 +10,13 @@ import type {
   ScriptTerminal,
   StatusFileDiff,
   StatusFileDiffType,
-} from "../repositories";
-import RepositoryCommitDetailsModal from "./repository-detail/RepositoryCommitDetailsModal.vue";
-import RepositoryGitLogPanel from "./repository-detail/RepositoryGitLogPanel.vue";
-import RepositoryStatusDiffModal from "./repository-detail/RepositoryStatusDiffModal.vue";
-import { NpmScriptsPanel, ProjectHealthPanel, RunProjectHealthScriptsButton } from "./smart";
-import { AppTabs, type AppTabItem } from "./ui";
+} from "../../repositories";
+import RepositoryCommitDetailsModal from "./detail/RepositoryCommitDetailsModal.vue";
+import RepositoryGitLogPanel from "./detail/RepositoryGitLogPanel.vue";
+import RepositoryStatusDiffModal from "./detail/RepositoryStatusDiffModal.vue";
+import { ProjectHealthPanel, RunProjectHealthScriptsButton } from "./health";
+import { NpmScriptsPanel } from "./scripts";
+import { AppTabs, type AppTabItem } from "../ui";
 
 type RepositoryDetailTab = "git" | "log" | "health" | "scripts";
 

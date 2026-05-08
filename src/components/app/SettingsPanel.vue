@@ -5,8 +5,8 @@ import {
   DEFAULT_APP_SETTINGS,
   type AppSettings,
   type ThemeMode,
-} from '../settings'
-import { AppButton, AppCheckbox, AppDropdown } from './ui'
+} from '../../settings'
+import { AppButton, AppCheckbox, AppDropdown } from '../ui'
 
 const props = defineProps<{
   settings: AppSettings

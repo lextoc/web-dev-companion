@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
-import { parseAnsiOutput } from '../output-formatting'
-import type { ScriptTerminal } from '../repositories'
-import { AppButton } from './ui'
+import { parseAnsiOutput } from '../../output-formatting'
+import type { ScriptTerminal } from '../../repositories'
+import { AppButton } from '../ui'
 
 const props = defineProps<{
   terminal: ScriptTerminal

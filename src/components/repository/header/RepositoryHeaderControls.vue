@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
-import type { RepositoryBranchLink } from "../../app-state";
-import type { MergeBranchRequest, MergeLinkedSubmoduleBranchRequest, RepositoryDetails } from "../../repositories";
-import { AppActionMenu, AppButton, AppDropdown, AppMenuItem } from "../ui";
-import RepositoryBranchMenuTrigger from "./repository-header/RepositoryBranchMenuTrigger.vue";
-import RepositoryHeaderStateSummary from "./repository-header/RepositoryHeaderStateSummary.vue";
-import RepositoryQuickActions from "./repository-header/RepositoryQuickActions.vue";
-import RepositoryRefreshButton from "./repository-header/RepositoryRefreshButton.vue";
-import RepositorySubmoduleLinksModal from "./repository-header/RepositorySubmoduleLinksModal.vue";
+import type { RepositoryBranchLink } from "../../../app-state";
+import type { MergeBranchRequest, MergeLinkedSubmoduleBranchRequest, RepositoryDetails } from "../../../repositories";
+import { AppActionMenu, AppButton, AppDropdown, AppMenuItem } from "../../ui";
+import RepositoryBranchMenuTrigger from "./RepositoryBranchMenuTrigger.vue";
+import RepositoryHeaderStateSummary from "./RepositoryHeaderStateSummary.vue";
+import RepositoryQuickActions from "./RepositoryQuickActions.vue";
+import RepositoryRefreshButton from "./RepositoryRefreshButton.vue";
+import RepositorySubmoduleLinksModal from "./RepositorySubmoduleLinksModal.vue";
 import {
   type BranchFilterKey,
   branchCheckoutDisabledReason,
@@ -31,7 +31,7 @@ import {
   submoduleBranchCheckoutDisabledReason as getSubmoduleBranchCheckoutDisabledReason,
   submoduleBranchSyncDisabledReason,
   submoduleBranchSyncTitle as getSubmoduleBranchSyncTitle,
-} from "./repository-header/branchUtils";
+} from "./branchUtils";
 
 const props = defineProps<{
   selectedDetails: RepositoryDetails | null;

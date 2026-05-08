@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import type { RepositorySummary } from '../repositories'
-import { AppDropdown, AppIcon } from './ui'
+import type { RepositorySummary } from '../../repositories'
+import { AppDropdown, AppIcon } from '../ui'
 import RepositoryCard from './RepositoryCard.vue'
 
 const props = defineProps<{

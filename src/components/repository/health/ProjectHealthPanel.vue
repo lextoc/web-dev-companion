@@ -5,7 +5,7 @@ import type {
   ProjectHealthStatus,
   ProjectScriptCheck,
   ScriptTerminal,
-} from "../../repositories";
+} from "../../../repositories";
 import RunProjectHealthScriptsButton from "./RunProjectHealthScriptsButton.vue";
 
 const props = defineProps<{

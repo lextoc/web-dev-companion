@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import RepositoryDashboard from './components/RepositoryDashboard.vue'
-import RepositoryDetail from './components/RepositoryDetail.vue'
-import SettingsPanel from './components/SettingsPanel.vue'
-import TerminalModal from './components/TerminalModal.vue'
-import { ActiveTerminalsSidebar, CommandPalette, KeybindingsSheet, RepositoryHeaderControls } from './components/smart'
+import { ActiveTerminalsSidebar, CommandPalette, KeybindingsSheet, SettingsPanel, TerminalModal } from './components/app'
+import { RepositoryDashboard, RepositoryDetail } from './components/repository'
+import { RepositoryHeaderControls } from './components/repository/header'
 import { AppButton, AppHeader } from './components/ui'
 import { useCommandPalette } from './composables/useCommandPalette'
 import { useConfirmations } from './composables/useConfirmations'

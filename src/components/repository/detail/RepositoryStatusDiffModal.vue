@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { parseDiffOutput } from "../../output-formatting";
-import type { StatusFileDiff } from "../../repositories";
+import { parseDiffOutput } from "../../../output-formatting";
+import type { StatusFileDiff } from "../../../repositories";
 
 const props = defineProps<{
   error: string | null;

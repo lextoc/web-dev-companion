@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { RepositorySummary } from '../repositories'
-import { AppActionMenu, AppButton, AppIcon, AppMenuItem } from './ui'
+import type { RepositorySummary } from '../../repositories'
+import { AppActionMenu, AppButton, AppIcon, AppMenuItem } from '../ui'
 
 defineProps<{
   repository: RepositorySummary

@@ -10,6 +10,7 @@ describe("AppHeader", () => {
         activeRepositoryPath: "/Users/alexanderclaes/web-dev-companion",
         activeScriptCount: 2,
         commandShortcutLabel: "Cmd+K",
+        settingsShortcutLabel: "Cmd+,",
       },
       slots: {
         "repository-controls": '<nav data-test="repository-controls">Controls</nav>',
@@ -24,7 +25,10 @@ describe("AppHeader", () => {
     );
     expect(wrapper.get(".state-chip.warning").text()).toBe("2 active");
     expect(wrapper.get(".command-palette-trigger").text()).toContain("Command");
-    expect(wrapper.get("kbd").text()).toBe("Cmd+K");
+    expect(wrapper.findAll("kbd").map((shortcut) => shortcut.text())).toEqual([
+      "Cmd+K",
+      "Cmd+,",
+    ]);
     expect(wrapper.get('[data-test="repository-controls"]').text()).toBe(
       "Controls",
     );
@@ -43,6 +47,7 @@ describe("AppHeader", () => {
       props: {
         activeScriptCount: 0,
         commandShortcutLabel: "Ctrl+K",
+        settingsShortcutLabel: "Ctrl+,",
       },
     });
 

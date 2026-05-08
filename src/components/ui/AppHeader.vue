@@ -6,6 +6,7 @@ defineProps<{
   activeRepositoryPath?: string
   activeScriptCount: number
   commandShortcutLabel: string
+  settingsShortcutLabel: string
 }>()
 
 defineEmits<{
@@ -37,7 +38,7 @@ defineEmits<{
         <AppButton
           variant="secondary"
           icon="command"
-          class="command-palette-trigger"
+          class="top-action-button command-palette-trigger"
           title="Open command palette"
           @click="$emit('commandPalette')"
         >
@@ -46,8 +47,16 @@ defineEmits<{
             <kbd>{{ commandShortcutLabel }}</kbd>
           </template>
         </AppButton>
-        <AppButton variant="secondary" @click="$emit('settings')">
+        <AppButton
+          variant="secondary"
+          class="top-action-button"
+          title="Open settings"
+          @click="$emit('settings')"
+        >
           Settings
+          <template #trailing>
+            <kbd>{{ settingsShortcutLabel }}</kbd>
+          </template>
         </AppButton>
       </div>
     </div>

@@ -236,6 +236,9 @@ const lastRepositoryRefreshLabel = computed(() => {
 const commandShortcutLabel = computed(() =>
   isMacPlatform.value ? '⌘K' : 'Ctrl K',
 )
+const settingsShortcutLabel = computed(() =>
+  isMacPlatform.value ? '⌘,' : 'Ctrl ,',
+)
 const dashboardShortcutLabel = computed(() =>
   isMacPlatform.value ? '⌘1' : 'Ctrl 1',
 )
@@ -671,6 +674,7 @@ onBeforeUnmount(() => {
       :active-repository-path="selectedDetails?.path ?? selectedSummary?.path"
       :active-script-count="activeTerminals.length"
       :command-shortcut-label="commandShortcutLabel"
+      :settings-shortcut-label="settingsShortcutLabel"
       @command-palette="openCommandPalette"
       @settings="isSettingsOpen = true"
     >

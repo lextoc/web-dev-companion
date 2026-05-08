@@ -227,3 +227,180 @@ function runItemFromPointer(event: PointerEvent, item: CommandPaletteItem) {
     </section>
   </div>
 </template>
+
+<style scoped>
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 8, 12, 0.62);
+}
+
+.command-palette-backdrop {
+  z-index: 45;
+  align-items: start;
+  padding-top: max(84px, 10vh);
+}
+
+.command-palette {
+  display: grid;
+  width: min(720px, 100%);
+  max-height: min(680px, calc(100vh - 120px));
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 0;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--app-bg));
+  color: var(--text);
+  box-shadow: none;
+}
+
+.command-palette-input-row {
+  display: grid;
+  gap: 8px;
+  border-bottom: 0;
+  padding: 14px;
+}
+
+.command-palette-input-row label {
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.command-palette-input-row input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--border-control);
+  border-radius: 8px;
+  padding: 0 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--font-size-title);
+}
+
+.command-palette-list {
+  display: grid;
+  gap: 10px;
+  overflow: auto;
+  margin: 0;
+  padding: 10px;
+}
+
+.command-palette-group {
+  display: grid;
+  gap: 4px;
+}
+
+.command-palette-group h3 {
+  margin: 0;
+  padding: 5px 8px 3px;
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.command-palette-group ol {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.command-palette-item {
+  display: grid;
+  width: 100%;
+  min-height: 58px;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border-color: transparent;
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.command-palette-item:hover:not(:disabled),
+.command-palette-item.active {
+  border-color: var(--brand-ring);
+  background: color-mix(in srgb, var(--surface-hover) 78%, var(--surface));
+  color: var(--text);
+}
+
+.command-palette-item-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+}
+
+.command-palette-item-icon :deep(.app-icon) {
+  width: 16px;
+  height: 16px;
+}
+
+.command-palette-item.active .command-palette-item-icon,
+.command-palette-item:hover:not(:disabled) .command-palette-item-icon {
+  background: var(--success-soft);
+  color: var(--brand-text-hover);
+}
+
+.command-palette-item-main {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.command-palette-item-main strong,
+.command-palette-item-main span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-palette-item-main span {
+  color: var(--muted);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+}
+
+.command-palette-item-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.command-palette-item-side kbd {
+  border: 1px solid var(--border-soft);
+  border-radius: 5px;
+  padding: 1px 5px;
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
+  font: inherit;
+  text-transform: none;
+}
+
+.command-palette-empty {
+  display: grid;
+  min-height: 160px;
+  place-items: center;
+  padding: 20px;
+  color: var(--muted);
+  font-weight: 800;
+}
+</style>

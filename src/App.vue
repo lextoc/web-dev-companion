@@ -969,3 +969,199 @@ onBeforeUnmount(() => {
     </div>
   </main>
 </template>
+
+<style scoped>
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 8, 12, 0.62);
+}
+
+.confirmation-backdrop {
+  z-index: 90;
+}
+
+.confirm-dialog {
+  display: grid;
+  width: min(440px, 100%);
+  gap: 14px;
+  border: 0;
+  border-radius: 8px;
+  padding: 18px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.confirm-dialog h2 {
+  margin: 0;
+  font-size: var(--font-size-title);
+}
+
+.confirm-dialog p {
+  margin-bottom: 0;
+  color: var(--muted-strong);
+}
+
+.confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.toast-stack {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 40;
+  display: grid;
+  align-items: end;
+  gap: 10px;
+  width: min(460px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.toast-message {
+  --toast-accent: var(--muted-strong);
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 54px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--toast-accent) 24%, var(--border));
+  border-radius: 8px;
+  padding: 12px 12px 12px 14px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 96%, #fff),
+      color-mix(in srgb, var(--surface) 86%, var(--surface-soft))
+    );
+  color: var(--text);
+  font-size: var(--font-size-base);
+  font-weight: 760;
+  line-height: 1.35;
+  box-shadow:
+    0 18px 40px rgba(7, 13, 19, 0.18),
+    0 3px 10px rgba(7, 13, 19, 0.12),
+    inset 0 1px 0 color-mix(in srgb, #fff 52%, transparent);
+  pointer-events: auto;
+}
+
+.toast-message::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: var(--toast-accent);
+  content: "";
+}
+
+.toast-message > span:not(.toast-icon) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.toast-message.success {
+  --toast-accent: var(--success-text);
+}
+
+.toast-message.info {
+  --toast-accent: var(--info-text);
+}
+
+.toast-message.error {
+  --toast-accent: var(--danger-text);
+}
+
+.toast-close {
+  display: grid;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  flex: 0 0 auto;
+  margin-left: auto;
+  border-color: transparent;
+  place-items: center;
+  padding: 0;
+  background: color-mix(in srgb, var(--surface-soft) 74%, transparent);
+  box-shadow: none;
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  line-height: 1;
+}
+
+.toast-close :deep(.button-icon) {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+
+.toast-close:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--toast-accent) 42%, transparent);
+  background: color-mix(in srgb, var(--toast-accent) 12%, var(--surface));
+  color: var(--toast-accent);
+}
+
+.toast-icon {
+  position: relative;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--toast-accent) 42%, transparent);
+  background: color-mix(in srgb, var(--toast-accent) 14%, var(--surface));
+  color: var(--toast-accent);
+  opacity: 1;
+  place-items: center;
+}
+
+.toast-icon::before {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+  content: "";
+}
+
+.toast-message.success .toast-icon::before {
+  width: 10px;
+  height: 6px;
+  border: 0;
+  border-bottom: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+.toast-message.error .toast-icon::before {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  content: "!";
+  font-size: var(--font-size-base);
+  font-weight: 900;
+  line-height: 1;
+}
+
+@media (max-width: 760px) {
+  .toast-stack {
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    width: auto;
+  }
+}
+</style>

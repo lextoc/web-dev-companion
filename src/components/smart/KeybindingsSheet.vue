@@ -86,3 +86,149 @@ nextTick(() => {
     </section>
   </div>
 </template>
+
+<style scoped>
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 8, 12, 0.62);
+}
+
+.keybindings-backdrop {
+  z-index: 50;
+}
+
+.keybindings-sheet {
+  display: grid;
+  width: min(760px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 0;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.keybindings-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-soft);
+  padding: 16px;
+}
+
+.keybindings-header div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.keybindings-header span {
+  color: var(--brand);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.keybindings-header h2 {
+  margin: 0;
+  font-size: var(--font-size-title);
+}
+
+.keybindings-list {
+  display: grid;
+  gap: 16px;
+  overflow: auto;
+  padding: 14px;
+}
+
+.keybindings-group {
+  display: grid;
+  gap: 8px;
+}
+
+.keybindings-group h3 {
+  margin: 0;
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.keybindings-group ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.keybindings-group li {
+  display: grid;
+  min-height: 54px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: color-mix(in srgb, var(--surface-soft) 68%, transparent);
+}
+
+.keybinding-main {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.keybinding-main strong,
+.keybinding-main small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.keybinding-main small {
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  font-weight: 760;
+}
+
+.keybinding-keys {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 6px;
+}
+
+.keybinding-keys kbd {
+  min-width: 32px;
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  padding: 3px 7px;
+  background: var(--surface);
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .keybindings-group li {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .keybinding-keys {
+    justify-content: start;
+  }
+}
+</style>

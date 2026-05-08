@@ -121,3 +121,110 @@ const terminalStatusLabel = computed(() => {
     </section>
   </div>
 </template>
+
+<style scoped>
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 8, 12, 0.62);
+}
+
+.terminal-modal-backdrop {
+  z-index: 30;
+}
+
+.terminal-modal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(1040px, 100%);
+  height: min(760px, calc(100vh - 48px));
+  gap: 12px;
+  border: 0;
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--terminal-panel);
+  color: var(--terminal-text);
+  box-shadow: none;
+}
+
+.terminal-modal-header {
+  display: flex;
+  min-width: 0;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.terminal-modal-header div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.terminal-modal-header p,
+.terminal-modal-header h2 {
+  margin: 0;
+}
+
+.terminal-modal-header p {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--font-size-base);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-modal-header h2 {
+  overflow: hidden;
+  color: var(--terminal-title);
+  font-size: var(--font-size-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-modal-header code {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--font-size-base);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-modal pre {
+  min-height: 0;
+  overflow: auto;
+  border: 0;
+  border-radius: 8px;
+  margin: 0;
+  padding: 12px;
+  background: var(--terminal-bg);
+  color: var(--terminal-text);
+  font-size: var(--font-size-base);
+  line-height: 1.55;
+}
+
+.terminal-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 760px) {
+  .terminal-modal {
+    height: calc(100vh - 32px);
+    padding: 12px;
+  }
+
+  .terminal-modal-header,
+  .terminal-modal-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+</style>

@@ -86,6 +86,16 @@ defineEmits<{
 </template>
 
 <style scoped>
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 8, 12, 0.62);
+}
+
 .submodule-link-modal-backdrop {
   z-index: 62;
   background: rgba(4, 8, 12, 0.42);

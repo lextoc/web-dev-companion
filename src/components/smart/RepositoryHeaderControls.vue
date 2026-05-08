@@ -1300,6 +1300,17 @@ onBeforeUnmount(() => {
   position: relative;
   min-width: 0;
 }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 8, 12, 0.62);
+}
+
 .branch-menu-modal-backdrop {
   z-index: 52;
   align-items: start;

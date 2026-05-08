@@ -107,3 +107,148 @@ const autoRefreshOptions = AUTO_REFRESH_INTERVAL_OPTIONS.map((option) => ({ ...o
     </section>
   </div>
 </template>
+
+<style scoped>
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 8, 12, 0.62);
+}
+
+.settings-dialog {
+  display: grid;
+  width: min(520px, 100%);
+  gap: 16px;
+  border: 0;
+  border-radius: 8px;
+  padding: 18px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.settings-dialog h2 {
+  margin: 0;
+  font-size: var(--font-size-title);
+}
+
+.settings-dialog label {
+  display: grid;
+  gap: 6px;
+}
+
+.settings-dialog :deep(.app-checkbox) {
+  position: relative;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--surface-soft);
+}
+
+.settings-dialog :deep(.commit-celebrations-setting) {
+  isolation: isolate;
+  overflow: hidden;
+  background: transparent;
+}
+
+.settings-dialog :deep(.commit-celebrations-setting)::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    #ff4f8b 0%,
+    #ff4f8b 10%,
+    #ff8f3d 18%,
+    #ffdd4d 28%,
+    #59d66f 40%,
+    #43d9ff 54%,
+    #8b67ff 68%,
+    #d85dff 80%,
+    #ff4f8b 92%,
+    #ff4f8b 100%
+  );
+  background-position: 0% 50%;
+  background-size: 520% 100%;
+  opacity: 0.18;
+  animation: rainbow-button-flow 8s linear infinite;
+}
+
+.settings-dialog :deep(.commit-celebrations-setting)::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--surface-soft) 78%, transparent);
+}
+
+.settings-dialog label span {
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.settings-dialog :deep(.app-checkbox span) {
+  display: grid;
+  gap: 2px;
+  text-transform: none;
+}
+
+.settings-dialog :deep(.app-checkbox strong) {
+  color: var(--text);
+  font-size: var(--font-size-base);
+}
+
+.settings-dialog :deep(.app-checkbox small) {
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  font-weight: 700;
+}
+
+.settings-dialog input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--border-control);
+  border-radius: 7px;
+  padding: 0 12px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.settings-dialog input[type="checkbox"] {
+  width: 18px;
+  min-height: 18px;
+  accent-color: var(--brand);
+}
+
+.settings-dialog :deep(.app-dropdown) {
+  width: 100%;
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+@keyframes rainbow-button-flow {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 520% 50%;
+  }
+}
+</style>

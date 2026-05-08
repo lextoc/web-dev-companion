@@ -25,6 +25,7 @@ defineEmits<{
     class="repo-card"
     :class="{
       'has-error': repository.error,
+      'has-changes': repository.dirty,
       'has-running-scripts': runningScriptCount > 0,
       pinned: isPinned,
     }"

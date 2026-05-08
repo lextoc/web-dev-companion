@@ -688,6 +688,20 @@
     );
 }
 
+.repo-card.has-changes {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--warning-soft) 48%, transparent),
+      transparent 46%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 94%, #fff),
+      color-mix(in srgb, var(--surface-soft) 34%, var(--surface))
+    );
+}
+
 .repo-card.pinned {
   border-width: 2px;
   border-color: var(--success-text);
@@ -714,6 +728,20 @@
 
 .repo-card.pinned .repo-quick-actions {
   border-left-color: color-mix(in srgb, var(--border-soft) 82%, var(--success-text));
+}
+
+.repo-card.pinned.has-changes {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--warning-soft) 48%, transparent),
+      transparent 46%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 94%, #fff),
+      color-mix(in srgb, var(--surface-soft) 34%, var(--surface))
+    );
 }
 
 .repo-card.pinned:hover,

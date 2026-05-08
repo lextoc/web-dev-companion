@@ -249,6 +249,20 @@ h2 {
     0 8px 18px rgba(23, 32, 42, 0.12);
 }
 
+.repo-card.has-changes {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--warning-soft) 50%, transparent),
+      transparent 46%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 86%, var(--app-bg)),
+      color-mix(in srgb, var(--surface-soft) 58%, var(--surface))
+    );
+}
+
 .repo-card.pinned {
   border-width: 2px;
   border-color: var(--success-text);
@@ -271,6 +285,20 @@ h2 {
 
 .repo-card.pinned .repo-quick-actions {
   border-left-color: color-mix(in srgb, var(--border-soft) 82%, var(--success-text));
+}
+
+.repo-card.pinned.has-changes {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--warning-soft) 50%, transparent),
+      transparent 46%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 86%, var(--app-bg)),
+      color-mix(in srgb, var(--surface-soft) 58%, var(--surface))
+    );
 }
 
 .repo-card.pinned:hover,

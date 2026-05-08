@@ -325,6 +325,7 @@ export async function isGitAncestor(repoPath: string, ancestor: string, descenda
 export async function readGitStatus(repoPath: string): Promise<GitStatusSummary> {
   const rawStatus = await tryRunGit(repoPath, ['status', '--porcelain=v1', '--branch'])
   const [branchLine = '', ...statusLines] = rawStatus.split('\n').filter(Boolean)
+  const mergeCommitMessage = await readMergeCommitMessage(repoPath)
   const branch = branchLine.startsWith('## ') ? branchLine.slice(3) : branchLine || 'unknown'
   const summary: GitStatusSummary = {
     branch,
@@ -333,6 +334,7 @@ export async function readGitStatus(repoPath: string): Promise<GitStatusSummary>
     unstaged: [],
     untracked: [],
     conflicted: [],
+    mergeCommitMessage,
     raw: rawStatus || 'Working tree clean.',
   }
 
@@ -361,6 +363,34 @@ export async function readGitStatus(repoPath: string): Promise<GitStatusSummary>
   }
 
   return summary
+}
+
+async function readMergeCommitMessage(repoPath: string) {
+  const mergeHeadPath = await tryRunGit(repoPath, ['rev-parse', '--git-path', 'MERGE_HEAD'])
+
+  if (!mergeHeadPath) {
+    return undefined
+  }
+
+  const mergeMessagePath = await tryRunGit(repoPath, ['rev-parse', '--git-path', 'MERGE_MSG'])
+
+  if (!mergeMessagePath) {
+    return undefined
+  }
+
+  try {
+    await fs.access(path.resolve(repoPath, mergeHeadPath))
+    const rawMessage = await fs.readFile(path.resolve(repoPath, mergeMessagePath), 'utf8')
+    const message = rawMessage
+      .split('\n')
+      .filter((line) => !line.trimStart().startsWith('#'))
+      .join('\n')
+      .trim()
+
+    return message || undefined
+  } catch {
+    return undefined
+  }
 }
 
 function parseTrackingStatus(trackingStatus: string) {

@@ -115,6 +115,16 @@ watch(
 );
 
 watch(
+  () => props.selectedDetails?.gitStatus.mergeCommitMessage,
+  (mergeCommitMessage) => {
+    if (mergeCommitMessage && !commitMessage.value.trim()) {
+      commitMessage.value = mergeCommitMessage;
+    }
+  },
+  { immediate: true },
+);
+
+watch(
   () => [props.selectedDetails?.path, props.selectedDetails?.gitStatus.raw] as const,
   () => {
     void loadStatusLineStats();

@@ -46,6 +46,7 @@ export interface GitStatusSummary {
   unstaged: GitStatusEntry[]
   untracked: GitStatusEntry[]
   conflicted: GitStatusEntry[]
+  mergeCommitMessage?: string
   raw: string
 }
 

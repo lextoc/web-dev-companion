@@ -16,7 +16,7 @@ import RepositoryGitLogPanel from "./detail/RepositoryGitLogPanel.vue";
 import RepositoryStatusDiffModal from "./detail/RepositoryStatusDiffModal.vue";
 import { ProjectHealthPanel, RunProjectHealthScriptsButton } from "./health";
 import { NpmScriptsPanel } from "./scripts";
-import { AppTabs, type AppTabItem } from "../ui";
+import { AppActionMenu, AppMenuItem, AppTabs, type AppTabItem } from "../ui";
 
 type RepositoryDetailTab = "git" | "log" | "health" | "scripts";
 
@@ -41,6 +41,7 @@ const emit = defineEmits<{
   refresh: [];
   stageFiles: [request: { paths: string[]; actionKey: string }];
   unstageFiles: [request: { paths: string[]; actionKey: string }];
+  resetTrackedChanges: [];
   commit: [request: { message: string; checkHealthBeforeCommit: boolean; healthScriptNames: string[] }];
   commitDraftChange: [hasDraft: boolean];
   runScript: [scriptName: string];
@@ -322,6 +323,10 @@ function statusActionLabelForGroup(groupKey: string) {
 
 function statusActionLabelForEntry(groupKey: string) {
   return isStagedGroup(groupKey) ? "Unstage" : "Stage";
+}
+
+function hasResettableTrackedChanges(gitStatus: RepositoryDetails["gitStatus"]) {
+  return gitStatus.staged.length > 0 || gitStatus.unstaged.length > 0 || gitStatus.conflicted.length > 0;
 }
 
 function statusActionKey(groupKey: string, entries: GitStatusEntry[]) {
@@ -790,23 +795,40 @@ function triggerCommitConfetti() {
                           <h4>{{ group.label }}</h4>
                           <span>{{ group.entries.length }}</span>
                         </div>
-                        <button
-                          v-if="group.entries.length > 0"
-                          type="button"
-                          class="secondary status-action"
-                          :class="{ pending: isStatusActionPending(group.key, group.entries) }"
-                          :disabled="Boolean(pendingStatusActionKey)"
-                          @click="emitStatusAction(group.key, group.entries)"
-                        >
-                          <span>
-                            {{
-                              isStatusActionPending(group.key, group.entries)
-                                ? `${statusActionLabelForGroup(group.key)}...`
-                                : statusActionLabelForGroup(group.key)
-                            }}
-                          </span>
-                          <kbd v-if="!isStagedGroup(group.key)">{{ stageAllShortcutLabel }}</kbd>
-                        </button>
+                        <div v-if="group.entries.length > 0" class="status-group-actions">
+                          <button
+                            type="button"
+                            class="secondary status-action"
+                            :class="{ pending: isStatusActionPending(group.key, group.entries) }"
+                            :disabled="Boolean(pendingStatusActionKey)"
+                            @click="emitStatusAction(group.key, group.entries)"
+                          >
+                            <span>
+                              {{
+                                isStatusActionPending(group.key, group.entries)
+                                  ? `${statusActionLabelForGroup(group.key)}...`
+                                  : statusActionLabelForGroup(group.key)
+                              }}
+                            </span>
+                            <kbd v-if="!isStagedGroup(group.key)">{{ stageAllShortcutLabel }}</kbd>
+                          </button>
+                          <AppActionMenu
+                            label="More status actions"
+                            trigger-class="status-action-menu-trigger"
+                          >
+                            <AppMenuItem
+                              icon="restart"
+                              tone="danger"
+                              :disabled="
+                                Boolean(pendingStatusActionKey) ||
+                                !hasResettableTrackedChanges(selectedDetails.gitStatus)
+                              "
+                              @click="$emit('resetTrackedChanges')"
+                            >
+                              Git reset
+                            </AppMenuItem>
+                          </AppActionMenu>
+                        </div>
                       </div>
 
                       <ul v-if="group.entries.length > 0" class="git-status-list">
@@ -2138,6 +2160,18 @@ pre {
   min-width: 0;
   align-items: center;
   gap: 8px;
+}
+
+.status-group-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-group-actions :deep(.status-action-menu-trigger) {
+  width: 30px;
+  min-height: 30px;
 }
 
 .git-status-group-heading h4 {

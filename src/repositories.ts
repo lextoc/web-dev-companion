@@ -357,6 +357,7 @@ export interface RepositoryApi {
   syncSubmoduleBranch: (request: SyncSubmoduleBranchRequest) => Promise<SyncBranchResult>
   stageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
   unstageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
+  resetTrackedChanges: (repoPath: string) => Promise<RepositoryDetails>
   diffFile: (request: StatusFileDiffRequest) => Promise<StatusFileDiff>
   commitDetails: (request: CommitDetailsRequest) => Promise<CommitDetails>
   commit: (request: CommitRequest) => Promise<RepositoryDetails>

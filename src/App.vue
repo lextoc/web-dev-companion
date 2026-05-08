@@ -119,6 +119,7 @@ const {
   commitStatus,
   hasCommitDraft,
   pendingStatusActionKey,
+  resetTrackedChanges,
   stageAllChanges,
   stageFiles,
   statusActionLabel,
@@ -127,6 +128,7 @@ const {
   updateCommitDraft,
 } = useRepositoryStatusActions({
   clearError,
+  confirmAction,
   isDetailLoading,
   isLoading,
   loadRepositories,
@@ -838,6 +840,7 @@ onBeforeUnmount(() => {
           @refresh="refreshSelectedRepository"
           @stage-files="stageFiles"
           @unstage-files="unstageFiles"
+          @reset-tracked-changes="resetTrackedChanges"
           @commit="commitStatus"
           @commit-draft-change="updateCommitDraft"
           @run-script="runScript"

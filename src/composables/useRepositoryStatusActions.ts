@@ -6,8 +6,16 @@ type ReadableRef<T> = {
   readonly value: T
 }
 
+type ConfirmAction = (options: {
+  title: string
+  message: string
+  confirmLabel: string
+  danger?: boolean
+}) => Promise<boolean>
+
 interface UseRepositoryStatusActionsOptions {
   clearError: () => void
+  confirmAction: ConfirmAction
   isDetailLoading: ReadableRef<boolean>
   isLoading: ReadableRef<boolean>
   loadRepositories: () => Promise<void>
@@ -26,6 +34,7 @@ interface CommitStatusRequest {
 
 export function useRepositoryStatusActions({
   clearError,
+  confirmAction,
   isDetailLoading,
   isLoading,
   loadRepositories,
@@ -150,6 +159,37 @@ export function useRepositoryStatusActions({
     )
   }
 
+  async function resetTrackedChanges() {
+    if (!selectedDetails.value || pendingStatusActionKey.value || isLoading.value || isDetailLoading.value) {
+      return
+    }
+
+    const { gitStatus, name, path: repoPath } = selectedDetails.value
+    const trackedChangeCount = gitStatus.staged.length + gitStatus.unstaged.length + gitStatus.conflicted.length
+
+    if (trackedChangeCount === 0) {
+      return
+    }
+
+    const confirmed = await confirmAction({
+      title: 'Git reset',
+      message: `Run git reset --hard HEAD in ${name}? This discards tracked staged and unstaged changes. Untracked files stay on disk.`,
+      confirmLabel: 'Git reset',
+      danger: true,
+    })
+
+    if (!confirmed) {
+      return
+    }
+
+    await runStatusAction(
+      'Resetting tracked changes...',
+      'git-reset',
+      'Reset tracked changes.',
+      () => window.repositories.resetTrackedChanges(repoPath),
+    )
+  }
+
   async function commitStatus(request: string | CommitStatusRequest) {
     if (!selectedDetails.value) {
       return
@@ -211,6 +251,7 @@ export function useRepositoryStatusActions({
     pendingStatusActionKey,
     stageAllChanges,
     stageFiles,
+    resetTrackedChanges,
     statusActionLabel,
     unstageAllChanges,
     unstageFiles,

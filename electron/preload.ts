@@ -30,6 +30,7 @@ const repositories: RepositoryApi = {
   syncSubmoduleBranch: (request) => ipcRenderer.invoke('repositories:sync-submodule-branch', request),
   stageFiles: (request) => ipcRenderer.invoke('repositories:stage-files', request),
   unstageFiles: (request) => ipcRenderer.invoke('repositories:unstage-files', request),
+  resetTrackedChanges: (repoPath: string) => ipcRenderer.invoke('repositories:reset-tracked-changes', repoPath),
   diffFile: (request) => ipcRenderer.invoke('repositories:diff-file', request),
   commitDetails: (request) => ipcRenderer.invoke('repositories:commit-details', request),
   commit: (request) => ipcRenderer.invoke('repositories:commit', request),

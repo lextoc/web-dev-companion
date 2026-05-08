@@ -866,6 +866,14 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     return readRepositoryDetails(normalizedPath)
   }
 
+  async function resetTrackedChanges(repoPath: string): Promise<RepositoryDetails> {
+    const normalizedPath = await normalizeRepositoryPath(repoPath)
+
+    await runGit(normalizedPath, ['reset', '--hard', 'HEAD'])
+
+    return readRepositoryDetails(normalizedPath)
+  }
+
   async function commit(request: CommitRequest): Promise<RepositoryDetails> {
     const normalizedPath = await normalizeRepositoryPath(request.repoPath)
     const message = request.message.trim()
@@ -911,6 +919,7 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     readRepositoryDetails,
     removeRepository,
     stageFiles,
+    resetTrackedChanges,
     syncBranch,
     syncSubmoduleBranch,
     unstageFiles,

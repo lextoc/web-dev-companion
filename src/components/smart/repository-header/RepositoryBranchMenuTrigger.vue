@@ -476,4 +476,16 @@ defineEmits<{
       scale(1) rotate(var(--confetti-rotate));
   }
 }
+
+@media (max-width: 760px) {
+  .branch-menu-combo,
+  .branch-menu-trigger {
+    width: 100%;
+    max-width: none;
+  }
+
+  .branch-menu-combo .branch-menu-trigger {
+    flex: 1 1 auto;
+  }
+}
 </style>

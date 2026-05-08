@@ -1166,11 +1166,38 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 760px) {
+  .app-shell {
+    --shell-x: 20px;
+    padding: 0 var(--shell-x) 20px;
+  }
+
+  .app-layout {
+    grid-template-columns: 1fr;
+    margin-right: 0;
+  }
+
+  .main-pane {
+    --main-pane-right-padding: 0px;
+    min-height: 0;
+  }
+
   .toast-stack {
     right: 16px;
     bottom: 16px;
     left: 16px;
     width: auto;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1180px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+    margin-right: 0;
+  }
+
+  .main-pane {
+    --main-pane-right-padding: 0px;
+    min-height: 0;
   }
 }
 </style>

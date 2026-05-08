@@ -2551,4 +2551,155 @@ button.secondary.active .branch-filter-count {
 .branch-action.pending {
   border-color: var(--focus);
 }
+
+@media (max-width: 1280px) {
+  .branch-menu-layout,
+  .branch-menu-layout.has-submodule-card {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .branch-parent-card,
+  .branch-submodule-card {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .branch-menu-panel {
+    overflow: hidden;
+  }
+
+  .branch-menu-side {
+    overflow: auto;
+  }
+
+  .branch-menu-main {
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 760px) {
+  .detail-command-bar {
+    align-items: stretch;
+    flex-direction: column;
+    width: calc(100% + (var(--shell-x) * 2));
+    margin-left: calc(var(--shell-x) * -1);
+    padding-right: var(--shell-x);
+    padding-left: var(--shell-x);
+  }
+
+  .detail-nav,
+  .detail-repository-tools,
+  .detail-refresh-area {
+    justify-content: stretch;
+  }
+
+  .detail-nav,
+  .detail-repository-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .branch-menu {
+    width: 100%;
+    max-width: none;
+  }
+
+  .detail-nav > button,
+  .detail-refresh-area button {
+    flex: 1 1 auto;
+  }
+
+  .branch-menu-modal-backdrop {
+    padding: 16px;
+  }
+
+  .branch-menu-panel {
+    height: calc(100vh - 32px);
+    max-height: calc(100vh - 32px);
+    padding: 10px;
+  }
+
+  .branch-list-toolbar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .branch-menu-panel .panel-heading,
+  .branch-menu-heading,
+  .branch-merge-combined-controls,
+  .branch-merge-submodule-fields,
+  .branch-merge-action-card,
+  .linked-submodule-field,
+  .branch-search-control,
+  .branch-search-input {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .branch-menu-panel .branch-filters {
+    grid-column: 1;
+    justify-content: flex-start;
+  }
+
+  .remote-branch-checkout {
+    grid-template-columns: 1fr;
+  }
+
+  .remote-branch-create-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+  }
+
+  .branch-merge-action-card {
+    grid-column: auto;
+  }
+
+  .branch-merge-action-menu,
+  .branch-merge-direct-action {
+    justify-self: stretch;
+  }
+
+  .branch-merge-direct-action {
+    width: 100%;
+  }
+
+  .branch-merge-action-menu :deep(.action-menu-trigger) {
+    width: 100%;
+  }
+
+  .branch-menu-heading-stats {
+    justify-content: flex-start;
+  }
+
+  .branch-primary-action {
+    justify-content: center;
+  }
+
+  .branch-menu-panel .branch-controls {
+    grid-column: auto;
+    grid-row: auto;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .git-branch-list li {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .branch-sync {
+    width: fit-content;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1180px) {
+  .detail-command-bar {
+    width: calc(100% + (var(--shell-x) * 2));
+    margin-left: calc(var(--shell-x) * -1);
+    padding-right: var(--shell-x);
+    padding-left: var(--shell-x);
+  }
+}
 </style>

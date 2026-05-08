@@ -91,4 +91,15 @@ defineEmits<{
   min-height: 36px;
   padding: 0;
 }
+
+@media (max-width: 760px) {
+  .detail-quick-actions {
+    align-items: stretch;
+    justify-content: stretch;
+  }
+
+  .detail-quick-actions button {
+    flex: 1 1 auto;
+  }
+}
 </style>

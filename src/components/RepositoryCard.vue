@@ -723,4 +723,54 @@ defineEmits<{
     border-left: 0;
   }
 }
+
+@media (max-width: 760px) {
+  .repo-card {
+    grid-template-columns: 1fr;
+  }
+
+  .repo-card-main {
+    min-height: 0;
+  }
+
+  .repo-title-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .repo-title-stack {
+    flex: 1 1 calc(100% - 44px);
+  }
+
+  .repo-card-badges {
+    order: 3;
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    max-width: 100%;
+  }
+
+  .repo-quick-actions {
+    grid-template-columns: repeat(4, 34px);
+    justify-content: start;
+    width: auto;
+    border-top: 0;
+    border-left: 0;
+    padding: 10px;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1180px) {
+  .repo-card {
+    grid-template-columns: 1fr;
+  }
+
+  .repo-quick-actions {
+    grid-template-columns: repeat(4, 34px);
+    justify-content: start;
+    width: auto;
+    border-top: 0;
+    border-left: 0;
+    padding: 10px;
+  }
+}
 </style>

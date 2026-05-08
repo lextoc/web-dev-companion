@@ -1037,4 +1037,45 @@ function missingProjectScriptSummary(health: ProjectHealth) {
   padding: 0;
   color: var(--muted);
 }
+
+@media (max-width: 1280px) {
+  .project-health-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .project-health-grid,
+  .project-health-attention li,
+  .project-health-check-row,
+  .project-health-dependency-row,
+  .project-health-script-row {
+    grid-template-columns: 1fr;
+  }
+
+  .project-health-header,
+  .project-health-section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .project-health-actions,
+  .project-health-section-actions {
+    justify-content: stretch;
+  }
+
+  .project-health-actions button,
+  .project-health-section-actions button {
+    flex: 1 1 auto;
+  }
+
+  .project-health-script-row time {
+    text-align: left;
+  }
+
+  .project-health-script-row > span,
+  .project-health-dependency-row span {
+    justify-self: start;
+  }
+}
 </style>

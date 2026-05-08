@@ -80,4 +80,17 @@ const scriptCountLabel = computed(() => {
   background: color-mix(in srgb, var(--warning-soft) 72%, transparent);
   color: var(--warning-text);
 }
+
+@media (max-width: 760px) {
+  .detail-context-pills,
+  .detail-state-summary {
+    width: 100%;
+    max-width: none;
+  }
+
+  .detail-state-item {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+}
 </style>

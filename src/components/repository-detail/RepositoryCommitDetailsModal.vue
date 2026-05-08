@@ -808,4 +808,22 @@ function scrollToCommitFile(file: CommitChangedFile, index: number) {
   border-color: color-mix(in srgb, var(--danger) 34%, var(--border-soft));
   color: var(--danger);
 }
+
+@media (max-width: 760px) {
+  .commit-detail-modal {
+    height: calc(100vh - 32px);
+    padding: 12px;
+  }
+
+  .commit-detail-title-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .commit-detail-content,
+  .commit-detail-meta,
+  .commit-file-button {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

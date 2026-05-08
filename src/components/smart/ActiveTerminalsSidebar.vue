@@ -937,7 +937,23 @@ function formatCommandTime(startedAt: string) {
 
 @media (max-width: 1180px) {
   .active-terminals {
+    position: static;
+    right: auto;
+    z-index: auto;
+    width: auto;
+    height: auto;
+    max-height: none;
+    grid-template-rows: auto;
+    overflow: visible;
     border-left: 0;
+    border-radius: 8px;
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .active-terminals {
+    order: -1;
   }
 }
 </style>

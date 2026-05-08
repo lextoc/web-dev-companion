@@ -106,4 +106,20 @@ h1 {
   line-height: 22px;
   vertical-align: middle;
 }
+
+@media (max-width: 760px) {
+  .top-bar,
+  .top-bar-main {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .top-actions {
+    flex-wrap: wrap;
+  }
+
+  .app-context-line {
+    max-width: 100%;
+  }
+}
 </style>

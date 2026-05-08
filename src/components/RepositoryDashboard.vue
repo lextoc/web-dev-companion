@@ -391,6 +391,27 @@ onBeforeUnmount(() => {
     width: 100%;
   }
 
+  @media (max-width: 1280px) {
+    .dashboard-toolbar {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .add-row {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .dashboard-toolbar {
+      grid-template-columns: 1fr;
+    }
+
+    .dashboard-toolbar-actions {
+      grid-template-columns: 1fr;
+    }
+  }
+
   .dashboard-add-toggle {
     min-height: 36px;
     padding: 0 13px;

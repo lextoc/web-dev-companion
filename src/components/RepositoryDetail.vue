@@ -2390,4 +2390,81 @@ pre {
   line-height: 22px;
   vertical-align: middle;
 }
+
+@media (max-width: 1280px) {
+  .detail-layout,
+  .git-main-grid,
+  .git-work-column {
+    grid-template-columns: 1fr;
+  }
+
+  .status-panel {
+    grid-column: 1 / -1;
+  }
+
+  .git-overview-panel {
+    height: auto;
+  }
+
+  .git-status-card,
+  .git-branches {
+    max-height: 520px;
+  }
+}
+
+@media (max-width: 760px) {
+  :deep(.detail-tabs) {
+    width: 100%;
+  }
+
+  :deep(.detail-tabs button) {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+
+  .detail-layout,
+  .git-main-grid,
+  .commit-form-wide {
+    grid-template-columns: 1fr;
+  }
+
+  .commit-form-wide > button {
+    justify-self: start;
+  }
+
+  .commit-form-wide .commit-health-controls {
+    grid-column: 1;
+    grid-row: 2;
+    align-items: stretch;
+    flex-direction: column;
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .commit-health-check-option {
+    min-height: 24px;
+  }
+
+  .commit-health-controls button.commit-run-scripts {
+    width: 100%;
+  }
+
+  .commit-form-wide textarea,
+  .commit-submit {
+    border-radius: 8px;
+    grid-column: 1;
+    grid-row: auto;
+    margin-left: 0;
+    min-height: 42px;
+    width: 100%;
+  }
+
+  .git-status-list li {
+    grid-template-columns: 1fr;
+  }
+
+  .status-action {
+    justify-self: start;
+  }
+}
 </style>

@@ -40,6 +40,7 @@ Use `pnpm` for all package commands.
 - Start from a clean `main` branch that is up to date with `origin/main`.
 - Bump the prerelease version in `package.json` before building, for example `0.1.0-alpha.1` to `0.1.0-alpha.2`.
 - Update the README download links for macOS and Windows to the new tag and generated artifact names, using the final asset names reported by GitHub.
+- Update the README macOS Gatekeeper note if the artifact is signed and notarized, or keep the unsigned-alpha workaround current.
 - Run `pnpm test` before release builds.
 - Run `pnpm run release:alpha` for macOS and Windows x64 artifacts, or use `pnpm run release:alpha:mac` / `pnpm run release:alpha:win` for a platform-specific alpha.
 - Commit the version and documentation changes after verification.

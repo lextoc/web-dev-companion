@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { parseDiffOutput } from "../output-formatting";
 import type {
-  CommitChangedFile,
   CommitDetails,
   GitStatusEntry,
   ProjectDependencyHealth,
@@ -13,6 +11,9 @@ import type {
   StatusFileDiff,
   StatusFileDiffType,
 } from "../repositories";
+import RepositoryCommitDetailsModal from "./repository-detail/RepositoryCommitDetailsModal.vue";
+import RepositoryGitLogPanel from "./repository-detail/RepositoryGitLogPanel.vue";
+import RepositoryStatusDiffModal from "./repository-detail/RepositoryStatusDiffModal.vue";
 import { NpmScriptsPanel, ProjectHealthPanel, RunProjectHealthScriptsButton } from "./smart";
 import { AppTabs, type AppTabItem } from "./ui";
 
@@ -66,60 +67,6 @@ const projectHealth = ref<ProjectHealth | null>(null);
 const projectHealthLoading = ref(false);
 const projectHealthError = ref<string | null>(null);
 const projectOutdatedLoading = ref(false);
-const activeCommitDiffSectionKey = ref<string | null>(null);
-const commitDiffSectionRefs = ref<Record<string, HTMLElement | null>>({});
-const selectedStatusDiffLines = computed(() => parseDiffOutput(selectedStatusDiff.value?.content ?? ""));
-const selectedCommitDiffSections = computed(() => {
-  const details = selectedCommitDetails.value;
-
-  if (!details?.diff.trim()) {
-    return [];
-  }
-
-  const rawSections: Array<{ path: string | null; lines: string[] }> = [];
-  let currentSection: { path: string | null; lines: string[] } | null = null;
-
-  for (const line of details.diff.split("\n")) {
-    if (line.startsWith("diff --git ")) {
-      if (currentSection) {
-        rawSections.push(currentSection);
-      }
-
-      currentSection = {
-        path: diffHeaderPath(line),
-        lines: [line],
-      };
-      continue;
-    }
-
-    if (!currentSection) {
-      currentSection = {
-        path: null,
-        lines: [],
-      };
-    }
-
-    currentSection.lines.push(line);
-  }
-
-  if (currentSection) {
-    rawSections.push(currentSection);
-  }
-
-  return rawSections.map((section, sectionIndex) => {
-    const fileIndex = commitFileIndexForDiffSection(details.files, section.path, sectionIndex);
-    const file = fileIndex === -1 ? undefined : details.files[fileIndex];
-    const path = section.path ?? file?.path ?? `Patch ${sectionIndex + 1}`;
-    const key = file ? commitFileKey(file, fileIndex) : `diff-section:${sectionIndex}:${path}`;
-
-    return {
-      key,
-      path,
-      originalPath: file?.originalPath,
-      lines: parseDiffOutput(section.lines.join("\n")),
-    };
-  });
-});
 let nextConfettiBurstId = 0;
 let nextCommitDetailsRequestId = 0;
 let activeCommitDetailsRequestId = 0;
@@ -127,13 +74,6 @@ let nextStatusLineStatsRequestId = 0;
 let activeStatusLineStatsRequestId = 0;
 let nextProjectHealthRequestId = 0;
 let activeProjectHealthRequestId = 0;
-const logDateFormatter = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
 const stagedPreview = computed(() => props.selectedDetails?.gitStatus.staged ?? []);
 const stagedLineTotals = computed(() =>
   stagedPreview.value.reduce(
@@ -212,26 +152,6 @@ function statusCode(entry: GitStatusEntry) {
 
 function statusEntryPaths(entries: GitStatusEntry[]) {
   return [...new Set(entries.map((entry) => entry.path))];
-}
-
-function formatLogDate(dateTime: string) {
-  const date = new Date(dateTime);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Unknown";
-  }
-
-  return logDateFormatter.format(date);
-}
-
-function fullLogDate(dateTime: string) {
-  const date = new Date(dateTime);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return date.toLocaleString();
 }
 
 function resetProjectHealth() {
@@ -314,80 +234,6 @@ function mergeProjectDependencies(dependencies: ProjectDependencyHealth) {
   };
 }
 
-function isSelectedCommit(hash: string) {
-  return (
-    commitDetailsLoadingHash.value === hash ||
-    selectedCommitDetails.value?.hash === hash ||
-    selectedCommitDetails.value?.fullHash === hash
-  );
-}
-
-function fileChangeSummary(file: CommitChangedFile) {
-  const additions = file.additions === undefined ? "" : `+${file.additions}`;
-  const deletions = file.deletions === undefined ? "" : `-${file.deletions}`;
-
-  return [additions, deletions].filter(Boolean).join(" ");
-}
-
-function commitFileKey(file: CommitChangedFile, index: number) {
-  return `${index}:${file.originalPath ?? ""}:${file.path}`;
-}
-
-function diffHeaderPath(line: string) {
-  const match = line.match(/^diff --git a\/(.+) b\/(.+)$/);
-
-  return match?.[2] ?? null;
-}
-
-function commitFileIndexForDiffSection(
-  files: CommitChangedFile[],
-  sectionPath: string | null,
-  sectionIndex: number,
-) {
-  if (sectionPath) {
-    const pathIndex = files.findIndex(
-      (file) => file.path === sectionPath || file.originalPath === sectionPath,
-    );
-
-    if (pathIndex !== -1) {
-      return pathIndex;
-    }
-  }
-
-  return files[sectionIndex] ? sectionIndex : -1;
-}
-
-function commitDiffSectionKey(file: CommitChangedFile, index: number) {
-  const fileKey = commitFileKey(file, index);
-  const matchingSection =
-    selectedCommitDiffSections.value.find((section) => section.key === fileKey) ??
-    selectedCommitDiffSections.value.find(
-      (section) =>
-        section.path === file.path ||
-        (Boolean(file.originalPath) && section.originalPath === file.originalPath),
-    );
-
-  return matchingSection?.key ?? null;
-}
-
-function setCommitDiffSectionRef(key: string, element: unknown) {
-  commitDiffSectionRefs.value[key] = element instanceof HTMLElement ? element : null;
-}
-
-function scrollToCommitFile(file: CommitChangedFile, index: number) {
-  const sectionKey = commitDiffSectionKey(file, index);
-
-  if (!sectionKey) {
-    return;
-  }
-
-  activeCommitDiffSectionKey.value = sectionKey;
-  commitDiffSectionRefs.value[sectionKey]?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
-}
-
 async function openCommitDetails(entry: RepositoryDetails["gitLog"][number]) {
   if (!props.selectedDetails || commitDetailsLoadingHash.value === entry.hash) {
     return;
@@ -399,8 +245,6 @@ async function openCommitDetails(entry: RepositoryDetails["gitLog"][number]) {
   selectedCommitDetails.value = null;
   commitDetailsLoadingHash.value = entry.hash;
   commitDetailsError.value = null;
-  activeCommitDiffSectionKey.value = null;
-  commitDiffSectionRefs.value = {};
 
   try {
     const details = await window.repositories.commitDetails({
@@ -428,8 +272,6 @@ function closeCommitDetails() {
   selectedCommitDetails.value = null;
   commitDetailsLoadingHash.value = null;
   commitDetailsError.value = null;
-  activeCommitDiffSectionKey.value = null;
-  commitDiffSectionRefs.value = {};
 }
 
 function statusCounts(gitStatus: RepositoryDetails["gitStatus"]) {
@@ -1008,64 +850,14 @@ function triggerCommitConfetti() {
         </template>
 
         <template #log>
-        <section class="detail-panel git-log-panel">
-          <div v-if="selectedDetails.gitLog.length > 0" class="git-log-table-wrap">
-            <table class="git-log-table">
-              <thead>
-                <tr>
-                  <th scope="col">Commit</th>
-                  <th scope="col">Message</th>
-                  <th scope="col">Author</th>
-                  <th scope="col">Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="entry in selectedDetails.gitLog"
-                  :key="entry.hash"
-                  :class="{ active: isSelectedCommit(entry.hash) }"
-                  tabindex="0"
-                  role="button"
-                  :aria-busy="commitDetailsLoadingHash === entry.hash"
-                  :aria-label="`View details for commit ${entry.hash}: ${entry.message}`"
-                  :title="`View details for ${entry.hash}`"
-                  @click="openCommitDetails(entry)"
-                  @keydown.enter.prevent="openCommitDetails(entry)"
-                  @keydown.space.prevent="openCommitDetails(entry)"
-                >
-                  <td>
-                    <button
-                      type="button"
-                      class="commit-hash-button"
-                      :title="`Open commit ${entry.hash} in browser`"
-                      @click.stop="$emit('openCommitInBrowser', entry.hash)"
-                      @keydown.enter.stop
-                      @keydown.space.stop
-                    >
-                      <code>{{ entry.hash }}</code>
-                    </button>
-                    <small v-if="commitDetailsLoadingHash === entry.hash">Loading...</small>
-                  </td>
-                  <td>
-                    <strong>{{ entry.message }}</strong>
-                  </td>
-                  <td>
-                    <span :title="entry.authorEmail">{{ entry.authorName }}</span>
-                  </td>
-                  <td>
-                    <time :datetime="entry.dateTime" :title="fullLogDate(entry.dateTime)">
-                      {{ formatLogDate(entry.dateTime) }}
-                    </time>
-                    <small>{{ entry.time }}</small>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div v-else class="clean-state">
-            No commits found.
-          </div>
-        </section>
+        <RepositoryGitLogPanel
+          :git-log="selectedDetails.gitLog"
+          :commit-details-loading-hash="commitDetailsLoadingHash"
+          :selected-commit-hash="selectedCommitDetails?.hash"
+          :selected-commit-full-hash="selectedCommitDetails?.fullHash"
+          @open-commit-details="openCommitDetails"
+          @open-commit-in-browser="$emit('openCommitInBrowser', $event)"
+        />
         </template>
 
         <template #health>
@@ -1106,175 +898,19 @@ function triggerCommitConfetti() {
       </button>
     </div>
 
-    <div
+    <RepositoryCommitDetailsModal
       v-if="selectedCommitDetails || commitDetailsLoadingHash || commitDetailsError"
-      class="modal-backdrop commit-detail-backdrop"
-      role="presentation"
-      @click.self="closeCommitDetails"
-    >
-      <section
-        class="commit-detail-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="commit-detail-title"
-        aria-live="polite"
-      >
-        <header class="commit-detail-header">
-          <div class="commit-detail-title-row">
-            <div>
-              <span>Commit details</span>
-              <h2 id="commit-detail-title">
-                {{
-                  commitDetailsError
-                    ? "Could not load commit details"
-                    : selectedCommitDetails?.message ?? "Loading commit details..."
-                }}
-              </h2>
-            </div>
-            <button type="button" class="secondary" @click="closeCommitDetails">Close</button>
-          </div>
-          <code v-if="selectedCommitDetails" :title="selectedCommitDetails.fullHash">
-            {{ selectedCommitDetails.fullHash }}
-          </code>
-        </header>
+      :commit-details="selectedCommitDetails"
+      :error="commitDetailsError"
+      :loading-hash="commitDetailsLoadingHash"
+      @close="closeCommitDetails"
+    />
 
-        <div v-if="commitDetailsError" class="commit-detail-empty error">
-          {{ commitDetailsError }}
-        </div>
-
-        <div
-          v-else-if="commitDetailsLoadingHash && !selectedCommitDetails"
-          class="commit-detail-empty"
-        >
-          Loading commit details...
-        </div>
-
-        <template v-else-if="selectedCommitDetails">
-          <div class="commit-detail-scroll">
-            <p v-if="selectedCommitDetails.body" class="commit-detail-body">
-              {{ selectedCommitDetails.body }}
-            </p>
-
-            <dl class="commit-detail-meta">
-              <div>
-                <dt>Author</dt>
-                <dd>
-                  <span>{{ selectedCommitDetails.authorName }}</span>
-                  <small>{{ selectedCommitDetails.authorEmail }}</small>
-                </dd>
-              </div>
-              <div>
-                <dt>Date</dt>
-                <dd>
-                  <time
-                    :datetime="selectedCommitDetails.dateTime"
-                    :title="fullLogDate(selectedCommitDetails.dateTime)"
-                  >
-                    {{ formatLogDate(selectedCommitDetails.dateTime) }}
-                  </time>
-                  <small>{{ selectedCommitDetails.time }}</small>
-                </dd>
-              </div>
-              <div>
-                <dt>Files</dt>
-                <dd>
-                  <span>{{ selectedCommitDetails.files.length }}</span>
-                  <small>changed</small>
-                </dd>
-              </div>
-            </dl>
-
-            <div class="commit-detail-content">
-              <section class="commit-files-section">
-                <div class="commit-detail-section-heading">
-                  <h4>Changed files</h4>
-                  <span>{{ selectedCommitDetails.files.length }}</span>
-                </div>
-                <ul v-if="selectedCommitDetails.files.length > 0" class="commit-file-list">
-                  <li
-                    v-for="(file, index) in selectedCommitDetails.files"
-                    :key="`${file.status}-${file.path}`"
-                  >
-                    <button
-                      type="button"
-                      class="commit-file-button"
-                      :class="{ active: activeCommitDiffSectionKey === commitDiffSectionKey(file, index) }"
-                      :disabled="!commitDiffSectionKey(file, index)"
-                      @click="scrollToCommitFile(file, index)"
-                    >
-                      <span class="commit-file-status">{{ file.status }}</span>
-                      <span class="commit-file-path">
-                        <strong>{{ file.path }}</strong>
-                        <small v-if="file.originalPath">from {{ file.originalPath }}</small>
-                      </span>
-                      <code v-if="fileChangeSummary(file)">{{ fileChangeSummary(file) }}</code>
-                    </button>
-                  </li>
-                </ul>
-                <p v-else class="commit-detail-empty compact">
-                  No changed files found for this commit.
-                </p>
-              </section>
-
-              <section class="commit-diff-section">
-                <div class="commit-detail-section-heading">
-                  <h4>Patch</h4>
-                </div>
-                <div v-if="selectedCommitDiffSections.length > 0" class="commit-diff-file-list">
-                  <article
-                    v-for="section in selectedCommitDiffSections"
-                    :key="section.key"
-                    :ref="(element) => setCommitDiffSectionRef(section.key, element)"
-                    class="commit-diff-file"
-                    :class="{ active: activeCommitDiffSectionKey === section.key }"
-                  >
-                    <div class="commit-diff-file-heading">
-                      <strong>{{ section.path }}</strong>
-                      <small v-if="section.originalPath">from {{ section.originalPath }}</small>
-                    </div>
-                    <pre class="status-diff-output commit-diff-output"><code><span
-                      v-for="line in section.lines"
-                      :key="line.key"
-                      class="diff-line"
-                      :class="line.className"
-                    ><span class="diff-line-prefix">{{ line.prefix }}</span><span>{{ line.content }}</span></span></code></pre>
-                  </article>
-                </div>
-                <p v-else class="commit-detail-empty compact">
-                  No patch available for this commit.
-                </p>
-              </section>
-            </div>
-          </div>
-        </template>
-      </section>
-    </div>
-
-    <div
+    <RepositoryStatusDiffModal
       v-if="selectedStatusDiff || statusDiffError"
-      class="modal-backdrop status-diff-backdrop"
-      role="presentation"
-      @click.self="closeStatusDiff"
-    >
-      <section class="status-diff-modal" role="dialog" aria-modal="true" aria-labelledby="status-diff-title">
-        <header class="status-diff-header">
-          <div>
-            <span>File changes</span>
-            <h2 id="status-diff-title">
-              {{ selectedStatusDiff?.path ?? "Could not load changes" }}
-            </h2>
-          </div>
-          <button type="button" class="secondary" @click="closeStatusDiff">Close</button>
-        </header>
-
-        <p v-if="statusDiffError" class="status-diff-error">{{ statusDiffError }}</p>
-        <pre v-else class="status-diff-output"><code><span
-          v-for="line in selectedStatusDiffLines"
-          :key="line.key"
-          class="diff-line"
-          :class="line.className"
-        ><span class="diff-line-prefix">{{ line.prefix }}</span><span>{{ line.content }}</span></span></code></pre>
-      </section>
-    </div>
+      :error="statusDiffError"
+      :status-diff="selectedStatusDiff"
+      @close="closeStatusDiff"
+    />
   </section>
 </template>

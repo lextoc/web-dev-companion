@@ -2,7 +2,35 @@
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import type { RepositoryBranchLink } from "../../app-state";
 import type { MergeBranchRequest, MergeLinkedSubmoduleBranchRequest, RepositoryDetails } from "../../repositories";
-import { AppActionMenu, AppButton, AppDropdown, AppIcon, AppMenuItem } from "../ui";
+import { AppActionMenu, AppButton, AppDropdown, AppMenuItem } from "../ui";
+import RepositoryBranchMenuTrigger from "./repository-header/RepositoryBranchMenuTrigger.vue";
+import RepositoryHeaderStateSummary from "./repository-header/RepositoryHeaderStateSummary.vue";
+import RepositoryQuickActions from "./repository-header/RepositoryQuickActions.vue";
+import RepositoryRefreshButton from "./repository-header/RepositoryRefreshButton.vue";
+import RepositorySubmoduleLinksModal from "./repository-header/RepositorySubmoduleLinksModal.vue";
+import {
+  type BranchFilterKey,
+  branchCheckoutDisabledReason,
+  branchMatchesFilter,
+  branchMatchesSearch,
+  branchSafetyNotes,
+  branchFilters,
+  branchSyncActionLabel,
+  branchSyncDisabledReason,
+  branchSyncLabel,
+  branchSyncTitle,
+  inferNextNumberedBranch,
+  isCheckingOutBranch,
+  isCheckingOutSubmoduleBranch as isSubmoduleCheckoutPending,
+  isDeletingBranch,
+  isDeletingSubmoduleBranch as isSubmoduleDeletePending,
+  isSubmoduleBranchSyncActionReady,
+  isSyncingBranch,
+  isSyncingSubmoduleBranch as isSubmoduleSyncPending,
+  submoduleBranchCheckoutDisabledReason as getSubmoduleBranchCheckoutDisabledReason,
+  submoduleBranchSyncDisabledReason,
+  submoduleBranchSyncTitle as getSubmoduleBranchSyncTitle,
+} from "./repository-header/branchUtils";
 
 const props = defineProps<{
   selectedDetails: RepositoryDetails | null;
@@ -44,10 +72,6 @@ const emit = defineEmits<{
   openInTerminal: [repoPath: string];
 }>();
 
-type SyncableBranch =
-  | RepositoryDetails["gitBranches"][number]
-  | RepositoryDetails["gitSubmodules"][number]["branches"][number];
-
 const branchFilter = ref("all");
 const branchSearchQuery = ref("");
 const selectedRemoteBranchName = ref("");
@@ -56,25 +80,9 @@ const targetParentBranchName = ref("");
 const targetSubmoduleBranchName = ref("");
 const isBranchMenuOpen = ref(false);
 const isSubmoduleLinkManagerOpen = ref(false);
-const refreshButtonElement = ref<HTMLElement | null>(null);
-const isRefreshIconSettling = ref(false);
 const syncConfettiBursts = ref<Array<{ id: number }>>([]);
-const refreshIconStartAngle = ref(0);
-const refreshIconEndAngle = ref(0);
-const refreshIconSettleDuration = ref(0);
-let refreshIconSettleTimer: number | undefined;
 let nextSyncConfettiBurstId = 0;
 const syncConfettiTimers = new Set<number>();
-
-const branchFilters = [
-  { key: "all", label: "All" },
-  { key: "behind", label: "Behind" },
-  { key: "ahead", label: "Ahead" },
-  { key: "no-upstream", label: "No upstream" },
-  { key: "in-sync", label: "In sync" },
-] as const;
-
-type BranchFilterKey = (typeof branchFilters)[number]["key"];
 
 const sortedBranches = computed(() => {
   const branches = props.selectedDetails?.gitBranches ?? [];
@@ -334,36 +342,6 @@ const branchMenuLabel = computed(() => {
 
   return `Manage branches. Current branch ${props.selectedDetails.branch}. ${currentBranchSyncLabel.value}.`;
 });
-const changedFileCount = computed(() => {
-  const gitStatus = props.selectedDetails?.gitStatus;
-
-  if (!gitStatus) {
-    return 0;
-  }
-
-  return (
-    gitStatus.staged.length +
-    gitStatus.unstaged.length +
-    gitStatus.untracked.length +
-    gitStatus.conflicted.length
-  );
-});
-const changedFileLabel = computed(() => {
-  if (!props.selectedDetails) {
-    return "";
-  }
-
-  if (changedFileCount.value === 0) {
-    return "Clean tree";
-  }
-
-  return changedFileCount.value === 1 ? "1 changed file" : `${changedFileCount.value} changed files`;
-});
-const scriptCountLabel = computed(() => {
-  const count = props.selectedDetails?.npmScriptCount ?? 0;
-
-  return count === 1 ? "1 script" : `${count} scripts`;
-});
 
 watch(
   () => props.selectedDetails?.path,
@@ -441,75 +419,6 @@ watch(
   },
   { immediate: true },
 );
-
-function currentRefreshIconAngle() {
-  const iconElement = refreshButtonElement.value?.querySelector<HTMLElement>(".button-icon");
-
-  if (!iconElement) {
-    return 0;
-  }
-
-  const transform = window.getComputedStyle(iconElement).transform;
-
-  if (!transform || transform === "none") {
-    return 0;
-  }
-
-  const matrix = new DOMMatrixReadOnly(transform);
-  const angle = Math.atan2(matrix.b, matrix.a) * (180 / Math.PI);
-
-  return (angle + 360) % 360;
-}
-
-function branchMatchesSearch(
-  branch: RepositoryDetails["gitBranches"][number],
-  normalizedQuery: string,
-) {
-  if (!normalizedQuery) {
-    return true;
-  }
-
-  return [branch.name, branch.upstream ?? ""].some((value) =>
-    value.toLowerCase().includes(normalizedQuery),
-  );
-}
-
-function branchMatchesFilter(
-  branch: RepositoryDetails["gitBranches"][number],
-  filterKey: BranchFilterKey,
-) {
-  if (filterKey === "behind") {
-    return branch.behind > 0;
-  }
-
-  if (filterKey === "ahead") {
-    return branch.ahead > 0;
-  }
-
-  if (filterKey === "no-upstream") {
-    return !branch.upstream;
-  }
-
-  if (filterKey === "in-sync") {
-    return branch.inSyncWithRemote;
-  }
-
-  return true;
-}
-
-function inferNextNumberedBranch(currentBranchName: string, branchNames: string[]) {
-  const match = currentBranchName.match(/^(.*?)(\d+)$/);
-
-  if (!match) {
-    return "";
-  }
-
-  const [, prefix, numberText] = match;
-  const nextNumber = String(Number(numberText) + 1).padStart(numberText.length, "0");
-  const nextBranchName = `${prefix}${nextNumber}`;
-
-  return branchNames.includes(nextBranchName) ? nextBranchName : "";
-}
 
 function findSavedSubmoduleLink(parentBranch: string) {
   if (!selectedSubmodulePath.value) {
@@ -602,46 +511,9 @@ function mergeLinkedBranches() {
   });
 }
 
-function isDeletingSubmoduleBranch(submodulePath: string, branchName: string) {
-  return props.deletingSubmoduleBranchName === `${submodulePath}:${branchName}`;
-}
-
 function clearBranchSearch() {
   branchSearchQuery.value = "";
 }
-
-function prepareRefreshIconSettle() {
-  const startAngle = currentRefreshIconAngle();
-  const remainingAngle = startAngle === 0 ? 0 : 360 - startAngle;
-
-  refreshIconStartAngle.value = startAngle;
-  refreshIconEndAngle.value = remainingAngle === 0 ? 0 : 360;
-  refreshIconSettleDuration.value = Math.round((remainingAngle / 360) * 900);
-}
-
-watch(
-  () => props.isDetailLoading,
-  (isDetailLoading, wasDetailLoading) => {
-    if (refreshIconSettleTimer !== undefined) {
-      window.clearTimeout(refreshIconSettleTimer);
-      refreshIconSettleTimer = undefined;
-    }
-
-    if (isDetailLoading) {
-      isRefreshIconSettling.value = false;
-      return;
-    }
-
-    if (wasDetailLoading) {
-      prepareRefreshIconSettle();
-      isRefreshIconSettling.value = true;
-      refreshIconSettleTimer = window.setTimeout(() => {
-        isRefreshIconSettling.value = false;
-        refreshIconSettleTimer = undefined;
-      }, refreshIconSettleDuration.value);
-    }
-  },
-);
 
 watch(
   () => props.syncCelebrationToken,
@@ -668,218 +540,27 @@ function triggerSyncConfetti() {
   syncConfettiTimers.add(timer);
 }
 
-function branchSyncLabel(branch: SyncableBranch) {
-  if (!branch.upstream) {
-    return "No upstream";
-  }
-
-  if (branch.inSyncWithRemote) {
-    return "In sync";
-  }
-
-  if (branch.remoteGone) {
-    return "Remote gone";
-  }
-
-  if (branch.ahead > 0 && branch.behind > 0) {
-    return `${branch.ahead} ahead, ${branch.behind} behind`;
-  }
-
-  if (branch.ahead > 0) {
-    return `${branch.ahead} ahead`;
-  }
-
-  return `${branch.behind} behind`;
-}
-
-function hasStagedOrUnstagedChanges(gitStatus: RepositoryDetails["gitStatus"]) {
-  return (
-    gitStatus.staged.length > 0 ||
-    gitStatus.unstaged.length > 0 ||
-    gitStatus.conflicted.length > 0
-  );
-}
-
-function branchSyncDisabledReason(
-  branch: SyncableBranch,
-  gitStatus: RepositoryDetails["gitStatus"],
-) {
-  if (hasStagedOrUnstagedChanges(gitStatus)) {
-    return "Commit, stash, or discard staged and unstaged changes before syncing.";
-  }
-
-  return branchSyncMetadataDisabledReason(branch);
-}
-
-function branchSyncMetadataDisabledReason(branch: SyncableBranch) {
-  if (!branch.upstream) {
-    return "No upstream remote branch is configured.";
-  }
-
-  if (branch.remoteGone) {
-    return "Upstream remote branch is gone.";
-  }
-
-  if (branch.ahead > 0 && branch.behind > 0) {
-    return "Branch has both local and remote commits. Resolve it manually before syncing.";
-  }
-
-  return undefined;
-}
-
-function isSyncingBranch(branchName: string, syncingBranchName: string | null) {
-  return syncingBranchName === branchName;
-}
-
 function isSyncingSubmoduleBranch(submodulePath: string, branchName: string) {
-  return props.syncingSubmoduleBranchName === `${submodulePath}:${branchName}`;
-}
-
-function isBranchSyncActionReady(
-  branch: SyncableBranch,
-  gitStatus: RepositoryDetails["gitStatus"],
-) {
-  return !branch.inSyncWithRemote && !branchSyncDisabledReason(branch, gitStatus);
-}
-
-function isSubmoduleBranchSyncActionReady(
-  submodule: RepositoryDetails["gitSubmodules"][number],
-  branch: RepositoryDetails["gitSubmodules"][number]["branches"][number],
-) {
-  return !branch.inSyncWithRemote && !submoduleBranchSyncDisabledReason(submodule, branch);
-}
-
-function isDeletingBranch(branchName: string, deletingBranchName: string | null) {
-  return deletingBranchName === branchName;
-}
-
-function isCheckingOutBranch(branchName: string, checkingOutBranchName: string | null) {
-  return checkingOutBranchName === branchName;
+  return isSubmoduleSyncPending(props.syncingSubmoduleBranchName, submodulePath, branchName);
 }
 
 function isCheckingOutSubmoduleBranch(submodulePath: string, branchName: string) {
-  return props.checkingOutSubmoduleBranchName === `${submodulePath}:${branchName}`;
+  return isSubmoduleCheckoutPending(props.checkingOutSubmoduleBranchName, submodulePath, branchName);
 }
 
-function branchCheckoutDisabledReason(gitStatus: RepositoryDetails["gitStatus"]) {
-  return gitStatus.clean
-    ? undefined
-    : "Commit, stash, or discard working tree changes before switching branches.";
+function isDeletingSubmoduleBranch(submodulePath: string, branchName: string) {
+  return isSubmoduleDeletePending(props.deletingSubmoduleBranchName, submodulePath, branchName);
 }
 
 function submoduleBranchCheckoutDisabledReason(submodule: RepositoryDetails["gitSubmodules"][number]) {
-  if (submodule.dirty) {
-    return "Commit, stash, or discard submodule changes before switching branches.";
-  }
-
-  if (
-    props.checkingOutBranchName ||
-    props.checkingOutSubmoduleBranchName ||
-    props.syncingBranchName ||
-    props.syncingSubmoduleBranchName ||
-    props.deletingSubmoduleBranchName ||
-    props.mergingBranchName ||
-    props.mergingLinkedBranchName
-  ) {
-    return "Wait for the current branch action to finish.";
-  }
-
-  return "";
-}
-
-function branchSyncTitle(
-  branch: SyncableBranch,
-  gitStatus: RepositoryDetails["gitStatus"],
-  syncingBranchName: string | null,
-) {
-  if (isSyncingBranch(branch.name, syncingBranchName)) {
-    return `Syncing ${branch.name}`;
-  }
-
-  return branchSyncDisabledReason(branch, gitStatus) ?? branchSyncActionTitle(branch);
+  return getSubmoduleBranchCheckoutDisabledReason(submodule, props);
 }
 
 function submoduleBranchSyncTitle(
   submodule: RepositoryDetails["gitSubmodules"][number],
   branch: RepositoryDetails["gitSubmodules"][number]["branches"][number],
 ) {
-  if (isSyncingSubmoduleBranch(submodule.path, branch.name)) {
-    return `Syncing ${branch.name}`;
-  }
-
-  if (branch.inSyncWithRemote) {
-    return "Branch is in sync with its remote.";
-  }
-
-  return submoduleBranchSyncDisabledReason(submodule, branch) ?? branchSyncActionTitle(branch);
-}
-
-function submoduleBranchSyncDisabledReason(
-  submodule: RepositoryDetails["gitSubmodules"][number],
-  branch: RepositoryDetails["gitSubmodules"][number]["branches"][number],
-) {
-  if (submodule.dirty) {
-    return "Commit, stash, or discard submodule changes before syncing.";
-  }
-
-  return branchSyncMetadataDisabledReason(branch);
-}
-
-function branchSyncActionLabel(branch: SyncableBranch) {
-  if (branch.ahead > 0 && branch.behind === 0) {
-    return "Push";
-  }
-
-  if (branch.behind > 0 && branch.ahead === 0) {
-    return "Pull";
-  }
-
-  return "Sync";
-}
-
-function branchSyncActionIcon(
-  branch: SyncableBranch,
-  syncingBranchName: string | null,
-) {
-  if (isSyncingBranch(branch.name, syncingBranchName)) {
-    return "restart";
-  }
-
-  if (branch.ahead > 0 && branch.behind === 0) {
-    return "push";
-  }
-
-  if (branch.behind > 0 && branch.ahead === 0) {
-    return "pull";
-  }
-
-  return "restart";
-}
-
-function branchSyncActionTitle(branch: SyncableBranch) {
-  if (branch.ahead > 0 && branch.behind === 0) {
-    return "Push local commits to the upstream branch";
-  }
-
-  if (branch.behind > 0 && branch.ahead === 0) {
-    return "Fast-forward the local branch from upstream";
-  }
-
-  return "Sync branch with upstream";
-}
-
-function branchSafetyNotes(
-  branch: RepositoryDetails["gitBranches"][number],
-  gitStatus: RepositoryDetails["gitStatus"],
-) {
-  const notes = [];
-  const syncReason = branchSyncDisabledReason(branch, gitStatus);
-
-  if (syncReason && !branch.inSyncWithRemote) {
-    notes.push(syncReason);
-  }
-
-  return [...new Set(notes)];
+  return getSubmoduleBranchSyncTitle(submodule, branch, props.syncingSubmoduleBranchName);
 }
 
 function checkoutSelectedRemoteBranch() {
@@ -891,10 +572,6 @@ function checkoutSelectedRemoteBranch() {
 }
 
 onBeforeUnmount(() => {
-  if (refreshIconSettleTimer !== undefined) {
-    window.clearTimeout(refreshIconSettleTimer);
-  }
-
   syncConfettiTimers.forEach((timer) => window.clearTimeout(timer));
   syncConfettiTimers.clear();
 });
@@ -907,75 +584,28 @@ onBeforeUnmount(() => {
         Back
       </AppButton>
 
-      <div v-if="selectedDetails" class="detail-context-pills" aria-label="Repository state">
-        <div class="detail-state-summary" aria-label="Repository summary">
-          <span class="detail-state-item" :class="{ warning: changedFileCount > 0 }">
-            {{ changedFileLabel }}
-          </span>
-          <span class="detail-state-item">{{ scriptCountLabel }}</span>
-        </div>
-      </div>
+      <RepositoryHeaderStateSummary
+        v-if="selectedDetails"
+        :selected-details="selectedDetails"
+      />
     </nav>
 
     <div v-if="selectedDetails" class="detail-repository-tools" aria-label="Repository actions">
       <div class="branch-menu">
-        <div class="branch-menu-combo">
-          <button
-            type="button"
-            class="secondary branch-menu-trigger"
-            :aria-label="branchMenuLabel"
-            :aria-expanded="isBranchMenuOpen"
-            aria-controls="branch-management-menu"
-            :title="branchMenuLabel"
-            @click="isBranchMenuOpen = !isBranchMenuOpen"
-          >
-            <AppIcon name="repository" class="branch-menu-icon" />
-            <span class="branch-menu-summary">
-              <span class="branch-menu-kicker">Branch</span>
-              <span class="branch-menu-title-row">
-                <strong>{{ selectedDetails.branch }}</strong>
-              </span>
-              <span class="branch-menu-meta">{{ currentBranchSyncLabel }}</span>
-            </span>
-            <span class="panel-count">{{ selectedDetails.gitBranches.length }}</span>
-          </button>
-          <button
-            v-if="currentBranch"
-            type="button"
-            class="secondary branch-menu-sync-button"
-            :class="{
-              active:
-                commitCelebrations &&
-                isBranchSyncActionReady(currentBranch, selectedDetails.gitStatus),
-              pending: isSyncingBranch(currentBranch.name, syncingBranchName),
-            }"
-            :disabled="
-              Boolean(branchSyncDisabledReason(currentBranch, selectedDetails.gitStatus)) ||
-              Boolean(syncingBranchName) ||
-              Boolean(deletingBranchName)
-            "
-            :title="branchSyncTitle(currentBranch, selectedDetails.gitStatus, syncingBranchName)"
-            :aria-busy="isSyncingBranch(currentBranch.name, syncingBranchName)"
-            :aria-label="`${branchSyncActionLabel(currentBranch)} current branch ${currentBranch.name}`"
-            @click="$emit('syncBranch', currentBranch.name)"
-          >
-            <AppIcon
-              :name="branchSyncActionIcon(currentBranch, syncingBranchName)"
-              class="button-icon"
-            />
-            <span class="branch-menu-sync-text">Sync</span>
-            <kbd class="shortcut-label branch-menu-sync-shortcut">{{ syncShortcutLabel }}</kbd>
-            <span class="visually-hidden">{{ branchSyncActionLabel(currentBranch) }}</span>
-          </button>
-          <div
-            v-for="burst in syncConfettiBursts"
-            :key="burst.id"
-            class="commit-confetti branch-sync-confetti"
-            aria-hidden="true"
-          >
-            <span v-for="index in 18" :key="index"></span>
-          </div>
-        </div>
+        <RepositoryBranchMenuTrigger
+          :branch-menu-label="branchMenuLabel"
+          :commit-celebrations="commitCelebrations"
+          :current-branch="currentBranch"
+          :current-branch-sync-label="currentBranchSyncLabel"
+          :deleting-branch-name="deletingBranchName"
+          :is-branch-menu-open="isBranchMenuOpen"
+          :selected-details="selectedDetails"
+          :sync-confetti-bursts="syncConfettiBursts"
+          :sync-shortcut-label="syncShortcutLabel"
+          :syncing-branch-name="syncingBranchName"
+          @sync-branch="$emit('syncBranch', $event)"
+          @toggle-menu="isBranchMenuOpen = !isBranchMenuOpen"
+        />
 
         <Teleport to="body">
           <div
@@ -1516,141 +1146,35 @@ onBeforeUnmount(() => {
         </Teleport>
 
         <Teleport to="body">
-          <div
+          <RepositorySubmoduleLinksModal
             v-if="isSubmoduleLinkManagerOpen && selectedSubmodule"
-            class="modal-backdrop submodule-link-modal-backdrop"
-            role="presentation"
-            @click.self="isSubmoduleLinkManagerOpen = false"
-          >
-            <section
-              id="submodule-branch-link-modal"
-              class="submodule-link-modal"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="submodule-branch-link-title"
-              @keydown.esc.stop.prevent="isSubmoduleLinkManagerOpen = false"
-            >
-              <div class="panel-heading submodule-link-modal-heading">
-                <div>
-                  <h3 id="submodule-branch-link-title">Branch links</h3>
-                  <span class="panel-subtitle">{{ selectedDetails.name }} - {{ selectedSubmodule.path }}</span>
-                </div>
-                <AppButton
-                  variant="secondary"
-                  size="icon"
-                  icon="close"
-                  class="branch-menu-close"
-                  aria-label="Close branch links"
-                  title="Close"
-                  @click="isSubmoduleLinkManagerOpen = false"
-                >
-                  Close
-                </AppButton>
-              </div>
-
-              <div
-                id="submodule-branch-link-table"
-                class="submodule-link-table"
-                role="table"
-                aria-label="Repository branch links"
-              >
-                <div class="submodule-link-table-head" role="row">
-                  <span role="columnheader">Repository branch</span>
-                  <span role="columnheader">Submodule branch</span>
-                </div>
-                <div
-                  v-for="row in submoduleLinkTableRows"
-                  :key="`${selectedSubmodulePath}:${row.parentBranch}`"
-                  class="submodule-link-table-row"
-                  :class="{ current: row.current }"
-                  role="row"
-                >
-                  <div class="submodule-link-parent-cell" role="cell">
-                    <strong>{{ row.parentBranch }}</strong>
-                    <small>{{ row.current ? "Current branch" : "Repository branch" }}</small>
-                  </div>
-                  <AppDropdown
-                    :model-value="row.submoduleBranch"
-                    menu-class="remote-branch-dropdown-menu submodule-link-dropdown-menu"
-                    :options="submoduleLinkDropdownOptions"
-                    @update:model-value="updateSubmoduleBranchLink(row.parentBranch, $event)"
-                  />
-                </div>
-              </div>
-            </section>
-          </div>
+            :dropdown-options="submoduleLinkDropdownOptions"
+            :repository-name="selectedDetails.name"
+            :rows="submoduleLinkTableRows"
+            :selected-submodule="selectedSubmodule"
+            :selected-submodule-path="selectedSubmodulePath"
+            @close="isSubmoduleLinkManagerOpen = false"
+            @update-link="updateSubmoduleBranchLink"
+          />
         </Teleport>
       </div>
-      <div class="detail-quick-actions" aria-label="Repository quick actions">
-        <AppButton
-          variant="secondary"
-          size="icon"
-          icon="folder"
-          :aria-label="`Show ${selectedDetails.name} in files`"
-          title="Show in files"
-          @click="$emit('openInFileManager', selectedDetails.path)"
-        >
-          Show in files
-        </AppButton>
-        <AppButton
-          variant="secondary"
-          size="icon"
-          icon="edit"
-          :aria-label="`Open ${selectedDetails.name} in editor`"
-          title="Open in editor"
-          @click="$emit('openInEditor', selectedDetails.path)"
-        >
-          Open in editor
-        </AppButton>
-        <AppButton
-          variant="secondary"
-          size="icon"
-          icon="terminal"
-          :aria-label="`Open ${selectedDetails.name} terminal`"
-          title="Open terminal"
-          @click="$emit('openInTerminal', selectedDetails.path)"
-        >
-          Open terminal
-        </AppButton>
-        <AppButton
-          variant="secondary"
-          size="icon"
-          icon="copy"
-          :aria-label="`Copy path for ${selectedDetails.name}`"
-          title="Copy path"
-          @click="$emit('copyPath', selectedDetails.path)"
-        >
-          Copy path
-        </AppButton>
-      </div>
+      <RepositoryQuickActions
+        :repository-name="selectedDetails.name"
+        :repository-path="selectedDetails.path"
+        @copy-path="$emit('copyPath', $event)"
+        @open-in-editor="$emit('openInEditor', $event)"
+        @open-in-file-manager="$emit('openInFileManager', $event)"
+        @open-in-terminal="$emit('openInTerminal', $event)"
+      />
     </div>
 
     <div class="detail-refresh-area">
-      <button
-        ref="refreshButtonElement"
-        type="button"
-        class="secondary refresh-button"
-        :class="{ pending: isDetailLoading, settling: isRefreshIconSettling }"
-        :style="{
-          '--refresh-start-angle': `${refreshIconStartAngle}deg`,
-          '--refresh-end-angle': `${refreshIconEndAngle}deg`,
-          '--refresh-settle-duration': `${refreshIconSettleDuration}ms`,
-        }"
-        :disabled="isDetailLoading"
-        :title="isDetailLoading ? 'Refreshing repository' : autoRefreshLabel"
-        :aria-busy="isDetailLoading"
-        :aria-label="isDetailLoading ? 'Refreshing repository' : 'Refresh repository'"
-        @click="$emit('refresh')"
-      >
-        <AppIcon name="restart" class="button-icon" />
-        <span class="refresh-button-label">Refresh</span>
-        <span class="refresh-progress" aria-hidden="true">
-          <span
-            class="refresh-progress-fill"
-            :style="{ width: `${autoRefreshProgress}%` }"
-          ></span>
-        </span>
-      </button>
+      <RepositoryRefreshButton
+        :auto-refresh-label="autoRefreshLabel"
+        :auto-refresh-progress="autoRefreshProgress"
+        :is-detail-loading="isDetailLoading"
+        @refresh="$emit('refresh')"
+      />
     </div>
   </div>
 </template>

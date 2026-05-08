@@ -189,6 +189,7 @@
 }
 
 .settings-dialog .app-checkbox {
+  position: relative;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 12px;
@@ -196,6 +197,45 @@
   border-radius: 8px;
   padding: 10px 12px;
   background: var(--surface-soft);
+}
+
+.settings-dialog .commit-celebrations-setting {
+  isolation: isolate;
+  overflow: hidden;
+  background: transparent;
+}
+
+.settings-dialog .commit-celebrations-setting::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    #ff4f8b 0%,
+    #ff4f8b 10%,
+    #ff8f3d 18%,
+    #ffdd4d 28%,
+    #59d66f 40%,
+    #43d9ff 54%,
+    #8b67ff 68%,
+    #d85dff 80%,
+    #ff4f8b 92%,
+    #ff4f8b 100%
+  );
+  background-position: 0% 50%;
+  background-size: 520% 100%;
+  opacity: 0.18;
+  animation: rainbow-button-flow 8s linear infinite;
+}
+
+.settings-dialog .commit-celebrations-setting::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--surface-soft) 78%, transparent);
 }
 
 .settings-dialog label span {

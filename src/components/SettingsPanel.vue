@@ -82,7 +82,8 @@ const autoRefreshOptions = AUTO_REFRESH_INTERVAL_OPTIONS.map((option) => ({ ...o
 
       <AppCheckbox
         v-model="draft.commitCelebrations"
-        description="Rainbow commit and sync buttons, plus confetti on successful submit."
+        class="commit-celebrations-setting"
+        description="Rainbow commit and sync buttons, current branch chip, plus confetti on successful submit."
       >
         Commit celebrations
       </AppCheckbox>

@@ -653,7 +653,18 @@ onBeforeUnmount(() => {
             <div class="panel-heading branch-menu-heading">
               <div>
                 <h3 id="branch-management-title">Branch management</h3>
-                <span class="panel-subtitle">{{ selectedDetails.name }} - {{ selectedDetails.branch }}</span>
+                <span
+                  class="panel-subtitle branch-menu-current-branch"
+                  :title="`${selectedDetails.name} - current branch ${selectedDetails.branch}`"
+                >
+                  <span class="branch-menu-repository-name">{{ selectedDetails.name }}</span>
+                  <strong
+                    class="branch-menu-current-name"
+                    :class="{ celebration: commitCelebrations }"
+                  >
+                    Currently on "{{ selectedDetails.branch }}"
+                  </strong>
+                </span>
               </div>
               <div class="branch-menu-heading-stats" aria-label="Branch counts">
                 <span>{{ selectedDetails.gitBranches.length }} local</span>

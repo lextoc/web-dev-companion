@@ -1278,14 +1278,19 @@ onBeforeUnmount(() => {
   min-height: 34px;
   align-items: center;
   gap: 6px;
-  border-color: transparent;
+  border-color: var(--border-control);
   padding: 0 10px;
-  background: transparent;
-  color: var(--muted-strong);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 92%, #fff),
+      color-mix(in srgb, var(--surface-soft) 42%, var(--surface))
+    );
+  color: var(--text);
 }
 
 .detail-dashboard-button:hover:not(:disabled) {
-  border-color: transparent;
+  border-color: var(--border-muted);
   background: var(--surface-subtle);
   color: var(--text);
 }

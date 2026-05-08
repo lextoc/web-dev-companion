@@ -1,4 +1,4 @@
-import { computed, ref, type Ref } from 'vue'
+import { computed, nextTick, ref, type Ref } from 'vue'
 import type { CommandPaletteItem } from '../command-palette'
 import { keybindingLabel } from '../keybindings'
 import type { PinnedScript, RepositoryDetails, RepositorySummary, ScriptTerminal } from '../repositories'
@@ -242,9 +242,17 @@ export function useCommandPalette({
   }
 
   async function runCommandPaletteItem(itemId: string) {
-    rememberCommand(itemId)
     closeCommandPalette()
+    await nextTick()
 
+    try {
+      await runCommandPaletteAction(itemId)
+    } finally {
+      rememberCommand(itemId)
+    }
+  }
+
+  async function runCommandPaletteAction(itemId: string) {
     if (itemId === 'action:add-repository') {
       await chooseAndAddRepository()
       return

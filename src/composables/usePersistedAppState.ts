@@ -58,7 +58,11 @@ export function usePersistedAppState({
 
   function saveRecentCommands(commandIds: string[]) {
     recentCommandIds.value = commandIds.slice(0, MAX_RECENT_COMMANDS)
-    void window.appState.saveRecentCommandIds(recentCommandIds.value).catch(showError)
+    const savedCommandIds = [...recentCommandIds.value]
+
+    void Promise.resolve()
+      .then(() => window.appState.saveRecentCommandIds(savedCommandIds))
+      .catch(showError)
   }
 
   function saveRepositoryBranchLinks(links: RepositoryBranchLink[]) {

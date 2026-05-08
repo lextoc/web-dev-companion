@@ -14,6 +14,7 @@ const emit = defineEmits<{
 
 const query = ref('')
 const selectedIndex = ref(0)
+const hasRunItem = ref(false)
 const listElement = ref<HTMLElement | null>(null)
 const searchInput = ref<HTMLInputElement | null>(null)
 
@@ -126,8 +127,26 @@ function runSelected() {
   const selectedItem = filteredItems.value[selectedIndex.value]
 
   if (selectedItem) {
-    emit('run', selectedItem.actionId ?? selectedItem.id)
+    runItem(selectedItem)
   }
+}
+
+function runItem(item: CommandPaletteItem) {
+  if (hasRunItem.value) {
+    return
+  }
+
+  hasRunItem.value = true
+  emit('run', item.actionId ?? item.id)
+}
+
+function runItemFromPointer(event: PointerEvent, item: CommandPaletteItem) {
+  if (event.button !== 0) {
+    return
+  }
+
+  event.preventDefault()
+  runItem(item)
 }
 </script>
 
@@ -183,7 +202,8 @@ function runSelected() {
                 class="command-palette-item"
                 :class="{ active: index === selectedIndex }"
                 @mouseenter="selectedIndex = index"
-                @click="$emit('run', item.actionId ?? item.id)"
+                @pointerdown="runItemFromPointer($event, item)"
+                @click="runItem(item)"
               >
                 <span class="command-palette-item-icon" aria-hidden="true">
                   <AppIcon :name="item.icon" />

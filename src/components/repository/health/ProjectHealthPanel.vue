@@ -38,8 +38,14 @@ const hasNodeHealth = computed(() =>
   Boolean(props.health?.node.configured) ||
   Boolean(props.health?.node.engineRange),
 );
+const hasJavaHealth = computed(() =>
+  javaTasks.value.length > 0 ||
+  Boolean(props.health?.java.requiredRelease) ||
+  Boolean(props.health?.java.mavenWrapperPresent) ||
+  Boolean(props.health?.java.gradleWrapperPresent),
+);
 const supportedEcosystemCount = computed(() =>
-  Number(hasNodeHealth.value) + Number(javaTasks.value.length > 0) + Number(rubyTasks.value.length > 0),
+  Number(hasNodeHealth.value) + Number(hasJavaHealth.value) + Number(rubyTasks.value.length > 0),
 );
 
 function projectHealthIssueCount(health: ProjectHealth) {
@@ -55,7 +61,10 @@ function projectHealthAttentionItems(health: ProjectHealth) {
         { key: "lockfile", title: "Lockfile", messages: health.lockfile.messages },
       ]
     : [];
-  const items = groupedMessages.flatMap((group) =>
+  const javaMessages = hasJavaHealth.value
+    ? [{ key: "java", title: "Java", messages: health.java.messages }]
+    : [];
+  const items = [...groupedMessages, ...javaMessages].flatMap((group) =>
     group.messages.map((entry) => ({
       key: `${group.key}-${entry.text}`,
       level: entry.level,
@@ -95,7 +104,7 @@ function projectHealthAttentionItems(health: ProjectHealth) {
 }
 
 function projectHealthOverallStatus(health: ProjectHealth): ProjectHealthStatus {
-  if (
+  const hasNodeError =
     hasNodeHealth.value &&
     (
       health.packageManager.status === "error" ||
@@ -104,12 +113,8 @@ function projectHealthOverallStatus(health: ProjectHealth): ProjectHealthStatus 
       health.lockfile.status === "error" ||
       health.dependencies.status === "failed" ||
       health.scripts.some((script) => ["failed", "timed-out"].includes(script.status))
-    )
-  ) {
-    return "error";
-  }
-
-  if (
+    );
+  const hasNodeWarning =
     hasNodeHealth.value &&
     (
       health.packageManager.status === "warning" ||
@@ -117,22 +122,34 @@ function projectHealthOverallStatus(health: ProjectHealth): ProjectHealthStatus 
       health.install.status === "warning" ||
       health.lockfile.status === "warning" ||
       health.dependencies.status === "outdated"
-    )
+    );
+  const hasNodeUnknown =
+    hasNodeHealth.value &&
+    (
+      health.packageManager.status === "unknown" ||
+      health.node.status === "unknown" ||
+      health.install.status === "unknown" ||
+      health.lockfile.status === "unknown"
+    );
+
+  if (
+    hasNodeError ||
+    (hasJavaHealth.value && health.java.status === "error")
+  ) {
+    return "error";
+  }
+
+  if (
+    hasNodeWarning ||
+    (hasJavaHealth.value && health.java.status === "warning")
   ) {
     return "warning";
   }
 
   if (
     supportedEcosystemCount.value === 0 ||
-    (
-      hasNodeHealth.value &&
-      (
-        health.packageManager.status === "unknown" ||
-        health.node.status === "unknown" ||
-        health.install.status === "unknown" ||
-        health.lockfile.status === "unknown"
-      )
-    )
+    hasNodeUnknown ||
+    (hasJavaHealth.value && health.java.status === "unknown")
   ) {
     return "unknown";
   }
@@ -237,7 +254,8 @@ function healthCheckedAtLabel(checkedAt?: string) {
       />
 
       <JavaHealthSection
-        v-if="javaTasks.length > 0"
+        v-if="hasJavaHealth"
+        :java="health.java"
         :tasks="javaTasks"
         :task-terminals-by-task="taskTerminalsByTask"
         @run-task="$emit('runTask', $event)"
@@ -399,6 +417,10 @@ function healthCheckedAtLabel(checkedAt?: string) {
 
 .ecosystem-summary-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.java-summary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .project-health-card,
@@ -754,8 +776,9 @@ function healthCheckedAtLabel(checkedAt?: string) {
 }
 
 @media (max-width: 760px) {
-	  .project-health-grid,
-	  .ecosystem-summary-grid,
+  .project-health-grid,
+  .ecosystem-summary-grid,
+  .java-summary-grid,
   .project-health-attention li,
   .project-health-check-row,
   .project-health-dependency-row,

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { ProjectTask, ScriptTerminal } from "../../../repositories";
+import type { ProjectHealthStatus, ProjectJavaHealth, ProjectTask, ScriptTerminal } from "../../../repositories";
 import RunProjectHealthScriptsButton from "./RunProjectHealthScriptsButton.vue";
 
 const props = defineProps<{
+  java: ProjectJavaHealth;
   tasks: ProjectTask[];
   taskTerminalsByTask: Record<string, ScriptTerminal>;
 }>();
@@ -23,6 +24,32 @@ const tools = computed(() => [
   ...(gradleTasks.value.length > 0 ? ["Gradle"] : []),
   ...(mavenTasks.value.length > 0 ? ["Maven"] : []),
 ]);
+
+function healthStatusLabel(status: ProjectHealthStatus) {
+  if (status === "ok") {
+    return "OK";
+  }
+
+  if (status === "warning") {
+    return "Warning";
+  }
+
+  if (status === "error") {
+    return "Error";
+  }
+
+  return "Unknown";
+}
+
+function compactPath(value?: string) {
+  if (!value) {
+    return "None";
+  }
+
+  const home = value.match(/^\/Users\/[^/]+/)?.[0];
+
+  return home ? value.replace(home, "~") : value;
+}
 
 function terminalForTask(task: ProjectTask) {
   return props.taskTerminalsByTask[task.id];
@@ -100,7 +127,41 @@ function restartOrRunTask(task: ProjectTask) {
       </div>
     </div>
 
-    <div class="project-health-grid ecosystem-summary-grid">
+    <div class="project-health-grid java-summary-grid">
+      <article class="project-health-card" :class="java.status">
+        <div class="project-health-card-heading">
+          <span>Java runtime</span>
+          <strong>{{ healthStatusLabel(java.status) }}</strong>
+        </div>
+        <dl>
+          <div>
+            <dt>Runtime</dt>
+            <dd>{{ java.current ?? "Unknown" }}</dd>
+          </div>
+          <div>
+            <dt>Compiler</dt>
+            <dd>{{ java.compiler ?? "Unknown" }}</dd>
+          </div>
+          <div>
+            <dt>Required</dt>
+            <dd>{{ java.requiredRelease ? `Java ${java.requiredRelease}` : "Unknown" }}</dd>
+          </div>
+          <div>
+            <dt>Configured</dt>
+            <dd>{{ java.configured ?? "None" }}</dd>
+          </div>
+          <div>
+            <dt>JAVA_HOME</dt>
+            <dd :title="java.javaHome">{{ compactPath(java.javaHome) }}</dd>
+          </div>
+        </dl>
+        <ul v-if="java.messages.length > 0" class="project-health-messages">
+          <li v-for="entry in java.messages" :key="`java-${entry.text}`" :class="entry.level">
+            {{ entry.text }}
+          </li>
+        </ul>
+      </article>
+
       <article class="project-health-card" :class="gradleTasks.length > 0 ? 'ok' : 'unknown'">
         <div class="project-health-card-heading">
           <span>Gradle</span>
@@ -114,6 +175,10 @@ function restartOrRunTask(task: ProjectTask) {
           <div>
             <dt>Runner</dt>
             <dd>{{ gradleTasks[0]?.command.split(" ")[0] ?? "None" }}</dd>
+          </div>
+          <div>
+            <dt>Wrapper</dt>
+            <dd>{{ java.gradleWrapperPresent ? "Found" : "Missing" }}</dd>
           </div>
         </dl>
       </article>
@@ -131,6 +196,14 @@ function restartOrRunTask(task: ProjectTask) {
           <div>
             <dt>Runner</dt>
             <dd>{{ mavenTasks[0]?.command.split(" ")[0] ?? "None" }}</dd>
+          </div>
+          <div>
+            <dt>Wrapper</dt>
+            <dd>{{ java.mavenWrapperPresent ? "Found" : "Missing" }}</dd>
+          </div>
+          <div>
+            <dt>System</dt>
+            <dd>{{ java.maven ?? (java.mavenWrapperPresent ? "Not required" : "Unknown") }}</dd>
           </div>
         </dl>
       </article>

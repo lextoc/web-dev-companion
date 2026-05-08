@@ -138,6 +138,21 @@ export interface ProjectNodeHealth {
   messages: ProjectHealthMessage[]
 }
 
+export interface ProjectJavaHealth {
+  current?: string
+  compiler?: string
+  compilerMajor?: number
+  configured?: string
+  requiredRelease?: string
+  requiredMajor?: number
+  javaHome?: string
+  maven?: string
+  mavenWrapperPresent: boolean
+  gradleWrapperPresent: boolean
+  status: ProjectHealthStatus
+  messages: ProjectHealthMessage[]
+}
+
 export interface ProjectInstallHealth {
   installed: boolean
   status: ProjectHealthStatus
@@ -185,6 +200,7 @@ export interface ProjectHealth {
   packageJsonPresent: boolean
   packageManager: ProjectPackageHealth
   node: ProjectNodeHealth
+  java: ProjectJavaHealth
   install: ProjectInstallHealth
   lockfile: ProjectLockfileHealth
   dependencies: ProjectDependencyHealth

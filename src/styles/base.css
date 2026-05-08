@@ -297,6 +297,11 @@ button.secondary.active {
   color: var(--text);
 }
 
+.action-menu-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
 .action-menu-item.danger {
   border-color: transparent;
   background: transparent;

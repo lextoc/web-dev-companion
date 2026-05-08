@@ -2,11 +2,41 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
 import AppButton from './AppButton.vue'
 
+type AppActionMenuTriggerIcon =
+  | 'arrow-left'
+  | 'command'
+  | 'copy'
+  | 'close'
+  | 'edit'
+  | 'folder'
+  | 'hide'
+  | 'link'
+  | 'merge'
+  | 'more-horizontal'
+  | 'panel-hide'
+  | 'pin'
+  | 'pin-off'
+  | 'play'
+  | 'pull'
+  | 'push'
+  | 'repository'
+  | 'restart'
+  | 'stop'
+  | 'terminal'
+  | 'trash'
+
 const props = withDefaults(defineProps<{
   align?: 'left' | 'right'
   label: string
+  triggerClass?: string
+  triggerIcon?: AppActionMenuTriggerIcon
+  triggerText?: string
+  triggerVariant?: 'primary' | 'secondary' | 'danger'
 }>(), {
   align: 'right',
+  triggerIcon: 'more-horizontal',
+  triggerText: '',
+  triggerVariant: 'secondary',
 })
 
 const menuRoot = ref<HTMLElement | null>(null)
@@ -93,10 +123,10 @@ onBeforeUnmount(() => {
 <template>
   <div ref="menuRoot" class="action-menu" :class="{ open: isOpen }">
     <AppButton
-      variant="secondary"
-      size="icon"
-      icon="more-horizontal"
-      class="action-menu-trigger"
+      :variant="triggerVariant"
+      :size="triggerText ? 'default' : 'icon'"
+      :icon="triggerIcon"
+      :class="['action-menu-trigger', triggerClass]"
       :aria-label="label"
       :aria-expanded="isOpen"
       aria-haspopup="menu"
@@ -104,7 +134,7 @@ onBeforeUnmount(() => {
       @click="toggleMenu"
       @keydown.esc.prevent="closeMenu"
     >
-      {{ label }}
+      {{ triggerText || label }}
     </AppButton>
 
     <Teleport to="body">

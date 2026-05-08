@@ -3,12 +3,14 @@ import path from 'node:path'
 import { spawn } from 'node:child_process'
 import type {
   CheckoutBranchRequest,
+  CheckoutSubmoduleBranchRequest,
   CommitDetails,
   CommitDetailsRequest,
   CheckoutRemoteBranchRequest,
   CommitRequest,
   DeleteBranchRequest,
   DeleteSubmoduleBranchRequest,
+  MergeBranchRequest,
   MergeLinkedSubmoduleBranchRequest,
   OpenCommitInBrowserRequest,
   RepositoryDetails,
@@ -19,6 +21,7 @@ import type {
   StatusFileRequest,
   SyncBranchRequest,
   SyncBranchResult,
+  SyncSubmoduleBranchRequest,
 } from '../src/repositories'
 import {
   detectPackageManager,
@@ -422,6 +425,30 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     return readRepositoryDetails(normalizedPath)
   }
 
+  async function checkoutSubmoduleBranch(request: CheckoutSubmoduleBranchRequest): Promise<RepositoryDetails> {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+    const branchName = request.branchName.trim()
+
+    if (!branchName) {
+      throw new Error('Branch name is required.')
+    }
+
+    const { absoluteSubmodulePath, submodule } = await resolveSubmodulePath(normalizedPath, request.submodulePath)
+    const branch = submodule.branches.find((entry) => entry.name === branchName)
+
+    if (!branch) {
+      throw new Error(`Submodule branch "${branchName}" was not found.`)
+    }
+
+    await assertCleanWorkingTreeForCheckout(absoluteSubmodulePath)
+
+    if (!branch.current) {
+      await runGit(absoluteSubmodulePath, ['switch', '--', branchName], 120000)
+    }
+
+    return readRepositoryDetails(normalizedPath)
+  }
+
   async function checkoutRemoteBranch(request: CheckoutRemoteBranchRequest): Promise<RepositoryDetails> {
     const normalizedPath = await normalizeRepositoryPath(request.repoPath)
     const remoteBranchName = request.remoteBranchName.trim()
@@ -455,15 +482,8 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     return readRepositoryDetails(normalizedPath)
   }
 
-  async function syncBranch(request: SyncBranchRequest): Promise<SyncBranchResult> {
-    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
-    const branchName = request.branchName.trim()
-
-    if (!branchName) {
-      throw new Error('Branch name is required.')
-    }
-
-    const [gitStatus, branches] = await Promise.all([readGitStatus(normalizedPath), readGitBranches(normalizedPath)])
+  async function syncBranchInRepository(repoPath: string, branchName: string) {
+    const [gitStatus, branches] = await Promise.all([readGitStatus(repoPath), readGitBranches(repoPath)])
 
     if (hasStagedOrUnstagedChanges(gitStatus)) {
       throw new Error('Commit, stash, or discard staged and unstaged changes before syncing branches.')
@@ -483,21 +503,21 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
       throw new Error(`Branch "${branchName}" tracks a remote branch that is gone.`)
     }
 
-    const remoteName = await runGit(normalizedPath, ['config', '--get', `branch.${branchName}.remote`])
+    const remoteName = await runGit(repoPath, ['config', '--get', `branch.${branchName}.remote`])
 
     if (!remoteName || remoteName === '.') {
       throw new Error(`Branch "${branchName}" does not track a remote branch.`)
     }
 
-    const upstreamMergeRef = await runGit(normalizedPath, ['config', '--get', `branch.${branchName}.merge`])
+    const upstreamMergeRef = await runGit(repoPath, ['config', '--get', `branch.${branchName}.merge`])
 
     if (!upstreamMergeRef) {
       throw new Error(`Branch "${branchName}" does not track a remote branch.`)
     }
 
-    await runGit(normalizedPath, ['fetch', remoteName], 120000)
+    await runGit(repoPath, ['fetch', remoteName], 120000)
 
-    const refreshedBranch = (await readGitBranches(normalizedPath)).find((entry) => entry.name === branchName)
+    const refreshedBranch = (await readGitBranches(repoPath)).find((entry) => entry.name === branchName)
 
     if (!refreshedBranch) {
       throw new Error(`Branch "${branchName}" was not found.`)
@@ -508,41 +528,62 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     }
 
     const branchRef = `refs/heads/${branchName}`
-    const localCommit = await runGit(normalizedPath, ['rev-parse', '--verify', branchRef])
-    const upstreamCommit = await runGit(normalizedPath, ['rev-parse', '--verify', `${branchName}@{upstream}`])
+    const localCommit = await runGit(repoPath, ['rev-parse', '--verify', branchRef])
+    const upstreamCommit = await runGit(repoPath, ['rev-parse', '--verify', `${branchName}@{upstream}`])
 
     if (localCommit === upstreamCommit) {
-      return {
-        details: await readRepositoryDetails(normalizedPath),
-        pushed: false,
-      }
+      return false
     }
 
-    if (await isGitAncestor(normalizedPath, localCommit, upstreamCommit)) {
+    if (await isGitAncestor(repoPath, localCommit, upstreamCommit)) {
       if (refreshedBranch.current) {
-        await runGit(normalizedPath, ['merge', '--ff-only', `${branchName}@{upstream}`], 120000)
-        return {
-          details: await readRepositoryDetails(normalizedPath),
-          pushed: false,
-        }
+        await runGit(repoPath, ['merge', '--ff-only', `${branchName}@{upstream}`], 120000)
+        return false
       }
 
-      await runGit(normalizedPath, ['update-ref', branchRef, upstreamCommit, localCommit], 120000)
-      return {
-        details: await readRepositoryDetails(normalizedPath),
-        pushed: false,
-      }
+      await runGit(repoPath, ['update-ref', branchRef, upstreamCommit, localCommit], 120000)
+      return false
     }
 
-    if (await isGitAncestor(normalizedPath, upstreamCommit, localCommit)) {
-      await runGit(normalizedPath, ['push', remoteName, `${branchRef}:${upstreamMergeRef}`], 120000)
-      return {
-        details: await readRepositoryDetails(normalizedPath),
-        pushed: true,
-      }
+    if (await isGitAncestor(repoPath, upstreamCommit, localCommit)) {
+      await runGit(repoPath, ['push', remoteName, `${branchRef}:${upstreamMergeRef}`], 120000)
+      return true
     }
 
     throw new Error(`Branch "${branchName}" has both local and remote commits. Resolve it manually before syncing.`)
+  }
+
+  async function syncBranch(request: SyncBranchRequest): Promise<SyncBranchResult> {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+    const branchName = request.branchName.trim()
+
+    if (!branchName) {
+      throw new Error('Branch name is required.')
+    }
+
+    const pushed = await syncBranchInRepository(normalizedPath, branchName)
+
+    return {
+      details: await readRepositoryDetails(normalizedPath),
+      pushed,
+    }
+  }
+
+  async function syncSubmoduleBranch(request: SyncSubmoduleBranchRequest): Promise<SyncBranchResult> {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+    const branchName = request.branchName.trim()
+
+    if (!branchName) {
+      throw new Error('Branch name is required.')
+    }
+
+    const { absoluteSubmodulePath } = await resolveSubmodulePath(normalizedPath, request.submodulePath)
+    const pushed = await syncBranchInRepository(absoluteSubmodulePath, branchName)
+
+    return {
+      details: await readRepositoryDetails(normalizedPath),
+      pushed,
+    }
   }
 
   function cleanBranchName(branchName: string, label: string) {
@@ -582,28 +623,83 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     const normalizedPath = await normalizeRepositoryPath(request.repoPath)
     const sourceParentBranch = cleanBranchName(request.sourceParentBranch, 'Source parent branch')
     const targetParentBranch = cleanBranchName(request.targetParentBranch, 'Target parent branch')
-    const sourceSubmoduleBranch = cleanBranchName(request.sourceSubmoduleBranch, 'Source submodule branch')
-    const targetSubmoduleBranch = cleanBranchName(request.targetSubmoduleBranch, 'Target submodule branch')
-    const { absoluteSubmodulePath, submodule } = await resolveSubmodulePath(normalizedPath, request.submodulePath)
+    const routes = request.routes.map((route) => ({
+      ...route,
+      sourceSubmoduleBranch: cleanBranchName(route.sourceSubmoduleBranch, 'Source submodule branch'),
+      targetSubmoduleBranch: cleanBranchName(route.targetSubmoduleBranch, 'Target submodule branch'),
+    }))
+
+    if (routes.length === 0) {
+      throw new Error('Choose at least one linked submodule route to merge.')
+    }
+
+    const resolvedRoutes = await Promise.all(
+      routes.map(async (route) => {
+        const { absoluteSubmodulePath, submodule } = await resolveSubmodulePath(normalizedPath, route.submodulePath)
+
+        return {
+          ...route,
+          absoluteSubmodulePath,
+          submodule,
+        }
+      }),
+    )
 
     await Promise.all([
       assertBranchExists(normalizedPath, sourceParentBranch, 'Source parent branch'),
       assertBranchExists(normalizedPath, targetParentBranch, 'Target parent branch'),
-      assertBranchExists(absoluteSubmodulePath, sourceSubmoduleBranch, 'Source submodule branch'),
-      assertBranchExists(absoluteSubmodulePath, targetSubmoduleBranch, 'Target submodule branch'),
       assertNoMergeInProgress(normalizedPath, 'the parent repository'),
-      assertNoMergeInProgress(absoluteSubmodulePath, submodule.path),
+      ...resolvedRoutes.flatMap((route) => [
+        assertBranchExists(route.absoluteSubmodulePath, route.sourceSubmoduleBranch, 'Source submodule branch'),
+        assertBranchExists(route.absoluteSubmodulePath, route.targetSubmoduleBranch, 'Target submodule branch'),
+        assertNoMergeInProgress(route.absoluteSubmodulePath, route.submodule.path),
+      ]),
     ])
 
     await assertCleanWorkingTreeForCheckout(normalizedPath)
-    await assertCleanSubmoduleWorkingTree(absoluteSubmodulePath, submodule.path)
+    await Promise.all(
+      resolvedRoutes.map((route) =>
+        assertCleanSubmoduleWorkingTree(route.absoluteSubmodulePath, route.submodule.path),
+      ),
+    )
 
     await runGit(normalizedPath, ['switch', '--', targetParentBranch], 120000)
-    await runGit(normalizedPath, ['submodule', 'update', '--init', '--', submodule.path], 120000)
+    await runGit(normalizedPath, [
+      'submodule',
+      'update',
+      '--init',
+      '--',
+      ...resolvedRoutes.map((route) => route.submodule.path),
+    ], 120000)
     await runGit(normalizedPath, ['merge', '--no-ff', '--no-commit', sourceParentBranch], 120000)
-    await runGit(absoluteSubmodulePath, ['switch', '--', targetSubmoduleBranch], 120000)
-    await runGit(absoluteSubmodulePath, ['merge', '--no-edit', sourceSubmoduleBranch], 120000)
-    await runGit(normalizedPath, ['add', '--', submodule.path], 120000)
+
+    for (const route of resolvedRoutes) {
+      await runGit(route.absoluteSubmodulePath, ['switch', '--', route.targetSubmoduleBranch], 120000)
+      await runGit(route.absoluteSubmodulePath, ['merge', '--no-edit', route.sourceSubmoduleBranch], 120000)
+      await runGit(normalizedPath, ['add', '--', route.submodule.path], 120000)
+    }
+
+    return readRepositoryDetails(normalizedPath)
+  }
+
+  async function mergeBranch(request: MergeBranchRequest): Promise<RepositoryDetails> {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+    const sourceBranch = cleanBranchName(request.sourceBranch, 'Source branch')
+    const targetBranch = cleanBranchName(request.targetBranch, 'Target branch')
+
+    if (sourceBranch === targetBranch) {
+      throw new Error('Choose different source and target branches.')
+    }
+
+    await Promise.all([
+      assertBranchExists(normalizedPath, sourceBranch, 'Source branch'),
+      assertBranchExists(normalizedPath, targetBranch, 'Target branch'),
+      assertNoMergeInProgress(normalizedPath, 'the repository'),
+    ])
+
+    await assertCleanWorkingTreeForCheckout(normalizedPath)
+    await runGit(normalizedPath, ['switch', '--', targetBranch], 120000)
+    await runGit(normalizedPath, ['merge', '--no-ff', '--no-commit', sourceBranch], 120000)
 
     return readRepositoryDetails(normalizedPath)
   }
@@ -756,12 +852,14 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     addRepository,
     checkOutdatedDependencies,
     checkoutBranch,
+    checkoutSubmoduleBranch,
     checkoutRemoteBranch,
     commit,
     deleteBranch,
     deleteSubmoduleBranch,
     diffFile,
     health,
+    mergeBranch,
     mergeLinkedSubmoduleBranch,
     openCommitInBrowser,
     readCommitDetails,
@@ -773,6 +871,7 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     removeRepository,
     stageFiles,
     syncBranch,
+    syncSubmoduleBranch,
     unstageFiles,
   }
 }

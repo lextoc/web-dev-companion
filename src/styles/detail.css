@@ -379,12 +379,112 @@
 .branch-menu-layout {
   display: grid;
   min-height: 0;
-  grid-template-columns: minmax(320px, 390px) minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 12px;
   overflow: hidden;
 }
 
+.branch-menu-layout.has-submodule-card {
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
+}
+
+.branch-merge-top-card {
+  display: grid;
+  min-width: 0;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--border-control) 72%, transparent);
+  border-radius: 7px;
+  padding: 10px;
+  background: var(--surface-soft);
+}
+
+.branch-merge-combined-card {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.branch-merge-combined-controls {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto;
+  gap: 8px 10px;
+  align-items: center;
+}
+
+.branch-merge-combined-controls.has-submodule-controls {
+  grid-template-columns: minmax(280px, 0.9fr) minmax(420px, 1.35fr);
+}
+
+.branch-merge-route-card,
+.branch-merge-action-card {
+  display: grid;
+  min-width: 0;
+  align-self: stretch;
+  gap: 7px;
+  border: 1px solid color-mix(in srgb, var(--border-control) 66%, transparent);
+  border-radius: 7px;
+  padding: 8px;
+  background: color-mix(in srgb, var(--surface) 56%, transparent);
+}
+
+.branch-merge-submodule-fields {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.85fr);
+  gap: 6px;
+}
+
+.branch-merge-action-card {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  background: color-mix(in srgb, var(--surface-hover) 52%, transparent);
+}
+
+.branch-merge-action-menu {
+  justify-self: end;
+}
+
+.branch-merge-action-menu .action-menu-trigger {
+  width: auto;
+  min-height: 28px;
+  padding: 0 10px;
+  justify-content: center;
+}
+
+.branch-merge-menu-trigger::after {
+  content: "";
+  width: 0;
+  height: 0;
+  border-top: 5px solid currentColor;
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
+  opacity: 0.82;
+}
+
+.branch-merge-action-card .branch-action {
+  justify-content: center;
+}
+
+.branch-merge-helper-row {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.branch-merge-helper-row .branch-safety {
+  margin: 0;
+}
+
+.branch-parent-card,
+.branch-submodule-card,
 .branch-menu-side,
 .branch-menu-main {
   display: grid;
@@ -392,13 +492,66 @@
   gap: 8px;
 }
 
+.branch-parent-card,
+.branch-submodule-card {
+  align-content: start;
+  border-radius: 7px;
+  padding: 10px;
+  background: var(--surface-soft);
+}
+
+.branch-parent-card {
+  order: 1;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  overflow: hidden;
+}
+
+.branch-parent-card-heading {
+  border-bottom: 1px solid color-mix(in srgb, var(--border-soft) 82%, transparent);
+  padding: 0 2px 8px;
+}
+
+.branch-menu-layout.has-submodule-card .branch-parent-card {
+  grid-column: 1;
+}
+
+.branch-submodule-card {
+  order: 2;
+  grid-column: 2;
+  grid-row: 2;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  overflow: hidden;
+}
+
+.branch-submodule-card-heading {
+  border-bottom: 1px solid color-mix(in srgb, var(--border-soft) 82%, transparent);
+  padding: 0 2px 8px;
+}
+
+.branch-menu-panel .branch-parent-card > .git-branches {
+  border: 1px solid color-mix(in srgb, var(--border-control) 68%, transparent);
+  border-radius: 7px;
+  padding: 8px;
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+}
+
 .branch-menu-side {
-  grid-template-rows: auto auto minmax(0, 1fr);
+  align-content: start;
+  grid-auto-rows: auto;
   overflow: auto;
 }
 
 .branch-menu-main {
+  grid-template-rows: minmax(0, 1fr);
   overflow: hidden;
+}
+
+.branch-menu-main.has-submodule-local-branches {
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .branch-list-toolbar {
@@ -406,9 +559,11 @@
   z-index: 2;
   top: 0;
   display: grid;
-  gap: 8px;
+  grid-template-columns: minmax(260px, 0.95fr) minmax(320px, 1.05fr);
+  gap: 6px 10px;
+  align-items: center;
   border-bottom: 1px solid var(--border-soft);
-  padding-bottom: 8px;
+  padding-bottom: 6px;
   background: var(--surface-soft);
 }
 
@@ -489,12 +644,14 @@
 }
 
 .branch-list-heading {
-  padding: 0 2px 2px;
+  padding: 0 2px;
 }
 
 .branch-search-control {
   display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
   gap: 6px;
+  align-items: center;
 }
 
 .branch-search-control span {
@@ -506,66 +663,29 @@
 
 .branch-search-control input {
   width: 100%;
-  min-height: 34px;
+  min-height: 30px;
   border: 1px solid var(--border-control);
   border-radius: 7px;
   padding: 0 10px;
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-compact);
 }
 
 .branch-search-input {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 6px;
+  gap: 4px;
 }
 
 .branch-search-clear {
-  min-height: 34px;
+  min-height: 30px;
 }
 
 .branch-search-control input:focus {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
-}
-
-.current-branch-action-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: center;
-  border: 1px solid color-mix(in srgb, var(--border-control) 72%, transparent);
-  border-radius: 7px;
-  padding: 8px;
-  background: var(--surface-soft);
-}
-
-.current-branch-action-copy {
-  display: grid;
-  min-width: 0;
-  gap: 4px;
-}
-
-.current-branch-action-copy strong,
-.current-branch-action-copy small {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.current-branch-action-copy strong {
-  color: var(--text);
-  font-size: var(--font-size-base);
-  font-weight: 900;
-}
-
-.current-branch-action-copy small {
-  color: var(--muted);
-  font-size: var(--font-size-compact);
-  font-weight: 800;
 }
 
 .current-branch-action-kicker {
@@ -575,77 +695,36 @@
   text-transform: uppercase;
 }
 
-.current-branch-action-card > .branch-sync {
-  align-self: center;
-  margin-top: 0;
+.branch-merge-copy {
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
+  line-height: 1.35;
 }
 
-.current-branch-action-card > p {
-  grid-column: 1 / -1;
-}
-
-.linked-submodule-branch-card {
+.linked-submodule-field {
   display: grid;
-  min-height: 0;
-  grid-template-rows: auto auto auto auto;
-  gap: 8px;
-  align-content: start;
-  border: 1px solid color-mix(in srgb, var(--border-control) 72%, transparent);
-  border-radius: 7px;
-  padding: 8px;
-  background: var(--surface-soft);
-}
-
-.linked-submodule-branch-card.local-branch-manager-open {
-  grid-template-rows: auto auto auto minmax(0, 1fr);
-}
-
-.linked-submodule-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: center;
-}
-
-.linked-submodule-link-group,
-.linked-submodule-merge-group {
-  display: grid;
-  gap: 7px;
-  border-radius: 7px;
-  padding: 8px;
-  background: color-mix(in srgb, var(--surface) 54%, transparent);
-}
-
-.linked-submodule-actions {
-  display: flex;
-  flex-wrap: nowrap;
+  min-width: 0;
+  grid-template-columns: max-content minmax(0, 1fr);
   gap: 6px;
   align-items: center;
-  justify-content: flex-end;
-}
-
-.linked-submodule-actions .action-menu-trigger {
-  width: 32px;
-  min-height: 30px;
 }
 
 .linked-submodule-summary {
   display: grid;
   min-width: 0;
-  gap: 2px;
+  gap: 0;
+  line-height: 1.25;
 }
 
 .linked-submodule-summary strong,
 .linked-submodule-summary small {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .linked-submodule-summary strong {
   color: var(--text);
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-compact);
   font-weight: 900;
 }
 
@@ -655,55 +734,57 @@
   font-weight: 800;
 }
 
-.linked-submodule-grid {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  gap: 6px 8px;
-  align-items: center;
+.branch-merge-action-card .linked-submodule-summary strong,
+.branch-merge-action-card .linked-submodule-summary small {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
 }
 
-.linked-submodule-grid.compact {
-  grid-template-columns: max-content minmax(0, 1fr);
+.branch-merge-action-card .linked-submodule-summary {
+  gap: 1px;
 }
 
-.linked-submodule-grid label {
+.linked-submodule-field label {
   color: var(--muted-strong);
   font-size: var(--font-size-compact);
   font-weight: 900;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.linked-submodule-grid .app-dropdown {
+.linked-submodule-field .app-dropdown {
   min-width: 0;
 }
 
-.linked-submodule-grid .app-dropdown-button {
+.linked-submodule-field .app-dropdown-button {
   min-height: 28px;
   padding: 0 8px;
   font-size: var(--font-size-compact);
 }
 
-.linked-submodule-merge {
-  min-height: 32px;
-  justify-content: center;
-}
-
-.submodule-branch-controls {
+.submodule-local-branch-panel {
   display: grid;
   min-height: 0;
-  grid-template-rows: auto;
-  gap: 6px;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 7px;
 }
 
-.submodule-branch-controls.open {
-  grid-template-rows: auto minmax(0, 1fr);
+.submodule-local-branch-panel {
+  border: 1px solid color-mix(in srgb, var(--border-control) 68%, transparent);
+  border-radius: 7px;
+  padding: 8px;
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+  overflow: hidden;
 }
 
 .submodule-branch-heading {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
+  gap: 7px;
+  border-bottom: 1px solid var(--border-soft);
+  padding: 0 2px 6px;
   color: var(--muted);
   font-size: var(--font-size-compact);
   font-weight: 900;
@@ -715,7 +796,17 @@
   gap: 2px;
 }
 
-.submodule-branch-heading small {
+.submodule-branch-heading h4 {
+  overflow: hidden;
+  margin: 0;
+  color: var(--text);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.submodule-branch-heading span {
   overflow: hidden;
   color: var(--muted);
   font-size: var(--font-size-compact);
@@ -724,16 +815,36 @@
   white-space: nowrap;
 }
 
-.submodule-branch-toggle {
+.submodule-current-branch-switcher {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+}
+
+.submodule-current-branch-switcher > span {
+  color: var(--muted-strong);
+  font-size: var(--font-size-compact);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.submodule-current-branch-switcher .app-dropdown {
+  min-width: 0;
+}
+
+.submodule-current-branch-switcher .app-dropdown-button {
   min-height: 28px;
-  padding: 0 10px;
+  padding: 0 8px;
   font-size: var(--font-size-compact);
 }
 
 .submodule-branch-list {
   display: grid;
   min-height: 0;
-  gap: 5px;
+  gap: 0;
+  align-content: start;
   overflow: auto;
   margin: 0;
   padding: 0;
@@ -826,22 +937,34 @@
 .submodule-branch-list li {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 6px;
+  gap: 3px 8px;
   align-items: center;
-  border: 1px solid color-mix(in srgb, var(--border-control) 64%, transparent);
-  border-radius: 6px;
+  border: 1px solid transparent;
+  border-radius: 7px;
   padding: 6px 7px;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 54%, transparent);
 }
 
 .submodule-branch-list li.current {
-  border-color: color-mix(in srgb, var(--focus) 48%, var(--border-control));
+  border-color: color-mix(in srgb, var(--brand) 28%, var(--border-control));
+  background: color-mix(in srgb, var(--surface-hover) 72%, transparent);
+}
+
+.submodule-branch-list li.pending {
+  border-color: color-mix(in srgb, var(--focus) 42%, var(--border-control));
 }
 
 .submodule-branch-list li > div {
   display: grid;
   min-width: 0;
-  gap: 2px;
+  gap: 1px;
+}
+
+.submodule-branch-list .submodule-branch-controls {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .submodule-branch-list strong,
@@ -973,6 +1096,11 @@
   width: 36px;
   min-height: 34px;
   padding: 0;
+}
+
+.branch-menu-panel .branch-controls .action-menu-trigger {
+  width: 32px;
+  min-height: 30px;
 }
 
 .detail-quick-actions .subtle-icon-button {
@@ -2238,6 +2366,7 @@ pre {
 }
 
 .branch-menu-panel .branch-filters {
+  grid-column: 1 / -1;
   flex-wrap: nowrap;
   gap: 4px;
   overflow-x: auto;
@@ -2272,11 +2401,19 @@ button.secondary.active .branch-filter-count {
 
 .remote-branch-checkout {
   display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) auto;
   gap: 6px;
+  align-items: center;
   border: 0;
   border-radius: 6px;
-  padding: 8px 0 10px;
+  padding: 0;
   background: transparent;
+}
+
+.branch-list-footer {
+  border-top: 1px solid var(--border-soft);
+  margin-top: 2px;
+  padding-top: 8px;
 }
 
 .remote-branch-checkout label {
@@ -2287,9 +2424,7 @@ button.secondary.active .branch-filter-count {
 }
 
 .remote-branch-create-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 6px;
+  display: contents;
 }
 
 .remote-branch-checkout .app-dropdown {
@@ -3208,14 +3343,23 @@ button.secondary.active .branch-filter-count {
 }
 
 .branch-menu-panel .git-branches {
+  grid-template-rows: auto minmax(0, 1fr);
   height: 100%;
   min-height: 0;
   max-height: none;
-  overflow: auto;
+  overflow: hidden;
   gap: 7px;
   border-radius: 7px;
   padding: 10px;
   background: var(--surface-soft);
+}
+
+.branch-list-scroll {
+  display: grid;
+  min-height: 0;
+  gap: 7px;
+  align-content: start;
+  overflow: auto;
 }
 
 .git-branch-list {
@@ -3240,10 +3384,10 @@ button.secondary.active .branch-filter-count {
 
 .branch-menu-panel .git-branch-list li {
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 6px 10px;
+  gap: 3px 8px;
   border: 1px solid transparent;
   border-radius: 7px;
-  padding: 8px;
+  padding: 6px 7px;
   background: color-mix(in srgb, var(--surface) 54%, transparent);
 }
 
@@ -3258,7 +3402,7 @@ button.secondary.active .branch-filter-count {
 }
 
 .branch-menu-panel .git-branch-list li:first-child {
-  padding-top: 8px;
+  padding-top: 6px;
 }
 
 .branch-menu-panel .git-branch-list li > p {
@@ -3277,13 +3421,19 @@ button.secondary.active .branch-filter-count {
 }
 
 .branch-menu-panel .git-branch-list strong {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-compact);
+}
+
+.branch-row-main {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
 }
 
 .branch-row-title {
   display: flex;
   min-width: 0;
-  gap: 7px;
+  gap: 6px;
   align-items: center;
 }
 
@@ -3316,21 +3466,11 @@ button.secondary.active .branch-filter-count {
   flex: 0 0 auto;
   place-items: center;
   border-radius: 999px;
-  padding: 2px 6px;
+  padding: 1px 6px;
   background: var(--success-soft);
   color: var(--success-text);
   font-size: var(--font-size-compact);
   font-weight: 900;
-}
-
-.branch-menu-panel .branch-health {
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.branch-menu-panel .branch-health span {
-  padding: 2px 6px;
-  font-size: var(--font-size-compact);
 }
 
 .branch-pending {
@@ -3354,14 +3494,14 @@ button.secondary.active .branch-filter-count {
 }
 
 .branch-menu-panel .branch-sync {
-  padding: 3px 7px;
+  padding: 2px 7px;
   font-size: var(--font-size-compact);
 }
 
 .branch-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
   align-items: center;
   justify-content: flex-end;
 }
@@ -3385,9 +3525,36 @@ button.secondary.active .branch-filter-count {
 }
 
 .branch-menu-panel .branch-action {
-  min-height: 28px;
+  min-height: 26px;
   padding: 0 8px;
   font-size: var(--font-size-compact);
+}
+
+.branch-action-tooltip {
+  display: inline-grid;
+}
+
+.branch-row-sync-button {
+  width: 32px;
+  min-width: 32px;
+  min-height: 30px;
+  gap: 5px;
+  margin-left: 0;
+  border-radius: 7px;
+  padding: 0;
+  font-size: var(--font-size-compact);
+}
+
+.branch-row-sync-button.synced {
+  border-color: color-mix(in srgb, var(--success-text) 24%, var(--border-control));
+  background: color-mix(in srgb, var(--success-soft) 34%, var(--surface));
+  color: color-mix(in srgb, var(--success-text) 82%, var(--muted-strong));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success-text) 7%, transparent);
+}
+
+.branch-row-sync-button.synced:disabled {
+  cursor: default;
+  opacity: 1;
 }
 
 .branch-action.pending {

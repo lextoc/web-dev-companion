@@ -3,12 +3,14 @@ import type { BrowserWindow as BrowserWindowType, OpenDialogOptions } from 'elec
 import type {
   CheckoutBranchRequest,
   CheckoutRemoteBranchRequest,
+  CheckoutSubmoduleBranchRequest,
   CommitDetailsRequest,
   CommitRequest,
   DeleteBranchRequest,
   DeleteSubmoduleBranchRequest,
   DesktopMenuCommand,
   DesktopNotificationRequest,
+  MergeBranchRequest,
   MergeLinkedSubmoduleBranchRequest,
   OpenCommitInBrowserRequest,
   RepositoryActionRequest,
@@ -18,6 +20,7 @@ import type {
   StatusFileDiffRequest,
   StatusFileRequest,
   SyncBranchRequest,
+  SyncSubmoduleBranchRequest,
 } from '../src/repositories'
 import { createAppStateService } from './app-state-service'
 import { createRepositoryService } from './repository-service'
@@ -319,17 +322,26 @@ function registerRepositoryHandlers() {
   ipcMain.handle('repositories:checkout-remote-branch', (_event, request: CheckoutRemoteBranchRequest) =>
     repositoryService.checkoutRemoteBranch(request),
   )
+  ipcMain.handle('repositories:checkout-submodule-branch', (_event, request: CheckoutSubmoduleBranchRequest) =>
+    repositoryService.checkoutSubmoduleBranch(request),
+  )
   ipcMain.handle('repositories:delete-branch', (_event, request: DeleteBranchRequest) =>
     repositoryService.deleteBranch(request),
   )
   ipcMain.handle('repositories:delete-submodule-branch', (_event, request: DeleteSubmoduleBranchRequest) =>
     repositoryService.deleteSubmoduleBranch(request),
   )
+  ipcMain.handle('repositories:merge-branch', (_event, request: MergeBranchRequest) =>
+    repositoryService.mergeBranch(request),
+  )
   ipcMain.handle('repositories:merge-linked-submodule-branch', (_event, request: MergeLinkedSubmoduleBranchRequest) =>
     repositoryService.mergeLinkedSubmoduleBranch(request),
   )
   ipcMain.handle('repositories:sync-branch', (_event, request: SyncBranchRequest) =>
     repositoryService.syncBranch(request),
+  )
+  ipcMain.handle('repositories:sync-submodule-branch', (_event, request: SyncSubmoduleBranchRequest) =>
+    repositoryService.syncSubmoduleBranch(request),
   )
   ipcMain.handle('repositories:stage-files', (_event, request: StatusFileRequest) =>
     repositoryService.stageFiles(request),

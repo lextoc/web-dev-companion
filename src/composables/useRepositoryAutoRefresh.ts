@@ -12,32 +12,38 @@ interface UseRepositoryAutoRefreshOptions {
   appSettings: Ref<AppSettings>
   deletingBranchName: ReadableRef<string | null>
   deletingSubmoduleBranchName: ReadableRef<string | null>
+  checkingOutSubmoduleBranchName: ReadableRef<string | null>
   hasCommitDraft: ReadableRef<boolean>
   hasRunningScripts: ReadableRef<boolean>
   isDetailLoading: ReadableRef<boolean>
   isLoading: ReadableRef<boolean>
   loadRepositories: () => Promise<void>
+  mergingBranchName: ReadableRef<string | null>
   mergingLinkedBranchName: ReadableRef<string | null>
   pendingStatusActionKey: ReadableRef<string | null>
   refreshSelectedRepository: () => Promise<void>
   selectedPath: Ref<string | null>
   syncingBranchName: ReadableRef<string | null>
+  syncingSubmoduleBranchName: ReadableRef<string | null>
 }
 
 export function useRepositoryAutoRefresh({
   appSettings,
   deletingBranchName,
   deletingSubmoduleBranchName,
+  checkingOutSubmoduleBranchName,
   hasCommitDraft,
   hasRunningScripts,
   isDetailLoading,
   isLoading,
   loadRepositories,
+  mergingBranchName,
   mergingLinkedBranchName,
   pendingStatusActionKey,
   refreshSelectedRepository,
   selectedPath,
   syncingBranchName,
+  syncingSubmoduleBranchName,
 }: UseRepositoryAutoRefreshOptions) {
   const autoRefreshRemainingMs = ref(appSettings.value.autoRefreshIntervalMs)
   let autoRefreshTickTimer: number | undefined
@@ -68,8 +74,11 @@ export function useRepositoryAutoRefresh({
       isDetailLoading.value ||
       pendingStatusActionKey.value ||
       syncingBranchName.value ||
+      syncingSubmoduleBranchName.value ||
+      checkingOutSubmoduleBranchName.value ||
       deletingBranchName.value ||
       deletingSubmoduleBranchName.value ||
+      mergingBranchName.value ||
       mergingLinkedBranchName.value ||
       hasRunningScripts.value ||
       hasCommitDraft.value
@@ -103,7 +112,10 @@ export function useRepositoryAutoRefresh({
     if (
       hasRunningScripts.value ||
       hasCommitDraft.value ||
+      syncingSubmoduleBranchName.value ||
+      checkingOutSubmoduleBranchName.value ||
       deletingSubmoduleBranchName.value ||
+      mergingBranchName.value ||
       mergingLinkedBranchName.value
     ) {
       resetAutoRefreshTimer()

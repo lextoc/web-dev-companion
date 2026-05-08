@@ -7,6 +7,7 @@ type AppButtonSize = "default" | "icon";
 type AppButtonType = "button" | "submit" | "reset";
 type AppButtonIcon =
   | "arrow-left"
+  | "check"
   | "command"
   | "copy"
   | "close"

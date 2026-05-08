@@ -137,18 +137,24 @@ const {
   branchFeedbackMessages,
   canSyncCurrentBranch,
   checkingOutBranchName,
+  checkingOutSubmoduleBranchName,
   checkoutBranch,
   checkoutRemoteBranch,
+  checkoutSubmoduleBranch,
   currentBranch,
   deletingBranchName,
   deletingSubmoduleBranchName,
   deleteBranch,
   deleteSubmoduleBranch,
+  mergeBranch,
+  mergingBranchName,
   mergeLinkedSubmoduleBranch,
   mergingLinkedBranchName,
   syncBranch,
   syncCelebrationToken,
   syncingBranchName,
+  syncingSubmoduleBranchName,
+  syncSubmoduleBranch,
 } = useRepositoryBranchActions({
   appSettings,
   clearError,
@@ -168,6 +174,7 @@ const {
   syncAutoRefreshInterval,
 } = useRepositoryAutoRefresh({
   appSettings,
+  checkingOutSubmoduleBranchName,
   deletingBranchName,
   deletingSubmoduleBranchName,
   hasCommitDraft,
@@ -175,11 +182,13 @@ const {
   isDetailLoading,
   isLoading,
   loadRepositories,
+  mergingBranchName,
   mergingLinkedBranchName,
   pendingStatusActionKey,
   refreshSelectedRepository,
   selectedPath,
   syncingBranchName,
+  syncingSubmoduleBranchName,
 })
 const {
   closeCommandPalette,
@@ -631,9 +640,12 @@ onBeforeUnmount(() => {
           :sync-celebration-token="syncCelebrationToken"
           :sync-shortcut-label="syncShortcutLabel"
           :syncing-branch-name="syncingBranchName"
+          :syncing-submodule-branch-name="syncingSubmoduleBranchName"
           :deleting-branch-name="deletingBranchName"
           :deleting-submodule-branch-name="deletingSubmoduleBranchName"
           :checking-out-branch-name="checkingOutBranchName"
+          :checking-out-submodule-branch-name="checkingOutSubmoduleBranchName"
+          :merging-branch-name="mergingBranchName"
           :merging-linked-branch-name="mergingLinkedBranchName"
           :branch-feedback-messages="branchFeedbackMessages"
           :repository-branch-links="repositoryBranchLinks"
@@ -643,9 +655,12 @@ onBeforeUnmount(() => {
           @delete-submodule-branch="deleteSubmoduleBranch"
           @checkout-branch="checkoutBranch"
           @checkout-remote-branch="checkoutRemoteBranch"
+          @checkout-submodule-branch="checkoutSubmoduleBranch"
           @sync-branch="syncBranch"
+          @sync-submodule-branch="syncSubmoduleBranch"
           @save-repository-branch-link="saveRepositoryBranchLink"
           @remove-repository-branch-link="removeRepositoryBranchLink"
+          @merge-branch="mergeBranch"
           @merge-linked-submodule-branch="mergeLinkedSubmoduleBranch"
           @copy-path="copyRepositoryPath"
           @open-in-editor="openRepositoryInEditor"

@@ -1,5 +1,5 @@
 import { computed, ref, type Ref } from 'vue'
-import type { MergeLinkedSubmoduleBranchRequest, RepositoryDetails } from '../repositories'
+import type { MergeBranchRequest, MergeLinkedSubmoduleBranchRequest, RepositoryDetails } from '../repositories'
 import type { AppSettings } from '../settings'
 import type { AppFeedbackTone } from './useToasts'
 
@@ -34,9 +34,12 @@ export function useRepositoryBranchActions({
   showRepositoryError,
 }: UseRepositoryBranchActionsOptions) {
   const syncingBranchName = ref<string | null>(null)
+  const syncingSubmoduleBranchName = ref<string | null>(null)
   const deletingBranchName = ref<string | null>(null)
   const deletingSubmoduleBranchName = ref<string | null>(null)
   const checkingOutBranchName = ref<string | null>(null)
+  const checkingOutSubmoduleBranchName = ref<string | null>(null)
+  const mergingBranchName = ref<string | null>(null)
   const mergingLinkedBranchName = ref<string | null>(null)
   const branchFeedbackMessages = ref<Record<string, string>>({})
   const syncCelebrationToken = ref(0)
@@ -177,6 +180,32 @@ export function useRepositoryBranchActions({
     }
   }
 
+  async function checkoutSubmoduleBranch(submodulePath: string, branchName: string) {
+    if (!selectedDetails.value) {
+      return
+    }
+
+    const checkoutKey = `${submodulePath}:${branchName}`
+    checkingOutSubmoduleBranchName.value = checkoutKey
+    clearError()
+    const repoPath = selectedDetails.value.path
+
+    try {
+      selectedDetails.value = await window.repositories.checkoutSubmoduleBranch({
+        repoPath,
+        submodulePath,
+        branchName,
+      })
+      await loadRepositories()
+      showAppFeedback(`Checked out submodule branch ${branchName}.`)
+    } catch (error) {
+      showRepositoryError(repoPath, `Could not check out submodule branch "${branchName}"`, error)
+    } finally {
+      checkingOutSubmoduleBranchName.value = null
+      resetAutoRefreshTimer()
+    }
+  }
+
   async function syncBranch(branchName: string) {
     if (!selectedDetails.value) {
       return
@@ -218,15 +247,59 @@ export function useRepositoryBranchActions({
     }
   }
 
+  async function syncSubmoduleBranch(submodulePath: string, branchName: string) {
+    if (!selectedDetails.value) {
+      return
+    }
+
+    const submodule = selectedDetails.value.gitSubmodules.find((entry) => entry.path === submodulePath)
+    const branch = submodule?.branches.find((entry) => entry.name === branchName)
+    const action = branchSyncAction(branch)
+    const confirmed = appSettings.value.skipBranchSyncConfirmation || (await confirmAction({
+      title: action.confirmLabel,
+      message: `${action.message} Submodule: ${submodulePath}.`,
+      confirmLabel: action.confirmLabel,
+    }))
+
+    if (!confirmed) {
+      return
+    }
+
+    const syncKey = `${submodulePath}:${branchName}`
+    syncingSubmoduleBranchName.value = syncKey
+    clearError()
+    const repoPath = selectedDetails.value.path
+
+    try {
+      const syncResult = await window.repositories.syncSubmoduleBranch({
+        repoPath,
+        submodulePath,
+        branchName,
+      })
+      selectedDetails.value = syncResult.details
+      await loadRepositories()
+      if (syncResult.pushed) {
+        syncCelebrationToken.value += 1
+      }
+      showAppFeedback(`${action.toastVerb} submodule branch ${branchName}.`)
+    } catch (error) {
+      showRepositoryError(repoPath, `Could not ${action.confirmLabel.toLowerCase()}`, error)
+    } finally {
+      syncingSubmoduleBranchName.value = null
+      resetAutoRefreshTimer()
+    }
+  }
+
   async function mergeLinkedSubmoduleBranch(request: Omit<MergeLinkedSubmoduleBranchRequest, 'repoPath'>) {
     if (!selectedDetails.value) {
       return
     }
 
     const repoPath = selectedDetails.value.path
+    const submoduleCount = request.routes.length
     const confirmed = await confirmAction({
       title: 'Merge linked branches',
-      message: `Switch to "${request.targetParentBranch}" and "${request.targetSubmoduleBranch}", then merge "${request.sourceParentBranch}" and "${request.sourceSubmoduleBranch}" into them?`,
+      message: `Switch to "${request.targetParentBranch}", merge "${request.sourceParentBranch}" into it, then merge ${submoduleCount} linked submodule ${submoduleCount === 1 ? 'branch' : 'branches'}?`,
       confirmLabel: 'Merge branches',
     })
 
@@ -253,6 +326,41 @@ export function useRepositoryBranchActions({
     }
   }
 
+  async function mergeBranch(request: Omit<MergeBranchRequest, 'repoPath'>) {
+    if (!selectedDetails.value) {
+      return
+    }
+
+    const repoPath = selectedDetails.value.path
+    const confirmed = await confirmAction({
+      title: 'Merge branches',
+      message: `Switch to "${request.targetBranch}", then merge "${request.sourceBranch}" into it?`,
+      confirmLabel: 'Merge',
+    })
+
+    if (!confirmed) {
+      return
+    }
+
+    mergingBranchName.value = request.targetBranch
+    clearError()
+
+    try {
+      selectedDetails.value = await window.repositories.mergeBranch({
+        repoPath,
+        ...request,
+      })
+      await loadRepositories()
+      showBranchFeedback(request.targetBranch, 'Merged branch')
+      showAppFeedback(`Merged ${request.sourceBranch} into ${request.targetBranch}.`)
+    } catch (error) {
+      showRepositoryError(repoPath, 'Could not merge branches', error)
+    } finally {
+      mergingBranchName.value = null
+      resetAutoRefreshTimer()
+    }
+  }
+
   function showBranchFeedback(branchName: string, message: string) {
     branchFeedbackMessages.value = {
       ...branchFeedbackMessages.value,
@@ -270,22 +378,33 @@ export function useRepositoryBranchActions({
     branchFeedbackMessages,
     canSyncCurrentBranch,
     checkingOutBranchName,
+    checkingOutSubmoduleBranchName,
     checkoutBranch,
     checkoutRemoteBranch,
+    checkoutSubmoduleBranch,
     currentBranch,
     deletingBranchName,
     deletingSubmoduleBranchName,
     deleteBranch,
     deleteSubmoduleBranch,
+    mergeBranch,
+    mergingBranchName,
     mergeLinkedSubmoduleBranch,
     mergingLinkedBranchName,
     syncBranch,
     syncCelebrationToken,
     syncingBranchName,
+    syncingSubmoduleBranchName,
+    syncSubmoduleBranch,
   }
 }
 
-function branchSyncAction(branch: RepositoryDetails['gitBranches'][number] | undefined) {
+function branchSyncAction(
+  branch:
+    | RepositoryDetails['gitBranches'][number]
+    | RepositoryDetails['gitSubmodules'][number]['branches'][number]
+    | undefined,
+) {
   if (!branch) {
     return {
       confirmLabel: 'Sync branch',

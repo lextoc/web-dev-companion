@@ -70,7 +70,12 @@ export interface GitRemoteBranchEntry {
 
 export interface GitSubmoduleBranchEntry {
   name: string
+  upstream?: string
   current: boolean
+  ahead: number
+  behind: number
+  remoteGone: boolean
+  inSyncWithRemote: boolean
   canDelete: boolean
   deleteReason?: string
 }
@@ -185,8 +190,20 @@ export interface DeleteSubmoduleBranchRequest {
   branchName: string
 }
 
+export interface CheckoutSubmoduleBranchRequest {
+  repoPath: string
+  submodulePath: string
+  branchName: string
+}
+
 export interface SyncBranchRequest {
   repoPath: string
+  branchName: string
+}
+
+export interface SyncSubmoduleBranchRequest {
+  repoPath: string
+  submodulePath: string
   branchName: string
 }
 
@@ -195,13 +212,23 @@ export interface SyncBranchResult {
   pushed: boolean
 }
 
+export interface LinkedSubmoduleBranchMergeRoute {
+  submodulePath: string
+  sourceSubmoduleBranch: string
+  targetSubmoduleBranch: string
+}
+
 export interface MergeLinkedSubmoduleBranchRequest {
   repoPath: string
   sourceParentBranch: string
   targetParentBranch: string
-  submodulePath: string
-  sourceSubmoduleBranch: string
-  targetSubmoduleBranch: string
+  routes: LinkedSubmoduleBranchMergeRoute[]
+}
+
+export interface MergeBranchRequest {
+  repoPath: string
+  sourceBranch: string
+  targetBranch: string
 }
 
 export interface CheckoutBranchRequest {
@@ -319,11 +346,14 @@ export interface RepositoryApi {
   remove: (repoPath: string) => Promise<RepositorySummary[]>
   details: (repoPath: string) => Promise<RepositoryDetails>
   checkoutBranch: (request: CheckoutBranchRequest) => Promise<RepositoryDetails>
+  checkoutSubmoduleBranch: (request: CheckoutSubmoduleBranchRequest) => Promise<RepositoryDetails>
   checkoutRemoteBranch: (request: CheckoutRemoteBranchRequest) => Promise<RepositoryDetails>
   deleteBranch: (request: DeleteBranchRequest) => Promise<RepositoryDetails>
   deleteSubmoduleBranch: (request: DeleteSubmoduleBranchRequest) => Promise<RepositoryDetails>
+  mergeBranch: (request: MergeBranchRequest) => Promise<RepositoryDetails>
   mergeLinkedSubmoduleBranch: (request: MergeLinkedSubmoduleBranchRequest) => Promise<RepositoryDetails>
   syncBranch: (request: SyncBranchRequest) => Promise<SyncBranchResult>
+  syncSubmoduleBranch: (request: SyncSubmoduleBranchRequest) => Promise<SyncBranchResult>
   stageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
   unstageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
   diffFile: (request: StatusFileDiffRequest) => Promise<StatusFileDiff>

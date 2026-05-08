@@ -7,6 +7,8 @@ type AppMenuItemIcon =
   | 'copy'
   | 'edit'
   | 'folder'
+  | 'link'
+  | 'merge'
   | 'restart'
   | 'terminal'
   | 'trash'

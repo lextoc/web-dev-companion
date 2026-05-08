@@ -28,7 +28,17 @@
 
   .branch-menu-layout {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    grid-template-rows: auto auto auto;
+  }
+
+  .branch-menu-layout.has-submodule-card {
+    grid-template-columns: 1fr;
+  }
+
+  .branch-parent-card,
+  .branch-submodule-card {
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .branch-menu-panel {
@@ -343,11 +353,6 @@
     width: fit-content;
   }
 
-  .current-branch-action-card {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-
   .branch-menu-modal-backdrop {
     padding: 16px;
   }
@@ -358,13 +363,48 @@
     padding: 10px;
   }
 
+  .branch-list-toolbar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
   .branch-menu-panel .panel-heading,
   .branch-menu-heading,
-  .linked-submodule-row,
-  .linked-submodule-grid,
+  .branch-merge-combined-controls,
+  .branch-merge-submodule-fields,
+  .branch-merge-action-card,
+  .linked-submodule-field,
+  .branch-search-control,
   .branch-search-input {
     grid-template-columns: 1fr;
     align-items: stretch;
+  }
+
+  .branch-menu-panel .branch-filters {
+    grid-column: 1;
+    justify-content: flex-start;
+  }
+
+  .remote-branch-checkout {
+    grid-template-columns: 1fr;
+  }
+
+  .remote-branch-create-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+  }
+
+  .branch-merge-action-card {
+    grid-column: auto;
+  }
+
+  .branch-merge-action-menu {
+    justify-self: stretch;
+  }
+
+  .branch-merge-action-menu .action-menu-trigger {
+    width: 100%;
   }
 
   .branch-menu-heading-stats {

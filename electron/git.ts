@@ -507,33 +507,18 @@ export async function readGitSubmodules(repoPath: string): Promise<GitSubmoduleE
       const [branch, status, branches] = await Promise.all([
         tryRunGit(submodulePath, ['branch', '--show-current']),
         tryRunGit(submodulePath, ['status', '--porcelain=v1']),
-        tryRunGit(submodulePath, [
-          'for-each-ref',
-          'refs/heads',
-          '--format=%(HEAD)%00%(refname:short)',
-          '--sort=refname',
-        ]),
+        readGitBranches(submodulePath),
       ])
 
       return {
         ...entry,
         branch: branch || 'detached',
         dirty: status.length > 0,
-        branches: branches
-          .split('\n')
-          .map((line) => line.trim())
-          .filter(Boolean)
-          .map((line) => {
-            const [head = '', name = ''] = line.split('\0')
-            const current = head === '*'
-
-            return {
-              name,
-              current,
-              canDelete: !current,
-              deleteReason: current ? 'Current submodule branch cannot be deleted.' : undefined,
-            }
-          }),
+        branches: branches.map((submoduleBranch) => ({
+          ...submoduleBranch,
+          canDelete: !submoduleBranch.current,
+          deleteReason: submoduleBranch.current ? 'Current submodule branch cannot be deleted.' : undefined,
+        })),
       }
     }),
   )

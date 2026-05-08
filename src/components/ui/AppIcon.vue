@@ -10,6 +10,7 @@ defineProps<{
     | "edit"
     | "folder"
     | "home"
+    | "keyboard"
     | "hide"
     | "link"
     | "merge"
@@ -130,6 +131,14 @@ defineProps<{
       <path d="M4 11.5 12 4l8 7.5" />
       <path d="M6.5 10.5V20h11v-9.5" />
       <path d="M10 20v-5h4v5" />
+    </g>
+    <g v-else-if="name === 'keyboard'">
+      <rect x="3" y="6" width="18" height="12" rx="2" />
+      <path d="M7 10h.01" />
+      <path d="M11 10h.01" />
+      <path d="M15 10h.01" />
+      <path d="M17 14h.01" />
+      <path d="M7 14h6" />
     </g>
     <g v-else-if="name === 'edit'">
       <path d="M4 20h4l11-11-4-4L4 16z" />

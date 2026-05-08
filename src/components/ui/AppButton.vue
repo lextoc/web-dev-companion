@@ -14,6 +14,7 @@ type AppButtonIcon =
   | "edit"
   | "folder"
   | "home"
+  | "keyboard"
   | "hide"
   | "link"
   | "merge"

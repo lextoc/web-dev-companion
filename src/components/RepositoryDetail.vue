@@ -26,6 +26,7 @@ const props = defineProps<{
   commitClearToken: number;
   commitCelebrations: boolean;
   commitShortcutLabel: string;
+  stageAllShortcutLabel: string;
   unstageAllShortcutLabel: string;
   npmScripts: [string, string][];
   pinnedScriptNames: string[];
@@ -796,7 +797,7 @@ function triggerCommitConfetti() {
                                 : statusActionLabelForGroup(group.key)
                             }}
                           </span>
-                          <kbd v-if="!isStagedGroup(group.key)">⌘A</kbd>
+                          <kbd v-if="!isStagedGroup(group.key)">{{ stageAllShortcutLabel }}</kbd>
                         </button>
                       </div>
 

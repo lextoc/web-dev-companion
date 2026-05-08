@@ -4,6 +4,7 @@ export type CommandPaletteIcon =
   | 'copy'
   | 'edit'
   | 'folder'
+  | 'keyboard'
   | 'play'
   | 'repository'
   | 'restart'

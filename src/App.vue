@@ -4,7 +4,7 @@ import RepositoryDashboard from './components/RepositoryDashboard.vue'
 import RepositoryDetail from './components/RepositoryDetail.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import TerminalModal from './components/TerminalModal.vue'
-import { ActiveTerminalsSidebar, CommandPalette, RepositoryHeaderControls } from './components/smart'
+import { ActiveTerminalsSidebar, CommandPalette, KeybindingsSheet, RepositoryHeaderControls } from './components/smart'
 import { AppButton, AppHeader } from './components/ui'
 import { useCommandPalette } from './composables/useCommandPalette'
 import { useConfirmations } from './composables/useConfirmations'
@@ -16,6 +16,7 @@ import { useRepositoryStatusActions } from './composables/useRepositoryStatusAct
 import { useSettings } from './composables/useSettings'
 import { useTerminals } from './composables/useTerminals'
 import { useToasts } from './composables/useToasts'
+import { KEYBINDINGS, keybindingLabel, type KeybindingPlatform } from './keybindings'
 import type {
   DesktopMenuCommand,
   GitCommandLogEntry,
@@ -32,6 +33,7 @@ const isLoading = ref(false)
 const isRefreshingRepositories = ref(false)
 const lastRepositoryListRefreshAt = ref<Date | null>(null)
 const isMacPlatform = ref(false)
+const isKeybindingsOpen = ref(false)
 const gitCommandLog = ref<GitCommandLogEntry[]>([])
 const branchShortcutTriggerToken = ref(0)
 let removeScriptOutputListener: (() => void) | undefined
@@ -205,6 +207,7 @@ const {
   isMacPlatform,
   isSettingsOpen,
   loadRepositories,
+  openKeybindingsSheet,
   openRepository,
   openRepositoryInEditor,
   openRepositoryInFileManager,
@@ -233,26 +236,30 @@ const lastRepositoryRefreshLabel = computed(() => {
     minute: '2-digit',
   })}`
 })
+const keybindingPlatform = computed<KeybindingPlatform>(() => (isMacPlatform.value ? 'mac' : 'other'))
 const commandShortcutLabel = computed(() =>
-  isMacPlatform.value ? '⌘K' : 'Ctrl K',
+  keybindingLabel('command-palette', keybindingPlatform.value),
 )
 const settingsShortcutLabel = computed(() =>
-  isMacPlatform.value ? '⌘,' : 'Ctrl ,',
+  keybindingLabel('settings', keybindingPlatform.value),
 )
 const dashboardShortcutLabel = computed(() =>
-  isMacPlatform.value ? '⌘1' : 'Ctrl 1',
+  keybindingLabel('dashboard', keybindingPlatform.value),
 )
 const branchShortcutLabel = computed(() =>
-  isMacPlatform.value ? '⌘B' : 'Ctrl B',
+  keybindingLabel('branch-switcher', keybindingPlatform.value),
 )
 const commitShortcutLabel = computed(() =>
-  isMacPlatform.value ? '⌘↵' : 'Ctrl ↵',
+  keybindingLabel('commit', keybindingPlatform.value),
+)
+const stageAllShortcutLabel = computed(() =>
+  keybindingLabel('stage-all', keybindingPlatform.value),
 )
 const unstageAllShortcutLabel = computed(() =>
-  isMacPlatform.value ? '⌘⇧A' : 'Ctrl Shift A',
+  keybindingLabel('unstage-all', keybindingPlatform.value),
 )
 const syncShortcutLabel = computed(() =>
-  isMacPlatform.value ? '⌘S' : 'Ctrl S',
+  keybindingLabel('sync-branch', keybindingPlatform.value),
 )
 
 async function saveAppSettings(settings: AppSettings) {
@@ -278,6 +285,15 @@ function activeRepositoryPath() {
 
 async function startPinnedScript(script: PinnedScript) {
   await runRepositoryScript(script)
+}
+
+function openKeybindingsSheet() {
+  closeCommandPalette()
+  isKeybindingsOpen.value = true
+}
+
+function closeKeybindingsSheet() {
+  isKeybindingsOpen.value = false
 }
 
 async function loadRepositories() {
@@ -418,6 +434,11 @@ async function handleMenuCommand(command: DesktopMenuCommand) {
     return
   }
 
+  if (command === 'keyboard-shortcuts') {
+    openKeybindingsSheet()
+    return
+  }
+
   if (command === 'add-repository') {
     await chooseAndAddRepository()
     return
@@ -488,6 +509,7 @@ function handlePageExit() {
   cleanupToasts()
   closeConfirmation(false)
   closeTerminalModal()
+  closeKeybindingsSheet()
   stopAutoRefreshTimer()
   stopOwnedScripts()
 }
@@ -500,8 +522,20 @@ function handleGlobalKeydown(event: KeyboardEvent) {
   const key = event.key.toLowerCase()
 
   if (
+    (event.metaKey || event.ctrlKey) &&
+    key === '/' &&
+    !event.altKey &&
+    !event.shiftKey
+  ) {
+    event.preventDefault()
+    openKeybindingsSheet()
+    return
+  }
+
+  if (
     selectedPath.value &&
     !isCommandPaletteOpen.value &&
+    !isKeybindingsOpen.value &&
     !selectedTerminal.value &&
     !confirmationDialog.value &&
     !isSettingsOpen.value &&
@@ -526,6 +560,7 @@ function handleGlobalKeydown(event: KeyboardEvent) {
     if (
       canSyncCurrentBranch() &&
       !isCommandPaletteOpen.value &&
+      !isKeybindingsOpen.value &&
       !selectedTerminal.value &&
       !confirmationDialog.value &&
       !isSettingsOpen.value &&
@@ -546,6 +581,7 @@ function handleGlobalKeydown(event: KeyboardEvent) {
     if (
       selectedDetails.value &&
       !isCommandPaletteOpen.value &&
+      !isKeybindingsOpen.value &&
       !selectedTerminal.value &&
       !confirmationDialog.value &&
       !isSettingsOpen.value
@@ -563,6 +599,7 @@ function handleGlobalKeydown(event: KeyboardEvent) {
 
   if ((event.metaKey || event.ctrlKey) && key === 'k') {
     event.preventDefault()
+    closeKeybindingsSheet()
     openCommandPalette()
     return
   }
@@ -577,6 +614,7 @@ function handleGlobalKeydown(event: KeyboardEvent) {
     if (
       selectedDetails.value &&
       !isCommandPaletteOpen.value &&
+      !isKeybindingsOpen.value &&
       !selectedTerminal.value &&
       !confirmationDialog.value &&
       !isSettingsOpen.value
@@ -588,7 +626,7 @@ function handleGlobalKeydown(event: KeyboardEvent) {
     return
   }
 
-  if (event.key === '/' && !isEditableTarget(event.target)) {
+  if (event.key === '/' && !isKeybindingsOpen.value && !isEditableTarget(event.target)) {
     event.preventDefault()
     openCommandPalette()
     return
@@ -602,6 +640,13 @@ function handleGlobalKeydown(event: KeyboardEvent) {
     event.preventDefault()
     event.stopImmediatePropagation()
     closeCommandPalette()
+    return
+  }
+
+  if (isKeybindingsOpen.value) {
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    closeKeybindingsSheet()
     return
   }
 
@@ -754,6 +799,7 @@ onBeforeUnmount(() => {
           :commit-clear-token="commitClearToken"
           :commit-celebrations="appSettings.commitCelebrations"
           :commit-shortcut-label="commitShortcutLabel"
+          :stage-all-shortcut-label="stageAllShortcutLabel"
           :unstage-all-shortcut-label="unstageAllShortcutLabel"
           :npm-scripts="npmScripts"
           :pinned-script-names="pinnedScriptNamesForSelectedRepo"
@@ -804,6 +850,13 @@ onBeforeUnmount(() => {
       :items="commandPaletteItems"
       @close="closeCommandPalette"
       @run="runCommandPaletteItem"
+    />
+
+    <KeybindingsSheet
+      v-if="isKeybindingsOpen"
+      :keybindings="KEYBINDINGS"
+      :platform="keybindingPlatform"
+      @close="closeKeybindingsSheet"
     />
 
     <div

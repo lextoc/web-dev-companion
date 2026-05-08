@@ -180,6 +180,15 @@
     flex-wrap: wrap;
   }
 
+  .keybindings-group li {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .keybinding-keys {
+    justify-content: start;
+  }
+
   .app-context-line {
     max-width: 100%;
   }

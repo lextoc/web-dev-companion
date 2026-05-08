@@ -1,5 +1,6 @@
 import { computed, ref, type Ref } from 'vue'
 import type { CommandPaletteItem } from '../command-palette'
+import { keybindingLabel } from '../keybindings'
 import type { PinnedScript, RepositoryDetails, RepositorySummary, ScriptTerminal } from '../repositories'
 import { SCRIPT_REFERENCE_SEPARATOR } from './usePersistedAppState'
 import type { AppFeedbackTone } from './useToasts'
@@ -21,6 +22,7 @@ interface UseCommandPaletteOptions {
   isMacPlatform: Ref<boolean>
   isSettingsOpen: Ref<boolean>
   loadRepositories: () => Promise<void>
+  openKeybindingsSheet: () => void
   openRepository: (repository: RepositorySummary) => Promise<void>
   openRepositoryInEditor: (repoPath: string) => Promise<void>
   openRepositoryInFileManager: (repoPath: string) => Promise<void>
@@ -48,6 +50,7 @@ export function useCommandPalette({
   isMacPlatform,
   isSettingsOpen,
   loadRepositories,
+  openKeybindingsSheet,
   openRepository,
   openRepositoryInEditor,
   openRepositoryInFileManager,
@@ -74,6 +77,7 @@ export function useCommandPalette({
       items.set(item.id, item)
     }
     const currentRepoPath = activeRepositoryPath()
+    const platform = isMacPlatform.value ? 'mac' : 'other'
 
     addItem({
       id: 'action:add-repository',
@@ -81,6 +85,7 @@ export function useCommandPalette({
       title: 'Add repository',
       section: 'App',
       subtitle: 'Choose a repository folder to save',
+      meta: keybindingLabel('add-repository', platform),
       keywords: ['browse', 'folder', 'new'],
     })
     addItem({
@@ -89,6 +94,7 @@ export function useCommandPalette({
       title: selectedPath.value ? 'Refresh repository' : 'Refresh repositories',
       section: 'App',
       subtitle: selectedPath.value ? 'Reload current repository details' : 'Reload saved repositories',
+      meta: keybindingLabel('refresh', platform),
       keywords: ['reload', 'sync'],
     })
     addItem({
@@ -96,8 +102,16 @@ export function useCommandPalette({
       icon: 'command',
       title: 'Open settings',
       section: 'App',
-      meta: isMacPlatform.value ? '⌘,' : 'Ctrl ,',
+      meta: keybindingLabel('settings', platform),
       keywords: ['preferences'],
+    })
+    addItem({
+      id: 'action:keybindings',
+      icon: 'keyboard',
+      title: 'Open keyboard shortcuts',
+      section: 'App',
+      meta: keybindingLabel('keyboard-shortcuts', platform),
+      keywords: ['shortcuts', 'hotkeys', 'keybindings'],
     })
 
     if (currentRepoPath) {
@@ -107,6 +121,7 @@ export function useCommandPalette({
         title: 'Open repository files',
         section: 'Repository',
         subtitle: currentRepoPath,
+        meta: keybindingLabel('open-files', platform),
         keywords: ['finder', 'explorer', 'folder'],
       })
       addItem({
@@ -115,6 +130,7 @@ export function useCommandPalette({
         title: 'Open repository in editor',
         section: 'Repository',
         subtitle: currentRepoPath,
+        meta: keybindingLabel('open-editor', platform),
         keywords: ['code', 'ide'],
       })
       addItem({
@@ -123,6 +139,7 @@ export function useCommandPalette({
         title: 'Open repository terminal',
         section: 'Repository',
         subtitle: currentRepoPath,
+        meta: keybindingLabel('open-terminal', platform),
         keywords: ['shell', 'console'],
       })
       addItem({
@@ -142,6 +159,7 @@ export function useCommandPalette({
         title: 'Stop running scripts',
         section: 'Scripts',
         subtitle: `${activeTerminals.value.filter((terminal) => terminal.isRunning).length} running`,
+        meta: keybindingLabel('stop-scripts', platform),
         keywords: ['cancel', 'abort'],
       })
     }
@@ -244,6 +262,11 @@ export function useCommandPalette({
 
     if (itemId === 'action:settings') {
       isSettingsOpen.value = true
+      return
+    }
+
+    if (itemId === 'action:keybindings') {
+      openKeybindingsSheet()
       return
     }
 

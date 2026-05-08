@@ -286,6 +286,16 @@ function configureApplicationMenu() {
           : [{ role: 'close' as const }]),
       ],
     },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'Keyboard Shortcuts',
+          accelerator: isMac ? 'Command+/' : 'Ctrl+/',
+          click: () => sendMenuCommand('keyboard-shortcuts'),
+        },
+      ],
+    },
   ]
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))

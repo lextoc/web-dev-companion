@@ -20,7 +20,7 @@ interface UseRepositoryStatusActionsOptions {
   isLoading: ReadableRef<boolean>
   loadRepositories: () => Promise<void>
   resetAutoRefreshTimer: () => void
-  runHealthScriptsBeforeCommit?: (repository: RepositoryDetails, scriptNames: string[]) => Promise<unknown>
+  runHealthScriptsBeforeCommit?: (repository: RepositoryDetails, taskIds: string[]) => Promise<unknown>
   selectedDetails: Ref<RepositoryDetails | null>
   showAppFeedback: (message: string, tone?: AppFeedbackTone) => void
   showRepositoryError: (repoPath: string, title: string, error: unknown) => void
@@ -28,7 +28,7 @@ interface UseRepositoryStatusActionsOptions {
 
 interface CommitStatusRequest {
   checkHealthBeforeCommit?: boolean
-  healthScriptNames?: string[]
+  healthTaskIds?: string[]
   message: string
 }
 
@@ -214,9 +214,9 @@ export function useRepositoryStatusActions({
       ? { message: request }
       : request
     const repoPath = selectedDetails.value.path
-    const healthScriptNames = commitRequest.healthScriptNames ?? []
+    const healthTaskIds = commitRequest.healthTaskIds ?? []
 
-    if (commitRequest.checkHealthBeforeCommit && healthScriptNames.length > 0) {
+    if (commitRequest.checkHealthBeforeCommit && healthTaskIds.length > 0) {
       if (!runHealthScriptsBeforeCommit) {
         showRepositoryError(repoPath, 'Health check failed.', new Error('Health checks are not available.'))
         return
@@ -227,7 +227,7 @@ export function useRepositoryStatusActions({
       clearError()
 
       try {
-        await runHealthScriptsBeforeCommit(selectedDetails.value, healthScriptNames)
+        await runHealthScriptsBeforeCommit(selectedDetails.value, healthTaskIds)
       } catch (error) {
         showRepositoryError(repoPath, 'Health check failed.', error)
         return

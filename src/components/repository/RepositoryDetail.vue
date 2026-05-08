@@ -43,7 +43,7 @@ const emit = defineEmits<{
   stageFiles: [request: { paths: string[]; actionKey: string }];
   unstageFiles: [request: { paths: string[]; actionKey: string }];
   resetTrackedChanges: [paths?: string[]];
-  commit: [request: { message: string; checkHealthBeforeCommit: boolean; healthScriptNames: string[] }];
+  commit: [request: { message: string; checkHealthBeforeCommit: boolean; healthTaskIds: string[] }];
   commitDraftChange: [hasDraft: boolean];
   runScript: [taskId: string];
   togglePinScript: [task: ProjectTask];
@@ -99,40 +99,30 @@ const stagedLineTotals = computed(() =>
     { additions: 0, deletions: 0 },
   ),
 );
-const availableProjectHealthScriptNames = computed(() =>
-  projectHealth.value?.scripts.filter((script) => script.present).map((script) => script.name) ?? [],
-);
-const projectHealthTerminalsByScript = computed(() =>
-  Object.fromEntries(
-    (projectHealth.value?.scripts ?? []).flatMap((script) => {
-      const task = taskForHealthScript(script.name);
-      const terminal = task ? props.scriptTerminalsByScript[task.id] : undefined;
+const healthCheckTasks = computed(() => {
+  const nodeCheckNames = new Set(projectHealth.value?.scripts
+    .filter((script) => script.present)
+    .map((script) => script.name) ?? ["test", "typecheck", "lint"]);
+  const javaCheckNames = new Set(["test", "check", "build", "package", "verify"]);
+  const rubyCheckNames = new Set(["test", "spec"]);
 
-      return terminal ? [[script.name, terminal]] : [];
-    }),
-  ),
-);
+  return props.projectTasks.filter((task) => {
+    if (task.source === "node") {
+      return nodeCheckNames.has(task.name);
+    }
 
-function taskForHealthScript(scriptName: string) {
-  return props.projectTasks.find((task) => task.id === `node:${scriptName}`) ??
-    props.projectTasks.find((task) => task.name === scriptName);
-}
+    if (["gradle", "maven"].includes(task.source)) {
+      return javaCheckNames.has(task.name);
+    }
 
-function emitHealthScript(eventName: "runScript" | "restartScript" | "openTerminal", scriptName: string) {
-  const task = taskForHealthScript(scriptName);
+    if (["rails", "rake"].includes(task.source)) {
+      return rubyCheckNames.has(task.name);
+    }
 
-  if (!task) {
-    return;
-  }
-
-  if (eventName === "runScript") {
-    emit("runScript", task.id);
-  } else if (eventName === "restartScript") {
-    emit("restartScript", task.id);
-  } else {
-    emit("openTerminal", task.id);
-  }
-}
+    return false;
+  });
+});
+const healthCheckTaskIds = computed(() => healthCheckTasks.value.map((task) => task.id));
 
 watch(
   () => props.commitClearToken,
@@ -561,8 +551,8 @@ function commitDisabledReason(
     return "Project health has not loaded.";
   }
 
-  if (checkHealthBeforeCommit.value && availableProjectHealthScriptNames.value.length === 0) {
-    return "No health scripts are available.";
+  if (checkHealthBeforeCommit.value && healthCheckTaskIds.value.length === 0) {
+    return "No health check tasks are available.";
   }
 
   if (!commitMessage.value.trim()) {
@@ -586,7 +576,7 @@ function submitCommit(
   emit("commit", {
     message,
     checkHealthBeforeCommit: checkHealthBeforeCommit.value,
-    healthScriptNames: availableProjectHealthScriptNames.value,
+    healthTaskIds: healthCheckTaskIds.value,
   });
 }
 
@@ -677,11 +667,12 @@ function triggerCommitConfetti() {
                   </label>
                   <RunProjectHealthScriptsButton
                     class="secondary commit-run-scripts"
-                    :health="projectHealth"
+                    :tasks="healthCheckTasks"
                     :loading="projectHealthLoading"
-                    :script-terminals-by-script="projectHealthTerminalsByScript"
-                    @run-script="emitHealthScript('runScript', $event)"
-                    @restart-script="emitHealthScript('restartScript', $event)"
+                    :task-terminals-by-task="scriptTerminalsByScript"
+                    run-label="Run checks"
+                    @run-task="$emit('runScript', $event)"
+                    @restart-task="$emit('restartScript', $event)"
                   />
                 </div>
 
@@ -974,15 +965,16 @@ function triggerCommitConfetti() {
         <template #health>
         <ProjectHealthPanel
           :health="projectHealth"
+          :project-tasks="projectTasks"
           :loading="projectHealthLoading"
           :error="projectHealthError"
           :outdated-loading="projectOutdatedLoading"
-          :script-terminals-by-script="projectHealthTerminalsByScript"
+          :task-terminals-by-task="scriptTerminalsByScript"
           @refresh="loadProjectHealth"
           @check-outdated="checkOutdatedDependencies"
-          @run-script="emitHealthScript('runScript', $event)"
-          @restart-script="emitHealthScript('restartScript', $event)"
-          @open-terminal="emitHealthScript('openTerminal', $event)"
+          @run-task="$emit('runScript', $event)"
+          @restart-task="$emit('restartScript', $event)"
+          @open-task="$emit('openTerminal', $event)"
         />
         </template>
 

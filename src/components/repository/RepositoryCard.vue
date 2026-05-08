@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { RepositorySummary } from '../../repositories'
+import type { ProjectTaskSource, RepositorySummary } from '../../repositories'
 import { AppActionMenu, AppButton, AppIcon, AppMenuItem } from '../ui'
 
 defineProps<{
@@ -18,6 +18,18 @@ defineEmits<{
   openInFileManager: [repoPath: string]
   openInTerminal: [repoPath: string]
 }>()
+
+const ecosystemBadges: Record<ProjectTaskSource, { label: string; logo: string }> = {
+  node: { label: 'Node', logo: '/ecosystems/node.svg' },
+  gradle: { label: 'Gradle', logo: '/ecosystems/gradle.svg' },
+  maven: { label: 'Maven', logo: '/ecosystems/maven.svg' },
+  rails: { label: 'Rails', logo: '/ecosystems/rails.svg' },
+  rake: { label: 'Rake (Ruby)', logo: '/ecosystems/ruby.svg' },
+}
+
+function ecosystemBadge(source: ProjectTaskSource) {
+  return ecosystemBadges[source]
+}
 </script>
 
 <template>
@@ -56,6 +68,21 @@ defineEmits<{
       <span class="repo-health-row">
         <span v-if="repository.error" class="health-pill error">Needs attention</span>
         <span v-if="lastRefreshedLabel" class="health-pill neutral">{{ lastRefreshedLabel }}</span>
+      </span>
+      <span
+        v-if="repository.ecosystems.length > 0"
+        class="ecosystem-watermark"
+        :title="`Detected: ${repository.ecosystems.map((source) => ecosystemBadge(source).label).join(', ')}`"
+        aria-label="Detected project ecosystems"
+      >
+        <img
+          v-for="source in repository.ecosystems"
+          :key="source"
+          class="ecosystem-watermark-logo"
+          :class="`ecosystem-${source}`"
+          :src="ecosystemBadge(source).logo"
+          :alt="ecosystemBadge(source).label"
+        />
       </span>
     </AppButton>
 
@@ -286,8 +313,9 @@ defineEmits<{
 }
 
 .repo-title-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 42%) 30px;
   align-items: start;
-  justify-content: space-between;
   gap: 12px;
 }
 
@@ -321,11 +349,11 @@ defineEmits<{
 
 .repo-card-badges {
   display: flex;
-  flex: 0 0 auto;
+  width: 100%;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 7px;
-  max-width: min(520px, 52%);
+  max-width: none;
 }
 
 .repo-open-indicator {
@@ -462,6 +490,8 @@ defineEmits<{
 .repo-quick-actions :deep(.action-menu-trigger) {
   width: 34px;
   padding: 0;
+  background: color-mix(in srgb, var(--surface) 94%, #fff);
+  box-shadow: 0 1px 2px rgba(23, 32, 42, 0.06);
 }
 
 .repo-quick-actions :deep(.action-menu) {
@@ -664,15 +694,55 @@ defineEmits<{
 }
 
 .repo-card-main {
+  position: relative;
+  overflow: hidden;
   min-height: 82px;
   border-radius: 0;
   gap: 6px;
   padding: 10px 12px 10px 16px;
 }
 
+.repo-card-main > :not(.ecosystem-watermark) {
+  position: relative;
+  z-index: 1;
+}
+
 .repo-card-main:hover:not(:disabled) {
   background: color-mix(in srgb, var(--surface-hover) 68%, transparent);
   box-shadow: none;
+}
+
+.ecosystem-watermark {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  z-index: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: 38%;
+  opacity: 0.16;
+  filter: saturate(1.05);
+  pointer-events: none;
+}
+
+.ecosystem-watermark-logo {
+  display: block;
+  width: 72px;
+  max-height: 56px;
+  object-fit: contain;
+}
+
+.ecosystem-watermark-logo.ecosystem-node,
+.ecosystem-watermark-logo.ecosystem-rake {
+  width: 52px;
+  max-height: 52px;
+}
+
+.ecosystem-watermark-logo.ecosystem-maven,
+.ecosystem-watermark-logo.ecosystem-rails {
+  width: 86px;
 }
 
 .repo-quick-actions {
@@ -696,7 +766,6 @@ defineEmits<{
 
 .repo-card-badges {
   gap: 5px;
-  max-width: min(360px, 44%);
 }
 
 .repo-path,
@@ -709,18 +778,13 @@ defineEmits<{
 
 .branch-pill {
   height: 22px;
-  padding-top: 0;
-  padding-bottom: 0;
-  font-size: 0.72rem;
-  font-weight: 720;
-  line-height: 22px;
-  vertical-align: middle;
 }
 
 @media (max-width: 1180px) {
   .repo-quick-actions {
     border-top: 1px solid color-mix(in srgb, var(--border-soft) 62%, transparent);
     border-left: 0;
+    box-shadow: none;
   }
 }
 
@@ -734,6 +798,7 @@ defineEmits<{
   }
 
   .repo-title-row {
+    display: flex;
     align-items: flex-start;
     flex-wrap: wrap;
   }

@@ -76,11 +76,6 @@ export function useTerminals({
     )
   }
 
-  function nodeTaskForScriptName(repository: Pick<RepositoryDetails, 'projectTasks'>, scriptName: string) {
-    return repository.projectTasks.find((task) => task.id === `node:${scriptName}`) ??
-      repository.projectTasks.find((task) => task.name === scriptName)
-  }
-
   function handleScriptOutput(output: ScriptOutput) {
     const terminal = scriptTerminals.value[output.runId]
 
@@ -230,16 +225,16 @@ export function useTerminals({
 
   async function runRepositoryScriptsAndWait(
     repository: Pick<RepositoryDetails, 'name' | 'path' | 'projectTasks'>,
-    scriptNames: string[],
+    taskIds: string[],
   ) {
-    const uniqueScriptNames = [...new Set(scriptNames)]
+    const uniqueTaskIds = [...new Set(taskIds)]
     const pendingResults: Array<Promise<ScriptRunResult>> = []
 
-    for (const scriptName of uniqueScriptNames) {
-      const task = nodeTaskForScriptName(repository, scriptName)
+    for (const taskId of uniqueTaskIds) {
+      const task = repository.projectTasks.find((entry) => entry.id === taskId)
 
       if (!task) {
-        throw new Error(`Could not find "${scriptName}".`)
+        throw new Error(`Could not find "${taskId}".`)
       }
 
       const existingTerminal = terminalForTask(repository.path, task.id)
@@ -260,13 +255,13 @@ export function useTerminals({
       )
 
       if (!runId) {
-        throw new Error(`Could not start "${scriptName}".`)
+        throw new Error(`Could not start "${task.name}".`)
       }
 
       const terminal = scriptTerminals.value[runId]
 
       if (!terminal) {
-        throw new Error(`Could not monitor "${scriptName}".`)
+        throw new Error(`Could not monitor "${task.name}".`)
       }
 
       pendingResults.push(waitForScriptRun(terminal))

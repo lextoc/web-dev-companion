@@ -1,40 +1,60 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import type {
-  ProjectDependencyHealth,
   ProjectHealth,
   ProjectHealthStatus,
-  ProjectScriptCheck,
+  ProjectTask,
   ScriptTerminal,
 } from "../../../repositories";
-import RunProjectHealthScriptsButton from "./RunProjectHealthScriptsButton.vue";
+import JavaHealthSection from "./JavaHealthSection.vue";
+import NodeHealthSection from "./NodeHealthSection.vue";
+import RubyHealthSection from "./RubyHealthSection.vue";
 
 const props = defineProps<{
   health: ProjectHealth | null;
+  projectTasks: ProjectTask[];
   loading: boolean;
   error: string | null;
   outdatedLoading: boolean;
-  scriptTerminalsByScript: Record<string, ScriptTerminal>;
+  taskTerminalsByTask: Record<string, ScriptTerminal>;
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   refresh: [];
   checkOutdated: [];
-  runScript: [scriptName: string];
-  restartScript: [scriptName: string];
-  openTerminal: [scriptName: string];
+  runTask: [taskId: string];
+  restartTask: [taskId: string];
+  openTask: [taskId: string];
 }>();
+
+const nodeTasks = computed(() => props.projectTasks.filter((task) => task.source === "node"));
+const javaTasks = computed(() => props.projectTasks.filter((task) => ["gradle", "maven"].includes(task.source)));
+const rubyTasks = computed(() => props.projectTasks.filter((task) => ["rails", "rake"].includes(task.source)));
+
+const hasNodeHealth = computed(() =>
+  nodeTasks.value.length > 0 ||
+  Boolean(props.health?.packageJsonPresent) ||
+  Boolean(props.health?.packageManager.detected) ||
+  Boolean(props.health?.node.configured) ||
+  Boolean(props.health?.node.engineRange),
+);
+const supportedEcosystemCount = computed(() =>
+  Number(hasNodeHealth.value) + Number(javaTasks.value.length > 0) + Number(rubyTasks.value.length > 0),
+);
 
 function projectHealthIssueCount(health: ProjectHealth) {
   return projectHealthAttentionItems(health).length;
 }
 
 function projectHealthAttentionItems(health: ProjectHealth) {
-  const groupedMessages = [
-    { key: "package", title: "Package manager", messages: health.packageManager.messages },
-    { key: "node", title: "Node", messages: health.node.messages },
-    { key: "install", title: "Install state", messages: health.install.messages },
-    { key: "lockfile", title: "Lockfile", messages: health.lockfile.messages },
-  ];
+  const groupedMessages = hasNodeHealth.value
+    ? [
+        { key: "package", title: "Package manager", messages: health.packageManager.messages },
+        { key: "node", title: "Node", messages: health.node.messages },
+        { key: "install", title: "Install state", messages: health.install.messages },
+        { key: "lockfile", title: "Lockfile", messages: health.lockfile.messages },
+      ]
+    : [];
   const items = groupedMessages.flatMap((group) =>
     group.messages.map((entry) => ({
       key: `${group.key}-${entry.text}`,
@@ -44,7 +64,7 @@ function projectHealthAttentionItems(health: ProjectHealth) {
     })),
   );
 
-  if (health.dependencies.status === "outdated") {
+  if (hasNodeHealth.value && health.dependencies.status === "outdated") {
     items.push({
       key: "dependencies-outdated",
       level: "warning",
@@ -53,7 +73,7 @@ function projectHealthAttentionItems(health: ProjectHealth) {
     });
   }
 
-  if (health.dependencies.status === "failed") {
+  if (hasNodeHealth.value && health.dependencies.status === "failed") {
     items.push({
       key: "dependencies-failed",
       level: "error",
@@ -62,12 +82,12 @@ function projectHealthAttentionItems(health: ProjectHealth) {
     });
   }
 
-  for (const script of health.scripts.filter((entry) => ["failed", "timed-out"].includes(entry.status))) {
+  for (const script of hasNodeHealth.value ? health.scripts.filter((entry) => ["failed", "timed-out"].includes(entry.status)) : []) {
     items.push({
       key: `script-${script.name}`,
       level: "error",
       title: script.name,
-      text: script.error ?? `Script ${scriptStatusLabel(script).toLowerCase()}.`,
+      text: script.error ?? "Common script failed.",
     });
   }
 
@@ -76,31 +96,43 @@ function projectHealthAttentionItems(health: ProjectHealth) {
 
 function projectHealthOverallStatus(health: ProjectHealth): ProjectHealthStatus {
   if (
-    health.packageManager.status === "error" ||
-    health.node.status === "error" ||
-    health.install.status === "error" ||
-    health.lockfile.status === "error" ||
-    health.dependencies.status === "failed" ||
-    health.scripts.some((script) => ["failed", "timed-out"].includes(script.status))
+    hasNodeHealth.value &&
+    (
+      health.packageManager.status === "error" ||
+      health.node.status === "error" ||
+      health.install.status === "error" ||
+      health.lockfile.status === "error" ||
+      health.dependencies.status === "failed" ||
+      health.scripts.some((script) => ["failed", "timed-out"].includes(script.status))
+    )
   ) {
     return "error";
   }
 
   if (
-    health.packageManager.status === "warning" ||
-    health.node.status === "warning" ||
-    health.install.status === "warning" ||
-    health.lockfile.status === "warning" ||
-    health.dependencies.status === "outdated"
+    hasNodeHealth.value &&
+    (
+      health.packageManager.status === "warning" ||
+      health.node.status === "warning" ||
+      health.install.status === "warning" ||
+      health.lockfile.status === "warning" ||
+      health.dependencies.status === "outdated"
+    )
   ) {
     return "warning";
   }
 
   if (
-    health.packageManager.status === "unknown" ||
-    health.node.status === "unknown" ||
-    health.install.status === "unknown" ||
-    health.lockfile.status === "unknown"
+    supportedEcosystemCount.value === 0 ||
+    (
+      hasNodeHealth.value &&
+      (
+        health.packageManager.status === "unknown" ||
+        health.node.status === "unknown" ||
+        health.install.status === "unknown" ||
+        health.lockfile.status === "unknown"
+      )
+    )
   ) {
     return "unknown";
   }
@@ -124,143 +156,6 @@ function healthStatusLabel(status: ProjectHealthStatus) {
   return "Unknown";
 }
 
-function dependencyStatusLabel(dependencies: ProjectDependencyHealth) {
-  if (dependencies.status === "ok") {
-    return "Up to date";
-  }
-
-  if (dependencies.status === "outdated") {
-    return `${dependencies.outdatedCount ?? 0} outdated`;
-  }
-
-  if (dependencies.status === "failed") {
-    return "Failed";
-  }
-
-  if (dependencies.status === "skipped") {
-    return "Skipped";
-  }
-
-  return "Not checked";
-}
-
-function dependencyDetailLabel(dependencies: ProjectDependencyHealth) {
-  if (dependencies.status === "outdated") {
-    return `${dependencies.outdatedCount ?? 0} dependencies`;
-  }
-
-  if (dependencies.status === "ok") {
-    return "No outdated dependencies found";
-  }
-
-  if (dependencies.status === "failed") {
-    return "Check failed";
-  }
-
-  if (dependencies.status === "skipped") {
-    return dependencies.error ?? "Check skipped";
-  }
-
-  return "Manual check not run";
-}
-
-function outdatedDependencyVersionLabel(current?: string, wanted?: string, latest?: string) {
-  if (current && wanted && latest) {
-    return `${current} -> ${wanted} / ${latest}`;
-  }
-
-  if (current && latest) {
-    return `${current} -> ${latest}`;
-  }
-
-  if (wanted && latest) {
-    return `${wanted} / ${latest}`;
-  }
-
-  return current ?? wanted ?? latest ?? "Version unknown";
-}
-
-function scriptStatusLabel(script: ProjectScriptCheck) {
-  if (script.status === "passed") {
-    return "Passed";
-  }
-
-  if (script.status === "failed") {
-    return "Failed";
-  }
-
-  if (script.status === "timed-out") {
-    return "Timed out";
-  }
-
-  if (script.status === "skipped") {
-    return "Missing";
-  }
-
-  return "Not run";
-}
-
-function projectScriptTerminal(scriptName: string) {
-  return props.scriptTerminalsByScript[scriptName];
-}
-
-function projectScriptRuntimeStatus(script: ProjectScriptCheck) {
-  const terminal = projectScriptTerminal(script.name);
-
-  if (!terminal) {
-    return script.status;
-  }
-
-  if (terminal.isRunning) {
-    return "running";
-  }
-
-  if (terminal.signal) {
-    return "stopped";
-  }
-
-  if (terminal.exitCode !== null && terminal.exitCode !== undefined && terminal.exitCode !== 0) {
-    return "failed";
-  }
-
-  return "finished";
-}
-
-function projectScriptRuntimeStatusLabel(script: ProjectScriptCheck) {
-  const terminal = projectScriptTerminal(script.name);
-
-  if (!terminal) {
-    return scriptStatusLabel(script);
-  }
-
-  if (terminal.isRunning) {
-    return "Running";
-  }
-
-  if (terminal.signal) {
-    return "Stopped";
-  }
-
-  if (terminal.exitCode !== null && terminal.exitCode !== undefined && terminal.exitCode !== 0) {
-    return "Failed";
-  }
-
-  return "Finished";
-}
-
-function openOrRunProjectScript(script: ProjectScriptCheck) {
-  if (!script.present) {
-    return;
-  }
-
-  if (projectScriptTerminal(script.name)) {
-    emit("openTerminal", script.name);
-    return;
-  }
-
-  emit("runScript", script.name);
-}
-
 function healthCheckedAtLabel(checkedAt?: string) {
   if (!checkedAt) {
     return "Not checked";
@@ -276,36 +171,6 @@ function healthCheckedAtLabel(checkedAt?: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function scriptDurationLabel(durationMs?: number) {
-  if (durationMs === undefined) {
-    return "";
-  }
-
-  if (durationMs < 1000) {
-    return `${durationMs} ms`;
-  }
-
-  return `${(durationMs / 1000).toFixed(1)} s`;
-}
-
-function availableProjectScripts(health: ProjectHealth) {
-  return health.scripts.filter((script) => script.present);
-}
-
-function missingProjectScripts(health: ProjectHealth) {
-  return health.scripts.filter((script) => !script.present);
-}
-
-function missingProjectScriptSummary(health: ProjectHealth) {
-  const missingScripts = missingProjectScripts(health);
-
-  if (missingScripts.length === 0) {
-    return "";
-  }
-
-  return `${missingScripts.length} common scripts missing: ${missingScripts.map((script) => script.name).join(", ")}`;
 }
 </script>
 
@@ -358,221 +223,45 @@ function missingProjectScriptSummary(health: ProjectHealth) {
         </ul>
       </section>
 
-      <div class="project-health-grid">
-        <article class="project-health-card" :class="health.packageManager.status">
-          <div class="project-health-card-heading">
-            <span>Package manager</span>
-            <strong>{{ healthStatusLabel(health.packageManager.status) }}</strong>
-          </div>
-          <dl>
-            <div>
-              <dt>Detected</dt>
-              <dd>{{ health.packageManager.detected ?? "Unknown" }}</dd>
-            </div>
-            <div>
-              <dt>Declared</dt>
-              <dd>{{ health.packageManager.declared ?? "None" }}</dd>
-            </div>
-            <div>
-              <dt>Lockfiles</dt>
-              <dd>{{ health.packageManager.lockfiles.join(", ") || "None" }}</dd>
-            </div>
-          </dl>
-          <ul v-if="health.packageManager.messages.length > 0" class="project-health-messages">
-            <li
-              v-for="entry in health.packageManager.messages"
-              :key="`package-${entry.text}`"
-              :class="entry.level"
-            >
-              {{ entry.text }}
-            </li>
-          </ul>
-        </article>
+      <NodeHealthSection
+        v-if="hasNodeHealth"
+        :health="health"
+        :loading="loading"
+        :outdated-loading="outdatedLoading"
+        :node-tasks="nodeTasks"
+        :task-terminals-by-task="taskTerminalsByTask"
+        @check-outdated="$emit('checkOutdated')"
+        @run-task="$emit('runTask', $event)"
+        @restart-task="$emit('restartTask', $event)"
+        @open-task="$emit('openTask', $event)"
+      />
 
-        <article class="project-health-card" :class="health.node.status">
-          <div class="project-health-card-heading">
-            <span>Node</span>
-            <strong>{{ healthStatusLabel(health.node.status) }}</strong>
-          </div>
-          <dl>
-            <div>
-              <dt>Current</dt>
-              <dd>{{ health.node.current ?? "Unknown" }}</dd>
-            </div>
-            <div>
-              <dt>Configured</dt>
-              <dd>{{ health.node.configured ?? "None" }}</dd>
-            </div>
-            <div>
-              <dt>Engines</dt>
-              <dd>{{ health.node.engineRange ?? "None" }}</dd>
-            </div>
-          </dl>
-          <ul v-if="health.node.messages.length > 0" class="project-health-messages">
-            <li v-for="entry in health.node.messages" :key="`node-${entry.text}`" :class="entry.level">
-              {{ entry.text }}
-            </li>
-          </ul>
-        </article>
+      <JavaHealthSection
+        v-if="javaTasks.length > 0"
+        :tasks="javaTasks"
+        :task-terminals-by-task="taskTerminalsByTask"
+        @run-task="$emit('runTask', $event)"
+        @restart-task="$emit('restartTask', $event)"
+        @open-task="$emit('openTask', $event)"
+      />
 
-        <article class="project-health-card" :class="health.lockfile.status">
-          <div class="project-health-card-heading">
-            <span>Lockfile</span>
-            <strong>{{ healthStatusLabel(health.lockfile.status) }}</strong>
-          </div>
-          <dl>
-            <div>
-              <dt>Present</dt>
-              <dd>{{ health.lockfile.present ? "Yes" : "No" }}</dd>
-            </div>
-            <div>
-              <dt>Dirty</dt>
-              <dd>{{ health.lockfile.dirty ? "Yes" : "No" }}</dd>
-            </div>
-            <div>
-              <dt>Stale</dt>
-              <dd>{{ health.lockfile.stale ? "Yes" : "No" }}</dd>
-            </div>
-          </dl>
-          <ul v-if="health.lockfile.messages.length > 0" class="project-health-messages">
-            <li
-              v-for="entry in health.lockfile.messages"
-              :key="`lockfile-${entry.text}`"
-              :class="entry.level"
-            >
-              {{ entry.text }}
-            </li>
-          </ul>
-        </article>
+      <RubyHealthSection
+        v-if="rubyTasks.length > 0"
+        :tasks="rubyTasks"
+        :task-terminals-by-task="taskTerminalsByTask"
+        @run-task="$emit('runTask', $event)"
+        @restart-task="$emit('restartTask', $event)"
+        @open-task="$emit('openTask', $event)"
+      />
 
-        <article class="project-health-card" :class="health.install.status">
-          <div class="project-health-card-heading">
-            <span>Install state</span>
-            <strong>{{ healthStatusLabel(health.install.status) }}</strong>
-          </div>
-          <dl>
-            <div>
-              <dt>package.json</dt>
-              <dd>{{ health.packageJsonPresent ? "Found" : "Missing" }}</dd>
-            </div>
-            <div>
-              <dt>node_modules</dt>
-              <dd>{{ health.install.installed ? "Found" : "Missing" }}</dd>
-            </div>
-          </dl>
-          <ul v-if="health.install.messages.length > 0" class="project-health-messages">
-            <li
-              v-for="entry in health.install.messages"
-              :key="`install-${entry.text}`"
-              :class="entry.level"
-            >
-              {{ entry.text }}
-            </li>
-          </ul>
-        </article>
-      </div>
-
-      <section class="project-health-section">
-        <div class="project-health-section-heading">
-          <div>
-            <span>Dependencies</span>
-            <h4>{{ dependencyStatusLabel(health.dependencies) }}</h4>
-          </div>
-          <div class="project-health-section-actions">
-            <small v-if="health.dependencies.checkedAt">
-              Checked {{ healthCheckedAtLabel(health.dependencies.checkedAt) }}
-            </small>
-            <button
-              type="button"
-              class="secondary"
-              :disabled="outdatedLoading || loading"
-              @click="$emit('checkOutdated')"
-            >
-              {{ outdatedLoading ? "Checking..." : "Check outdated" }}
-            </button>
-          </div>
-        </div>
-        <div class="project-health-check-row">
-          <span>Status</span>
-          <strong>{{ dependencyStatusLabel(health.dependencies) }}</strong>
-          <small>{{ dependencyDetailLabel(health.dependencies) }}</small>
-        </div>
-        <div
-          v-if="health.dependencies.outdated?.length"
-          class="project-health-dependency-table"
-          aria-label="Outdated dependencies"
-        >
-          <div
-            v-for="dependency in health.dependencies.outdated"
-            :key="dependency.name"
-            class="project-health-dependency-row"
-          >
-            <div>
-              <strong>{{ dependency.name }}</strong>
-              <small v-if="dependency.type">{{ dependency.type }}</small>
-            </div>
-            <span>
-              {{ outdatedDependencyVersionLabel(dependency.current, dependency.wanted, dependency.latest) }}
-            </span>
-          </div>
-        </div>
-        <p
-          v-if="health.dependencies.error"
-          class="project-health-error compact"
-        >
-          {{ health.dependencies.error }}
-        </p>
-      </section>
-
-      <section class="project-health-section">
-        <div class="project-health-section-heading">
-          <div>
-            <span>Common scripts</span>
-            <h4>{{ availableProjectScripts(health).length }} available</h4>
-          </div>
-          <div class="project-health-section-actions">
-            <RunProjectHealthScriptsButton
-              :health="health"
-              :loading="loading"
-              :script-terminals-by-script="scriptTerminalsByScript"
-              @run-script="$emit('runScript', $event)"
-              @restart-script="$emit('restartScript', $event)"
-            />
-          </div>
-        </div>
-
-        <div v-if="availableProjectScripts(health).length > 0" class="project-health-script-table">
-          <div
-            v-for="script in availableProjectScripts(health)"
-            :key="script.name"
-            class="project-health-script-row"
-            :class="projectScriptRuntimeStatus(script)"
-            role="button"
-            tabindex="0"
-            :title="projectScriptTerminal(script.name) ? 'Open terminal' : 'Run script'"
-            @click="openOrRunProjectScript(script)"
-            @keydown.enter="openOrRunProjectScript(script)"
-            @keydown.space.prevent="openOrRunProjectScript(script)"
-          >
-            <div>
-              <strong>{{ script.name }}</strong>
-              <small>{{ script.command ?? "Missing from package.json" }}</small>
-            </div>
-            <span>{{ projectScriptRuntimeStatusLabel(script) }}</span>
-            <time>{{ scriptDurationLabel(script.durationMs) }}</time>
-            <p v-if="script.error">{{ script.error }}</p>
-          </div>
-        </div>
-        <p v-else class="project-health-empty">No common scripts found.</p>
-        <p v-if="missingProjectScriptSummary(health)" class="project-health-missing-summary">
-          {{ missingProjectScriptSummary(health) }}
-        </p>
-      </section>
+      <p v-if="supportedEcosystemCount === 0" class="project-health-empty">
+        No supported project ecosystem detected.
+      </p>
     </template>
   </section>
 </template>
 
-<style scoped>
+<style>
 .scripts-panel {
   grid-column: 1 / -1;
 }
@@ -703,6 +392,15 @@ function missingProjectScriptSummary(health: ProjectHealth) {
   gap: 10px;
 }
 
+.project-health-ecosystem {
+  display: grid;
+  gap: 10px;
+}
+
+.ecosystem-summary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .project-health-card,
 .project-health-section {
   display: grid;
@@ -763,6 +461,11 @@ function missingProjectScriptSummary(health: ProjectHealth) {
   font-size: var(--font-size-compact);
   font-weight: 900;
   white-space: nowrap;
+}
+
+.project-health-script-row.idle > span {
+  background: var(--surface-subtle);
+  color: var(--muted-strong);
 }
 
 .project-health-card.ok .project-health-card-heading strong,
@@ -1018,6 +721,12 @@ function missingProjectScriptSummary(health: ProjectHealth) {
   text-align: right;
 }
 
+.project-health-script-row > button {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: var(--font-size-compact);
+}
+
 .project-health-script-row p {
   grid-column: 1 / -1;
   margin: 0;
@@ -1045,7 +754,8 @@ function missingProjectScriptSummary(health: ProjectHealth) {
 }
 
 @media (max-width: 760px) {
-  .project-health-grid,
+	  .project-health-grid,
+	  .ecosystem-summary-grid,
   .project-health-attention li,
   .project-health-check-row,
   .project-health-dependency-row,

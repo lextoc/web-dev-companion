@@ -5,6 +5,7 @@ export interface RepositorySummary {
   lastCommit: string
   dirty: boolean
   taskCount: number
+  ecosystems: ProjectTaskSource[]
   remote?: string
   error?: string
 }

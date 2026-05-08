@@ -184,6 +184,7 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
         lastCommit: lastCommit || 'No commits found',
         dirty: status.length > 0,
         taskCount: projectTasks.length,
+        ecosystems: [...new Set(projectTasks.map((task) => task.source))],
         remote: remote || undefined,
       }
     } catch (error) {
@@ -194,6 +195,7 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
         lastCommit: 'Unavailable',
         dirty: false,
         taskCount: 0,
+        ecosystems: [],
         error: error instanceof Error ? error.message : 'Could not read repository.',
       }
     }

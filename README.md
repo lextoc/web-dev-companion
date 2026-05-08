@@ -12,7 +12,7 @@ Web Dev Companion is an Electron, Vue 3, and TypeScript app for keeping local pr
 - Stage, unstage, and reset tracked changes, write commits, and inspect commit details from the repository view.
 - Sync, switch, create tracking branches from remotes, and remove safe local branches.
 - Manage submodule branch links, merge linked parent/submodule branches downward, and remove safe local-only submodule branches.
-- Review project health, including package manager detection, Node configuration, lockfile and install state, outdated dependencies, and common script checks.
+- Review project health, including Node package checks and detected Java or Ruby task runners.
 - Run available health scripts from the health panel or before committing.
 - Open repositories in the file manager, configured editor, or terminal.
 - Run, pin, monitor, restart, and stop detected project tasks in managed terminals.

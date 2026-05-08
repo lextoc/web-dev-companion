@@ -17,9 +17,12 @@ import RepositoryStatusDiffModal from "./repository-detail/RepositoryStatusDiffM
 import { NpmScriptsPanel, ProjectHealthPanel, RunProjectHealthScriptsButton } from "./smart";
 import { AppTabs, type AppTabItem } from "./ui";
 
+type RepositoryDetailTab = "git" | "log" | "health" | "scripts";
+
 const props = defineProps<{
   selectedDetails: RepositoryDetails | null;
   selectedSummary?: RepositorySummary;
+  activeDetailTab: RepositoryDetailTab;
   isDetailLoading: boolean;
   statusActionLabel: string | null;
   pendingStatusActionKey: string | null;
@@ -45,12 +48,16 @@ const emit = defineEmits<{
   restartScript: [scriptName: string];
   openTerminal: [scriptName: string];
   openCommitInBrowser: [hash: string];
+  "update:activeDetailTab": [tab: RepositoryDetailTab];
 }>();
 
 const commitMessage = ref("");
 const checkHealthBeforeCommit = ref(false);
 const confettiBursts = ref<Array<{ id: number }>>([]);
-const activeDetailTab = ref<"git" | "log" | "health" | "scripts">("git");
+const activeDetailTab = computed({
+  get: () => props.activeDetailTab,
+  set: (tab: RepositoryDetailTab) => emit("update:activeDetailTab", tab),
+});
 const detailTabs: AppTabItem[] = [
   { key: "git", label: "Git overview" },
   { key: "log", label: "Git log" },

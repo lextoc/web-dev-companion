@@ -210,14 +210,30 @@
   border-bottom: 1px solid color-mix(in srgb, var(--border-soft) 62%, transparent);
 }
 
-.active-terminal-group h3 {
+.active-terminal-repo-link {
   min-width: 0;
   overflow: hidden;
+  border: 0;
+  padding: 0;
+  background: transparent;
   color: color-mix(in srgb, var(--muted-strong) 86%, var(--text));
+  cursor: pointer;
   font-size: var(--font-size-base);
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: left;
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.active-terminal-repo-link:hover {
+  color: var(--accent-strong);
+}
+
+.active-terminal-repo-link:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
 }
 
 .active-terminal-group-heading span {

@@ -26,6 +26,7 @@ import type {
 import type { AppSettings } from './settings'
 
 const MAX_GIT_COMMAND_LOG_ENTRIES = 80
+type RepositoryDetailTab = 'git' | 'log' | 'health' | 'scripts'
 
 const repositories = ref<RepositorySummary[]>([])
 const repoPathInput = ref('')
@@ -36,6 +37,7 @@ const isMacPlatform = ref(false)
 const isKeybindingsOpen = ref(false)
 const gitCommandLog = ref<GitCommandLogEntry[]>([])
 const branchShortcutTriggerToken = ref(0)
+const activeRepositoryDetailTab = ref<RepositoryDetailTab>('git')
 let removeScriptOutputListener: (() => void) | undefined
 let removeGitCommandListener: (() => void) | undefined
 let removeWindowFocusListener: (() => void) | undefined
@@ -285,6 +287,27 @@ function activeRepositoryPath() {
 
 async function startPinnedScript(script: PinnedScript) {
   await runRepositoryScript(script)
+}
+
+async function openRepositoryScriptsTab(repoPath: string) {
+  if (selectedPath.value === repoPath) {
+    activeRepositoryDetailTab.value = 'scripts'
+    return
+  }
+
+  const repository = repositories.value.find((savedRepository) => savedRepository.path === repoPath)
+
+  if (!repository) {
+    showRepositoryError(
+      repoPath,
+      'Could not open repository scripts',
+      new Error('Repository is no longer in the saved repository list.'),
+    )
+    return
+  }
+
+  await openRepository(repository)
+  activeRepositoryDetailTab.value = 'scripts'
 }
 
 function openKeybindingsSheet() {
@@ -791,6 +814,7 @@ onBeforeUnmount(() => {
 
         <RepositoryDetail
           v-else
+          v-model:active-detail-tab="activeRepositoryDetailTab"
           :selected-details="selectedDetails"
           :selected-summary="selectedSummary"
           :is-detail-loading="isDetailLoading"
@@ -826,6 +850,7 @@ onBeforeUnmount(() => {
         @restart="restartTerminal"
         @open="openTerminal"
         @start-pinned="startPinnedScript"
+        @open-repository-scripts="openRepositoryScriptsTab"
         @unpin-pinned="unpinScript"
       />
     </div>

@@ -9,6 +9,7 @@ import type {
 import { AppButton } from "../ui";
 
 interface TerminalGroup {
+  repoPath: string;
   repoName: string;
   runningCount: number;
   doneCount: number;
@@ -20,6 +21,7 @@ interface TerminalGroup {
 
 interface TerminalEntry {
   key: string;
+  repoPath: string;
   repoName: string;
   scriptName: string;
   command: string;
@@ -42,6 +44,7 @@ defineEmits<{
   stop: [runId: string];
   restart: [runId: string];
   open: [runId: string];
+  openRepositoryScripts: [repoPath: string];
   startPinned: [script: PinnedScript];
   unpinPinned: [script: PinnedScript];
 }>();
@@ -53,6 +56,7 @@ const terminalEntriesByKey = computed<TerminalEntryMap>(() => {
     const key = getTerminalKey(terminal.repoPath, terminal.scriptName);
     entriesByKey.set(key, {
       key,
+      repoPath: terminal.repoPath,
       repoName: terminal.repoName,
       scriptName: terminal.scriptName,
       command: terminal.command,
@@ -66,6 +70,7 @@ const terminalEntriesByKey = computed<TerminalEntryMap>(() => {
 
     entriesByKey.set(key, {
       key,
+      repoPath: pinnedScript.repoPath,
       repoName: pinnedScript.repoName,
       scriptName: pinnedScript.scriptName,
       command: existingEntry?.command ?? pinnedScript.command,
@@ -81,14 +86,14 @@ const terminalGroups = computed<TerminalGroup[]>(() => {
   const groups: TerminalGroupMap = new Map<string, TerminalEntry[]>();
 
   for (const entry of terminalEntriesByKey.value.values()) {
-    const existingEntries = groups.get(entry.repoName) ?? [];
+    const existingEntries = groups.get(entry.repoPath) ?? [];
     existingEntries.push(entry);
-    groups.set(entry.repoName, existingEntries);
+    groups.set(entry.repoPath, existingEntries);
   }
 
   return [...groups.entries()]
-    .sort(sortEntriesByRepoName)
-    .map(([repoName, entries]) => createGroup(repoName, entries));
+    .sort(sortEntriesByRepository)
+    .map(([repoPath, entries]) => createGroup(repoPath, entries));
 });
 
 const pinnedIdleCount = computed(() => {
@@ -138,10 +143,12 @@ watch(
 
 onMounted(scrollGitCommandLogToBottom);
 
-function createGroup(repoName: string, entries: TerminalEntry[]) {
+function createGroup(repoPath: string, entries: TerminalEntry[]) {
   const sortedEntries = [...entries].sort(compareTerminalEntries);
+  const repoName = entries[0]?.repoName ?? repoPath;
 
   return {
+    repoPath,
     repoName,
     runningCount: entries.filter((entry) => entry.terminal?.isRunning).length,
     doneCount: entries.filter(
@@ -162,11 +169,14 @@ function getTerminalKey(repoPath: string, scriptName: string) {
   return `${repoPath}\n${scriptName}`;
 }
 
-function sortEntriesByRepoName(
-  [repoNameA]: [string, TerminalEntry[]],
-  [repoNameB]: [string, TerminalEntry[]],
+function sortEntriesByRepository(
+  [repoPathA, entriesA]: [string, TerminalEntry[]],
+  [repoPathB, entriesB]: [string, TerminalEntry[]],
 ) {
-  return repoNameA.localeCompare(repoNameB);
+  const repoNameA = entriesA[0]?.repoName ?? repoPathA;
+  const repoNameB = entriesB[0]?.repoName ?? repoPathB;
+
+  return repoNameA.localeCompare(repoNameB) || repoPathA.localeCompare(repoPathB);
 }
 
 function compareTerminalEntries(entryA: TerminalEntry, entryB: TerminalEntry) {
@@ -252,11 +262,18 @@ function formatCommandTime(startedAt: string) {
     <div v-if="terminalGroups.length" class="active-terminal-groups">
       <section
         v-for="group in terminalGroups"
-        :key="group.repoName"
+        :key="group.repoPath"
         class="active-terminal-group"
       >
         <div class="active-terminal-group-heading">
-          <h3>{{ group.repoName }}</h3>
+          <button
+            type="button"
+            class="active-terminal-repo-link"
+            :title="`Open ${group.repoName} scripts`"
+            @click="$emit('openRepositoryScripts', group.repoPath)"
+          >
+            {{ group.repoName }}
+          </button>
           <span>
             {{ group.runningCount }} running
             <template v-if="group.failedCount">

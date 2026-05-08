@@ -299,7 +299,7 @@ export function useRepositoryBranchActions({
     const submoduleCount = request.routes.length
     const confirmed = await confirmAction({
       title: 'Merge linked branches',
-      message: `Switch to "${request.targetParentBranch}", merge "${request.sourceParentBranch}" into it, then merge ${submoduleCount} linked submodule ${submoduleCount === 1 ? 'branch' : 'branches'}?`,
+      message: `Switch to "${request.targetParentBranch}", pull it, merge "${request.sourceParentBranch}" into it, then merge and commit ${submoduleCount} linked submodule ${submoduleCount === 1 ? 'branch' : 'branches'}?`,
       confirmLabel: 'Merge branches',
     })
 
@@ -334,7 +334,7 @@ export function useRepositoryBranchActions({
     const repoPath = selectedDetails.value.path
     const confirmed = await confirmAction({
       title: 'Merge branches',
-      message: `Switch to "${request.targetBranch}", then merge "${request.sourceBranch}" into it?`,
+      message: `Switch to "${request.targetBranch}", pull it, then merge and commit "${request.sourceBranch}" into it?`,
       confirmLabel: 'Merge',
     })
 

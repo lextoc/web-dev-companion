@@ -619,6 +619,39 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     }
   }
 
+  async function pullCurrentTargetBranch(repoPath: string, branchName: string, label: string) {
+    const branch = (await readGitBranches(repoPath)).find((entry) => entry.name === branchName)
+
+    if (!branch) {
+      throw new Error(`${label} "${branchName}" was not found.`)
+    }
+
+    if (branch.remoteGone) {
+      throw new Error(`${label} "${branchName}" tracks a remote branch that is gone.`)
+    }
+
+    if (!branch.upstream) {
+      throw new Error(`${label} "${branchName}" has no upstream remote branch to pull from.`)
+    }
+
+    await runGit(repoPath, ['pull', '--ff-only'], 120000)
+  }
+
+  async function commitPendingMerge(repoPath: string, fallbackMessage: string) {
+    const mergeHead = await tryRunGit(repoPath, ['rev-parse', '--verify', 'MERGE_HEAD'])
+
+    if (mergeHead) {
+      await runGit(repoPath, ['commit', '--no-edit'], 120000)
+      return
+    }
+
+    const stagedPaths = await tryRunGit(repoPath, ['diff', '--cached', '--name-only'])
+
+    if (stagedPaths) {
+      await runGit(repoPath, ['commit', '-m', fallbackMessage], 120000)
+    }
+  }
+
   async function mergeLinkedSubmoduleBranch(request: MergeLinkedSubmoduleBranchRequest): Promise<RepositoryDetails> {
     const normalizedPath = await normalizeRepositoryPath(request.repoPath)
     const sourceParentBranch = cleanBranchName(request.sourceParentBranch, 'Source parent branch')
@@ -664,6 +697,7 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     )
 
     await runGit(normalizedPath, ['switch', '--', targetParentBranch], 120000)
+    await pullCurrentTargetBranch(normalizedPath, targetParentBranch, 'Target parent branch')
     await runGit(normalizedPath, [
       'submodule',
       'update',
@@ -675,9 +709,15 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
 
     for (const route of resolvedRoutes) {
       await runGit(route.absoluteSubmodulePath, ['switch', '--', route.targetSubmoduleBranch], 120000)
+      await pullCurrentTargetBranch(route.absoluteSubmodulePath, route.targetSubmoduleBranch, 'Target submodule branch')
       await runGit(route.absoluteSubmodulePath, ['merge', '--no-edit', route.sourceSubmoduleBranch], 120000)
       await runGit(normalizedPath, ['add', '--', route.submodule.path], 120000)
     }
+
+    await commitPendingMerge(
+      normalizedPath,
+      `Merge linked branches from ${sourceParentBranch} into ${targetParentBranch}`,
+    )
 
     return readRepositoryDetails(normalizedPath)
   }
@@ -699,7 +739,8 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
 
     await assertCleanWorkingTreeForCheckout(normalizedPath)
     await runGit(normalizedPath, ['switch', '--', targetBranch], 120000)
-    await runGit(normalizedPath, ['merge', '--no-ff', '--no-commit', sourceBranch], 120000)
+    await pullCurrentTargetBranch(normalizedPath, targetBranch, 'Target branch')
+    await runGit(normalizedPath, ['merge', '--no-ff', '--no-edit', sourceBranch], 120000)
 
     return readRepositoryDetails(normalizedPath)
   }

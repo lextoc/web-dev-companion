@@ -2,6 +2,7 @@
 defineProps<{
   name:
     | "arrow-left"
+    | "arrow-right"
     | "check"
     | "command"
     | "copy"
@@ -37,6 +38,10 @@ defineProps<{
     <g v-if="name === 'arrow-left'">
       <path d="M19 12H5" />
       <path d="M12 5l-7 7 7 7" />
+    </g>
+    <g v-else-if="name === 'arrow-right'">
+      <path d="M5 12h14" />
+      <path d="M12 5l7 7-7 7" />
     </g>
     <g v-else-if="name === 'check'">
       <path d="M20 6L9 17l-5-5" />

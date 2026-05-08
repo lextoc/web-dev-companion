@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { RepositorySummary } from '../repositories'
-import { AppActionMenu, AppButton, AppMenuItem } from './ui'
+import { AppActionMenu, AppButton, AppIcon, AppMenuItem } from './ui'
 
 defineProps<{
   repository: RepositorySummary
@@ -44,6 +44,9 @@ defineEmits<{
           <span v-if="runningScriptCount > 0" class="health-running">
             {{ runningScriptCount }} running
           </span>
+        </span>
+        <span class="repo-open-indicator" aria-hidden="true">
+          <AppIcon name="arrow-right" />
         </span>
       </span>
       <span class="last-commit" :title="repository.error ?? repository.lastCommit">

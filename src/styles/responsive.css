@@ -203,11 +203,17 @@
   }
 
   .repo-title-row {
-    align-items: stretch;
-    flex-direction: column;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .repo-title-stack {
+    flex: 1 1 calc(100% - 44px);
   }
 
   .repo-card-badges {
+    order: 3;
+    flex: 1 1 100%;
     justify-content: flex-start;
     max-width: 100%;
   }

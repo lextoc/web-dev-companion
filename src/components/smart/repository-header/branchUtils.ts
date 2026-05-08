@@ -14,6 +14,11 @@ export const branchFilters = [
   { key: "in-sync", label: "In sync" },
 ] as const;
 
+const branchNameCollator = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: "variant",
+});
+
 type BranchActionState = {
   checkingOutBranchName: string | null;
   checkingOutSubmoduleBranchName: string | null;
@@ -72,6 +77,10 @@ export function inferNextNumberedBranch(currentBranchName: string, branchNames: 
   const nextBranchName = `${prefix}${nextNumber}`;
 
   return branchNames.includes(nextBranchName) ? nextBranchName : "";
+}
+
+export function compareBranchNamesDescending(branchNameA: string, branchNameB: string) {
+  return branchNameCollator.compare(branchNameB, branchNameA);
 }
 
 export function branchSyncLabel(branch: SyncableBranch) {

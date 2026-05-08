@@ -19,6 +19,7 @@ import {
   branchSyncDisabledReason,
   branchSyncLabel,
   branchSyncTitle,
+  compareBranchNamesDescending,
   inferNextNumberedBranch,
   isCheckingOutBranch,
   isCheckingOutSubmoduleBranch as isSubmoduleCheckoutPending,
@@ -87,13 +88,9 @@ const syncConfettiTimers = new Set<number>();
 const sortedBranches = computed(() => {
   const branches = props.selectedDetails?.gitBranches ?? [];
 
-  return [...branches].sort((branchA, branchB) => {
-    if (branchA.current !== branchB.current) {
-      return branchA.current ? -1 : 1;
-    }
-
-    return branchA.name.localeCompare(branchB.name);
-  });
+  return [...branches].sort((branchA, branchB) =>
+    compareBranchNamesDescending(branchA.name, branchB.name)
+  );
 });
 
 const normalizedBranchSearchQuery = computed(() => branchSearchQuery.value.trim().toLowerCase());
@@ -118,7 +115,7 @@ const filteredBranches = computed(() =>
 const remoteBranchesToCreate = computed(() =>
   [...(props.selectedDetails?.gitRemoteBranches ?? [])]
     .filter((branch) => !branch.hasLocalBranch)
-    .sort((branchA, branchB) => branchA.localName.localeCompare(branchB.localName)),
+    .sort((branchA, branchB) => compareBranchNamesDescending(branchA.localName, branchB.localName)),
 );
 
 const remoteBranchOptions = computed(() =>
@@ -136,8 +133,13 @@ const submoduleOptions = computed(() =>
 const selectedSubmodule = computed(() =>
   props.selectedDetails?.gitSubmodules.find((submodule) => submodule.path === selectedSubmodulePath.value),
 );
+const selectedSubmoduleBranches = computed(() =>
+  [...(selectedSubmodule.value?.branches ?? [])].sort((branchA, branchB) =>
+    compareBranchNamesDescending(branchA.name, branchB.name)
+  ),
+);
 const selectedSubmoduleBranchOptions = computed(() =>
-  (selectedSubmodule.value?.branches ?? []).map((branch) => ({
+  selectedSubmoduleBranches.value.map((branch) => ({
     label: branch.current ? `${branch.name} (current)` : branch.name,
     value: branch.name,
   })),
@@ -203,7 +205,7 @@ const linkedSubmoduleMergeRoutes = computed(() =>
 const linkedSubmoduleMergeCount = computed(() => linkedSubmoduleMergeRoutes.value.length);
 const submoduleLinkDropdownOptions = computed(() => [
   { label: "No link", value: "" },
-  ...(selectedSubmodule.value?.branches ?? []).map((branch) => ({
+  ...selectedSubmoduleBranches.value.map((branch) => ({
     label: branch.name,
     value: branch.name,
   })),
@@ -232,7 +234,7 @@ const targetParentBranchOptions = computed(() =>
 );
 const targetSubmoduleBranchOptions = computed(() => [
   { label: "No target", value: "" },
-  ...(selectedSubmodule.value?.branches ?? []).map((branch) => ({
+  ...selectedSubmoduleBranches.value.map((branch) => ({
     label: branch.name,
     value: branch.name,
   })),
@@ -827,7 +829,7 @@ onBeforeUnmount(() => {
                   <div class="submodule-branch-heading">
                     <div>
                       <h4>Local branches</h4>
-                      <span>{{ selectedSubmodule.branches.length }} shown</span>
+                      <span>{{ selectedSubmoduleBranches.length }} shown</span>
                     </div>
                     <label
                       class="submodule-current-branch-switcher"
@@ -847,12 +849,12 @@ onBeforeUnmount(() => {
                   </div>
 
                   <ul
-                    v-if="selectedSubmodule.branches.length > 0"
+                    v-if="selectedSubmoduleBranches.length > 0"
                     id="submodule-local-branches"
                     class="submodule-branch-list"
                   >
                     <li
-                      v-for="branch in selectedSubmodule.branches"
+                      v-for="branch in selectedSubmoduleBranches"
                       :key="`${selectedSubmodule.path}:${branch.name}`"
                       :class="{
                         current: branch.current,

@@ -18,6 +18,7 @@ Use `pnpm` for all package commands.
 - Start development app: `pnpm run dev`
 - Run tests: `pnpm test`
 - Build app: `pnpm run build`
+- Build alpha release artifacts: `pnpm run release:alpha`
 
 ## Testing Policy
 
@@ -33,6 +34,17 @@ Use `pnpm` for all package commands.
 - Do not edit generated build output unless explicitly requested.
 - Do not revert unrelated user changes.
 - Review `README.md` and `AGENTS.md` after each completed task and mention only worthwhile update suggestions.
+
+## Alpha Release Flow
+
+- Start from a clean `main` branch that is up to date with `origin/main`.
+- Bump the prerelease version in `package.json` before building, for example `0.1.0-alpha.1` to `0.1.0-alpha.2`.
+- Run `pnpm test` before release builds.
+- Run `pnpm run release:alpha` for macOS and Windows x64 artifacts, or use `pnpm run release:alpha:mac` / `pnpm run release:alpha:win` for a platform-specific alpha.
+- Commit the version and documentation changes after verification.
+- Create a matching Git tag named `v<version>`, for example `v0.1.0-alpha.2`.
+- Push both the branch and tag when publishing: `git push origin main` and `git push origin v<version>`.
+- Do not commit generated `release/<version>/`, `dist/`, or `dist-electron/` output.
 
 ## Final Response
 

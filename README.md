@@ -123,6 +123,23 @@ pnpm run release:alpha:win
 
 Generated build output is intentionally ignored by Git. Commit source files, configuration, lockfiles, and assets instead.
 
+## Alpha Release
+
+Use this flow when preparing another alpha release:
+
+1. Start from a clean `main` branch that is up to date with `origin/main`.
+2. Bump the prerelease version in `package.json`, for example from `0.1.0-alpha.1` to `0.1.0-alpha.2`.
+3. Run `pnpm test`.
+4. Run the relevant release build:
+   - `pnpm run release:alpha` for macOS and Windows x64 artifacts.
+   - `pnpm run release:alpha:mac` for only the macOS artifact.
+   - `pnpm run release:alpha:win` for only the Windows x64 artifact.
+5. Review `git status`, then commit the version and documentation changes.
+6. Create a matching Git tag named `v<version>`, for example `v0.1.0-alpha.2`.
+7. Push the branch and tag with `git push origin main` and `git push origin v<version>`.
+
+The release artifacts are written to `release/<version>/` and are not committed.
+
 ## Publishing To GitHub
 
 Before pushing a new remote:

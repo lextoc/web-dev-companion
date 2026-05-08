@@ -236,6 +236,7 @@ defineEmits<{
   flex: 0 0 auto;
   width: 15px;
   height: 15px;
+  transform-origin: center;
 }
 
 .branch-menu-sync-text {
@@ -256,6 +257,12 @@ defineEmits<{
 
 .branch-menu-sync-button.pending :deep(.button-icon) {
   animation: refresh-spin 900ms linear infinite;
+}
+
+@keyframes refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .branch-menu-icon {

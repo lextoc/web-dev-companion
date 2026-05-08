@@ -242,13 +242,4 @@ const autoRefreshOptions = AUTO_REFRESH_INTERVAL_OPTIONS.map((option) => ({ ...o
   justify-content: flex-end;
 }
 
-@keyframes rainbow-button-flow {
-  from {
-    background-position: 0% 50%;
-  }
-
-  to {
-    background-position: 520% 50%;
-  }
-}
 </style>

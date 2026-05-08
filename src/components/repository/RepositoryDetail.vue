@@ -1628,28 +1628,6 @@ pre {
   color: var(--muted);
 }
 
-@keyframes rainbow-button-flow {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  100% {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes rainbow-button-sheen {
-  0%,
-  46% {
-    transform: translateX(-62%);
-  }
-
-  78%,
-  100% {
-    transform: translateX(62%);
-  }
-}
-
 @keyframes commit-confetti-pop {
   0% {
     opacity: 0;

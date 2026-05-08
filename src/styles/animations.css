@@ -1,0 +1,21 @@
+@keyframes rainbow-button-flow {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes rainbow-button-sheen {
+  0%,
+  46% {
+    transform: translateX(-62%);
+  }
+
+  78%,
+  100% {
+    transform: translateX(62%);
+  }
+}

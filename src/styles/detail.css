@@ -457,6 +457,10 @@
   justify-self: end;
 }
 
+.branch-merge-direct-action {
+  justify-self: end;
+}
+
 .branch-merge-action-menu .action-menu-trigger {
   width: auto;
   min-height: 28px;

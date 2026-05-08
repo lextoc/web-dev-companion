@@ -811,29 +811,21 @@ onBeforeUnmount(() => {
                     </AppActionMenu>
                   </div>
 
-                  <AppActionMenu
+                  <AppButton
                     v-else
-                    align="right"
-                    class="branch-merge-action-menu"
-                    label="Merge branch"
-                    trigger-class="branch-primary-action branch-merge-menu-trigger"
-                    trigger-icon="merge"
-                    trigger-variant="primary"
-                    :trigger-text="
+                    variant="primary"
+                    icon="merge"
+                    class="branch-primary-action branch-merge-direct-action"
+                    :disabled="Boolean(parentBranchMergeDisabledReason)"
+                    :title="parentBranchMergeDisabledReason || parentMergeRouteLabel || 'Merge parent repository'"
+                    @click="mergeBranch"
+                  >
+                    {{
                       mergingBranchName
                         ? `Merging into ${mergingBranchName}...`
-                        : 'Merge'
-                    "
-                  >
-                    <AppMenuItem
-                      icon="merge"
-                      :disabled="Boolean(parentBranchMergeDisabledReason)"
-                      :title="parentBranchMergeDisabledReason || parentMergeRouteLabel || 'Merge parent repository'"
-                      @click="mergeBranch"
-                    >
-                      Merge branch
-                    </AppMenuItem>
-                  </AppActionMenu>
+                        : 'Merge branch'
+                    }}
+                  </AppButton>
                 </div>
 
                 <div class="branch-merge-helper-row">

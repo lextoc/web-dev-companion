@@ -414,8 +414,13 @@
     grid-column: auto;
   }
 
-  .branch-merge-action-menu {
+  .branch-merge-action-menu,
+  .branch-merge-direct-action {
     justify-self: stretch;
+  }
+
+  .branch-merge-direct-action {
+    width: 100%;
   }
 
   .branch-merge-action-menu .action-menu-trigger {

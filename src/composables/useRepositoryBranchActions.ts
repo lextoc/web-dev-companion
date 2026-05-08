@@ -319,6 +319,7 @@ export function useRepositoryBranchActions({
       showBranchFeedback(request.targetParentBranch, 'Merged linked branches')
       showAppFeedback(`Merged ${request.sourceParentBranch} into ${request.targetParentBranch}.`)
     } catch (error) {
+      await refreshAfterFailedMerge(repoPath)
       showRepositoryError(repoPath, 'Could not merge linked branches', error)
     } finally {
       mergingLinkedBranchName.value = null
@@ -354,10 +355,20 @@ export function useRepositoryBranchActions({
       showBranchFeedback(request.targetBranch, 'Merged branch')
       showAppFeedback(`Merged ${request.sourceBranch} into ${request.targetBranch}.`)
     } catch (error) {
+      await refreshAfterFailedMerge(repoPath)
       showRepositoryError(repoPath, 'Could not merge branches', error)
     } finally {
       mergingBranchName.value = null
       resetAutoRefreshTimer()
+    }
+  }
+
+  async function refreshAfterFailedMerge(repoPath: string) {
+    try {
+      selectedDetails.value = await window.repositories.details(repoPath)
+      await loadRepositories()
+    } catch {
+      // Keep the original merge error visible.
     }
   }
 

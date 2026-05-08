@@ -239,6 +239,7 @@ const targetSubmoduleBranchOptions = computed(() => [
     value: branch.name,
   })),
 ]);
+const mergeConflictCount = computed(() => props.selectedDetails?.gitStatus.conflicted.length ?? 0);
 const parentMergeRouteLabel = computed(() => {
   if (!props.selectedDetails) {
     return "";
@@ -511,6 +512,12 @@ function mergeLinkedBranches() {
     targetParentBranch: targetParentBranchName.value,
     routes: linkedSubmoduleMergeRoutes.value,
   });
+}
+
+function branchMergeConflictMessage() {
+  const conflictCount = mergeConflictCount.value;
+
+  return `Merge stopped with ${conflictCount} ${conflictCount === 1 ? "conflict" : "conflicts"}. Resolve conflicts, stage, and commit.`;
 }
 
 function clearBranchSearch() {
@@ -1020,12 +1027,24 @@ onBeforeUnmount(() => {
                           <span class="branch-row-title">
                             <strong>{{ branch.name }}</strong>
                             <small v-if="branch.current" class="branch-current-marker">Current</small>
+                            <small
+                              v-if="branch.current && mergeConflictCount > 0"
+                              class="branch-conflict-marker"
+                            >
+                              Merge conflicts
+                            </small>
                           </span>
                           <small>
                             {{ branch.upstream ?? "No upstream" }}
                           </small>
                         </div>
-                        <p v-if="branchFeedbackMessages[branch.name]" class="branch-feedback">
+                        <p
+                          v-if="branch.current && mergeConflictCount > 0"
+                          class="branch-conflict-feedback"
+                        >
+                          {{ branchMergeConflictMessage() }}
+                        </p>
+                        <p v-else-if="branchFeedbackMessages[branch.name]" class="branch-feedback">
                           {{ branchFeedbackMessages[branch.name] }}
                         </p>
                         <p

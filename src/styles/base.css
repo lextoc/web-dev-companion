@@ -38,12 +38,21 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: var(--app-bg);
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 button,
 input,
 textarea {
   font: inherit;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 code,

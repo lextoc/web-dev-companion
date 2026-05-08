@@ -41,7 +41,7 @@ const emit = defineEmits<{
   refresh: [];
   stageFiles: [request: { paths: string[]; actionKey: string }];
   unstageFiles: [request: { paths: string[]; actionKey: string }];
-  resetTrackedChanges: [];
+  resetTrackedChanges: [paths?: string[]];
   commit: [request: { message: string; checkHealthBeforeCommit: boolean; healthScriptNames: string[] }];
   commitDraftChange: [hasDraft: boolean];
   runScript: [scriptName: string];
@@ -327,6 +327,14 @@ function statusActionLabelForEntry(groupKey: string) {
 
 function hasResettableTrackedChanges(gitStatus: RepositoryDetails["gitStatus"]) {
   return gitStatus.staged.length > 0 || gitStatus.unstaged.length > 0 || gitStatus.conflicted.length > 0;
+}
+
+function canResetStatusEntry(groupKey: string) {
+  return groupKey !== "untracked";
+}
+
+function statusEntryResetPaths(entry: GitStatusEntry) {
+  return [...new Set([entry.path, entry.originalPath].filter((statusPath): statusPath is string => Boolean(statusPath)))];
 }
 
 function statusActionKey(groupKey: string, entries: GitStatusEntry[]) {
@@ -755,19 +763,34 @@ function triggerCommitConfetti() {
                             <span>View changes</span>
                           </small>
                         </button>
-                        <button
-                          type="button"
-                          class="secondary status-action staged-preview-action"
-                          :class="{ pending: isStatusActionPending('staged', [entry]) }"
-                          :disabled="Boolean(pendingStatusActionKey)"
-                          @click="emitStatusAction('staged', [entry])"
-                        >
-                          {{
-                            isStatusActionPending('staged', [entry])
-                              ? "Unstaging..."
-                              : "Unstage"
-                          }}
-                        </button>
+                        <div class="status-row-actions">
+                          <button
+                            type="button"
+                            class="secondary status-action staged-preview-action"
+                            :class="{ pending: isStatusActionPending('staged', [entry]) }"
+                            :disabled="Boolean(pendingStatusActionKey)"
+                            @click="emitStatusAction('staged', [entry])"
+                          >
+                            {{
+                              isStatusActionPending('staged', [entry])
+                                ? "Unstaging..."
+                                : "Unstage"
+                            }}
+                          </button>
+                          <AppActionMenu
+                            label="More file actions"
+                            trigger-class="status-action-menu-trigger"
+                          >
+                            <AppMenuItem
+                              icon="restart"
+                              tone="danger"
+                              :disabled="Boolean(pendingStatusActionKey)"
+                              @click="$emit('resetTrackedChanges', statusEntryResetPaths(entry))"
+                            >
+                              Git reset
+                            </AppMenuItem>
+                          </AppActionMenu>
+                        </div>
                       </li>
                     </ul>
                     <p v-else>
@@ -863,19 +886,34 @@ function triggerCommitConfetti() {
                               <span>View changes</span>
                             </small>
                           </button>
-                          <button
-                            type="button"
-                            class="secondary status-action"
-                            :class="{ pending: isStatusActionPending(group.key, [entry]) }"
-                            :disabled="Boolean(pendingStatusActionKey)"
-                            @click="emitStatusAction(group.key, [entry])"
-                          >
-                            {{
-                              isStatusActionPending(group.key, [entry])
-                                ? `${statusActionLabelForEntry(group.key)}...`
-                                : statusActionLabelForEntry(group.key)
-                            }}
-                          </button>
+                          <div class="status-row-actions">
+                            <button
+                              type="button"
+                              class="secondary status-action"
+                              :class="{ pending: isStatusActionPending(group.key, [entry]) }"
+                              :disabled="Boolean(pendingStatusActionKey)"
+                              @click="emitStatusAction(group.key, [entry])"
+                            >
+                              {{
+                                isStatusActionPending(group.key, [entry])
+                                  ? `${statusActionLabelForEntry(group.key)}...`
+                                  : statusActionLabelForEntry(group.key)
+                              }}
+                            </button>
+                            <AppActionMenu
+                              label="More file actions"
+                              trigger-class="status-action-menu-trigger"
+                            >
+                              <AppMenuItem
+                                icon="restart"
+                                tone="danger"
+                                :disabled="Boolean(pendingStatusActionKey) || !canResetStatusEntry(group.key)"
+                                @click="$emit('resetTrackedChanges', statusEntryResetPaths(entry))"
+                              >
+                                Git reset
+                              </AppMenuItem>
+                            </AppActionMenu>
+                          </div>
                         </li>
                       </ul>
                     </section>
@@ -2170,6 +2208,18 @@ pre {
 }
 
 .status-group-actions :deep(.status-action-menu-trigger) {
+  width: 30px;
+  min-height: 30px;
+}
+
+.status-row-actions {
+  display: inline-flex;
+  justify-self: end;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-row-actions :deep(.status-action-menu-trigger) {
   width: 30px;
   min-height: 30px;
 }

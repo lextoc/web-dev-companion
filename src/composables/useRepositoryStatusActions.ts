@@ -159,21 +159,30 @@ export function useRepositoryStatusActions({
     )
   }
 
-  async function resetTrackedChanges() {
+  async function resetTrackedChanges(paths?: string[]) {
     if (!selectedDetails.value || pendingStatusActionKey.value || isLoading.value || isDetailLoading.value) {
       return
     }
 
     const { gitStatus, name, path: repoPath } = selectedDetails.value
+    const uniquePaths = paths ? [...new Set(paths.map((statusPath) => statusPath.trim()).filter(Boolean))] : []
     const trackedChangeCount = gitStatus.staged.length + gitStatus.unstaged.length + gitStatus.conflicted.length
 
-    if (trackedChangeCount === 0) {
+    if (uniquePaths.length === 0 && trackedChangeCount === 0) {
       return
     }
 
+    const fileLabel = uniquePaths.length === 1
+      ? `"${uniquePaths[0]}"`
+      : `${uniquePaths.length} files`
+    const selectedPathLabel = uniquePaths.length === 1 ? 'the selected path' : 'the selected paths'
+    const message = uniquePaths.length > 0
+      ? `Run git reset for ${fileLabel} in ${name}? This discards tracked staged and unstaged changes for ${selectedPathLabel}. Untracked files stay on disk.`
+      : `Run git reset --hard HEAD in ${name}? This discards tracked staged and unstaged changes. Untracked files stay on disk.`
+
     const confirmed = await confirmAction({
       title: 'Git reset',
-      message: `Run git reset --hard HEAD in ${name}? This discards tracked staged and unstaged changes. Untracked files stay on disk.`,
+      message,
       confirmLabel: 'Git reset',
       danger: true,
     })
@@ -184,9 +193,15 @@ export function useRepositoryStatusActions({
 
     await runStatusAction(
       'Resetting tracked changes...',
-      'git-reset',
-      'Reset tracked changes.',
-      () => window.repositories.resetTrackedChanges(repoPath),
+      `git-reset:${uniquePaths.join('\n') || 'all'}`,
+      uniquePaths.length > 0
+        ? `Reset ${uniquePaths.length} file${uniquePaths.length === 1 ? '' : 's'}.`
+        : 'Reset tracked changes.',
+      () =>
+        window.repositories.resetTrackedChanges({
+          repoPath,
+          paths: uniquePaths.length > 0 ? uniquePaths : undefined,
+        }),
     )
   }
 

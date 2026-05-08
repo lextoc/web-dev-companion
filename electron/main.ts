@@ -15,6 +15,7 @@ import type {
   MergeLinkedSubmoduleBranchRequest,
   OpenCommitInBrowserRequest,
   RepositoryActionRequest,
+  ResetTrackedChangesRequest,
   ScriptOutput,
   GitCommandLogEntry,
   ScriptRunRequest,
@@ -408,8 +409,8 @@ function registerRepositoryHandlers() {
   ipcMain.handle('repositories:unstage-files', (_event, request: StatusFileRequest) =>
     repositoryService.unstageFiles(request),
   )
-  ipcMain.handle('repositories:reset-tracked-changes', (_event, repoPath: string) =>
-    repositoryService.resetTrackedChanges(repoPath),
+  ipcMain.handle('repositories:reset-tracked-changes', (_event, request: ResetTrackedChangesRequest) =>
+    repositoryService.resetTrackedChanges(request),
   )
   ipcMain.handle('repositories:diff-file', (_event, request: StatusFileDiffRequest) =>
     repositoryService.diffFile(request),

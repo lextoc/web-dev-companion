@@ -248,6 +248,11 @@ export interface StatusFileRequest {
   paths: string[]
 }
 
+export interface ResetTrackedChangesRequest {
+  repoPath: string
+  paths?: string[]
+}
+
 export type StatusFileDiffType = 'staged' | 'unstaged' | 'untracked' | 'conflicted'
 
 export interface StatusFileDiffRequest {
@@ -357,7 +362,7 @@ export interface RepositoryApi {
   syncSubmoduleBranch: (request: SyncSubmoduleBranchRequest) => Promise<SyncBranchResult>
   stageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
   unstageFiles: (request: StatusFileRequest) => Promise<RepositoryDetails>
-  resetTrackedChanges: (repoPath: string) => Promise<RepositoryDetails>
+  resetTrackedChanges: (request: ResetTrackedChangesRequest) => Promise<RepositoryDetails>
   diffFile: (request: StatusFileDiffRequest) => Promise<StatusFileDiff>
   commitDetails: (request: CommitDetailsRequest) => Promise<CommitDetails>
   commit: (request: CommitRequest) => Promise<RepositoryDetails>

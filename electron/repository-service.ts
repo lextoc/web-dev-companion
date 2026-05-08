@@ -13,6 +13,7 @@ import type {
   MergeBranchRequest,
   MergeLinkedSubmoduleBranchRequest,
   OpenCommitInBrowserRequest,
+  ResetTrackedChangesRequest,
   RepositoryDetails,
   RepositoryActionRequest,
   RepositorySummary,
@@ -866,8 +867,33 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     return readRepositoryDetails(normalizedPath)
   }
 
-  async function resetTrackedChanges(repoPath: string): Promise<RepositoryDetails> {
-    const normalizedPath = await normalizeRepositoryPath(repoPath)
+  async function pathExistsInHead(repoPath: string, statusPath: string) {
+    const output = await tryRunGit(repoPath, ['ls-tree', '-r', '--name-only', 'HEAD', '--', statusPath])
+
+    return output.split(/\r?\n/).includes(statusPath)
+  }
+
+  async function resetTrackedChanges(request: ResetTrackedChangesRequest): Promise<RepositoryDetails> {
+    const normalizedPath = await normalizeRepositoryPath(request.repoPath)
+
+    if (request.paths?.length) {
+      const statusPaths = normalizeStatusPaths(request.paths)
+      const pathsInHead: string[] = []
+
+      for (const statusPath of statusPaths) {
+        if (await pathExistsInHead(normalizedPath, statusPath)) {
+          pathsInHead.push(statusPath)
+        }
+      }
+
+      await runGit(normalizedPath, ['reset', '--', ...statusPaths])
+
+      if (pathsInHead.length > 0) {
+        await runGit(normalizedPath, ['restore', '--source=HEAD', '--worktree', '--', ...pathsInHead])
+      }
+
+      return readRepositoryDetails(normalizedPath)
+    }
 
     await runGit(normalizedPath, ['reset', '--hard', 'HEAD'])
 

@@ -19,6 +19,7 @@ import type {
   DesktopMenuCommand,
   GitCommandLogEntry,
   PinnedScript,
+  ProjectTask,
   RepositorySummary,
 } from './repositories'
 import type { AppSettings } from './settings'
@@ -74,11 +75,11 @@ const {
 })
 const selectedSummary = selectedSummaryFrom(repositories)
 
-const npmScripts = computed(() => Object.entries(selectedDetails.value?.npmScripts ?? {}))
+const projectTasks = computed(() => selectedDetails.value?.projectTasks ?? [])
 const {
   loadPersistedAppState,
   pinnedRepositoryPaths,
-  pinnedScriptNamesForSelectedRepo,
+  pinnedTaskIdsForSelectedRepo,
   pinnedScripts,
   recentCommandIds,
   rememberCommand,
@@ -310,6 +311,10 @@ async function openRepositoryScriptsTab(repoPath: string) {
   activeRepositoryDetailTab.value = 'scripts'
 }
 
+function togglePinnedTask(task: ProjectTask) {
+  void togglePinnedScript(task)
+}
+
 function openKeybindingsSheet() {
   closeCommandPalette()
   isKeybindingsOpen.value = true
@@ -487,7 +492,7 @@ async function handleMenuCommand(command: DesktopMenuCommand) {
 
   if (command === 'stop-scripts') {
     stopOwnedScripts()
-    showAppFeedback('Stopped running scripts.', 'info')
+    showAppFeedback('Stopped running tasks.', 'info')
     return
   }
 
@@ -834,8 +839,8 @@ onBeforeUnmount(() => {
           :commit-shortcut-label="commitShortcutLabel"
           :stage-all-shortcut-label="stageAllShortcutLabel"
           :unstage-all-shortcut-label="unstageAllShortcutLabel"
-          :npm-scripts="npmScripts"
-          :pinned-script-names="pinnedScriptNamesForSelectedRepo"
+          :project-tasks="projectTasks"
+          :pinned-task-ids="pinnedTaskIdsForSelectedRepo"
           :script-terminals-by-script="currentRepoScriptTerminals"
           @refresh="refreshSelectedRepository"
           @stage-files="stageFiles"
@@ -844,7 +849,7 @@ onBeforeUnmount(() => {
           @commit="commitStatus"
           @commit-draft-change="updateCommitDraft"
           @run-script="runScript"
-          @toggle-pin-script="togglePinnedScript"
+          @toggle-pin-script="togglePinnedTask"
           @stop-script="stopScript"
           @restart-script="restartScript"
           @open-terminal="openScriptTerminal"

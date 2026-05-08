@@ -41,7 +41,7 @@ defineEmits<{
             {{ repository.dirty ? 'Changes' : 'Clean' }}
           </span>
           <span class="branch-pill branch-name" :title="repository.branch">{{ repository.branch }}</span>
-          <span class="branch-pill script-count">{{ repository.npmScriptCount }} scripts</span>
+          <span class="branch-pill script-count">{{ repository.taskCount }} tasks</span>
           <span v-if="runningScriptCount > 0" class="health-running">
             {{ runningScriptCount }} running
           </span>

@@ -1,22 +1,24 @@
 import { computed, ref, type Ref } from 'vue'
 import type { RepositoryBranchLink } from '../app-state'
-import type { PinnedScript, RepositoryDetails, RepositorySummary } from '../repositories'
+import type { PinnedScript, ProjectTask, RepositoryDetails, RepositorySummary } from '../repositories'
 import type { AppFeedbackTone } from './useToasts'
 
 const MAX_RECENT_COMMANDS = 6
 export const SCRIPT_REFERENCE_SEPARATOR = '\n'
 
-export function scriptReferenceKey(script: Pick<PinnedScript, 'repoPath' | 'scriptName'>) {
-  return `${script.repoPath}${SCRIPT_REFERENCE_SEPARATOR}${script.scriptName}`
+export function scriptReferenceKey(script: Pick<PinnedScript, 'repoPath' | 'taskId'>) {
+  return `${script.repoPath}${SCRIPT_REFERENCE_SEPARATOR}${script.taskId}`
 }
 
 function serializablePinnedScript(script: PinnedScript): PinnedScript {
   return {
     repoPath: script.repoPath,
     repoName: script.repoName,
-    scriptName: script.scriptName,
+    taskId: script.taskId,
+    taskName: script.taskName,
     command: script.command,
-    packageManager: script.packageManager,
+    source: script.source,
+    cwd: script.cwd,
   }
 }
 
@@ -56,14 +58,14 @@ export function usePersistedAppState({
   const recentCommandIds = ref<string[]>([])
   const repositoryBranchLinks = ref<RepositoryBranchLink[]>([])
 
-  const pinnedScriptNamesForSelectedRepo = computed(() => {
+  const pinnedTaskIdsForSelectedRepo = computed(() => {
     if (!selectedDetails.value) {
       return []
     }
 
     return pinnedScripts.value
       .filter((script) => script.repoPath === selectedDetails.value?.path)
-      .map((script) => script.scriptName)
+      .map((script) => script.taskId)
   })
 
   async function loadPersistedAppState() {
@@ -193,23 +195,19 @@ export function usePersistedAppState({
     showAppFeedback(`${isPinned ? 'Unpinned' : 'Pinned'} ${repositoryName}.`, 'info')
   }
 
-  async function togglePinnedScript(scriptName: string) {
+  async function togglePinnedScript(task: ProjectTask) {
     if (!selectedDetails.value) {
-      return
-    }
-
-    const command = selectedDetails.value.npmScripts[scriptName]
-
-    if (!command) {
       return
     }
 
     const pinnedScript: PinnedScript = {
       repoPath: selectedDetails.value.path,
       repoName: selectedDetails.value.name,
-      scriptName,
-      command,
-      packageManager: selectedDetails.value.packageManager,
+      taskId: task.id,
+      taskName: task.name,
+      command: task.command,
+      source: task.source,
+      cwd: task.cwd,
     }
     const key = scriptReferenceKey(pinnedScript)
     const isPinned = pinnedScripts.value.some((script) => scriptReferenceKey(script) === key)
@@ -223,7 +221,7 @@ export function usePersistedAppState({
       return
     }
 
-    showAppFeedback(`${isPinned ? 'Unpinned' : 'Pinned'} ${scriptName}.`, 'info')
+    showAppFeedback(`${isPinned ? 'Unpinned' : 'Pinned'} ${task.name}.`, 'info')
   }
 
   async function unpinScript(scriptToUnpin: PinnedScript) {
@@ -234,7 +232,7 @@ export function usePersistedAppState({
       return
     }
 
-    showAppFeedback(`Unpinned ${scriptToUnpin.scriptName}.`, 'info')
+    showAppFeedback(`Unpinned ${scriptToUnpin.taskName}.`, 'info')
   }
 
   async function removePinnedScriptsForRepository(repoPath: string) {
@@ -244,7 +242,7 @@ export function usePersistedAppState({
   return {
     loadPersistedAppState,
     pinnedRepositoryPaths,
-    pinnedScriptNamesForSelectedRepo,
+    pinnedTaskIdsForSelectedRepo,
     pinnedScripts,
     recentCommandIds,
     rememberCommand,

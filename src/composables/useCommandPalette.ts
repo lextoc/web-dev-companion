@@ -11,7 +11,7 @@ type ReadableRef<T> = {
 
 type ScriptPaletteReference = {
   repoPath: string
-  scriptName: string
+  taskId: string
 }
 
 interface UseCommandPaletteOptions {
@@ -34,7 +34,7 @@ interface UseCommandPaletteOptions {
   rememberCommand: (commandId: string) => void
   repositories: Ref<RepositorySummary[]>
   runRepositoryScript: (script: PinnedScript) => Promise<void>
-  runScript: (scriptName: string) => Promise<void>
+  runScript: (taskId: string) => Promise<void>
   selectedDetails: Ref<RepositoryDetails | null>
   selectedPath: Ref<string | null>
   selectedSummary: ReadableRef<RepositorySummary | undefined>
@@ -156,8 +156,8 @@ export function useCommandPalette({
       addItem({
         id: 'action:stop-scripts',
         icon: 'terminal',
-        title: 'Stop running scripts',
-        section: 'Scripts',
+        title: 'Stop running tasks',
+        section: 'Tasks',
         subtitle: `${activeTerminals.value.filter((terminal) => terminal.isRunning).length} running`,
         meta: keybindingLabel('stop-scripts', platform),
         keywords: ['cancel', 'abort'],
@@ -177,28 +177,28 @@ export function useCommandPalette({
     }
 
     if (selectedDetails.value) {
-      for (const [scriptName, command] of Object.entries(selectedDetails.value.npmScripts)) {
+      for (const task of selectedDetails.value.projectTasks) {
         addItem({
-          id: `script:${paletteScriptId(selectedDetails.value.path, scriptName)}`,
+          id: `script:${paletteScriptId(selectedDetails.value.path, task.id)}`,
           icon: 'play',
-          title: `Run ${scriptName}`,
-          section: 'Current scripts',
-          subtitle: command,
-          meta: selectedDetails.value.packageManager ?? 'npm',
-          keywords: [selectedDetails.value.name, selectedDetails.value.path],
+          title: `Run ${task.name}`,
+          section: 'Current tasks',
+          subtitle: task.command,
+          meta: sourceLabel(task.source),
+          keywords: [selectedDetails.value.name, selectedDetails.value.path, task.source],
         })
       }
     }
 
     for (const script of pinnedScripts.value) {
       addItem({
-        id: `script:${paletteScriptId(script.repoPath, script.scriptName)}`,
+        id: `script:${paletteScriptId(script.repoPath, script.taskId)}`,
         icon: 'play',
-        title: `Run ${script.scriptName}`,
-        section: 'Pinned scripts',
+        title: `Run ${script.taskName}`,
+        section: 'Pinned tasks',
         subtitle: `${script.repoName} · ${script.command}`,
-        meta: script.packageManager ?? 'npm',
-        keywords: [script.repoName, script.repoPath],
+        meta: sourceLabel(script.source),
+        keywords: [script.repoName, script.repoPath, script.source],
       })
     }
 
@@ -206,7 +206,7 @@ export function useCommandPalette({
       addItem({
         id: `terminal:${terminal.runId}`,
         icon: 'terminal',
-        title: `Open ${terminal.scriptName}`,
+        title: `Open ${terminal.taskName}`,
         section: 'Terminals',
         subtitle: terminal.repoName,
         meta: terminal.isRunning ? 'Running' : 'Finished',
@@ -280,7 +280,7 @@ export function useCommandPalette({
 
     if (itemId === 'action:stop-scripts') {
       stopOwnedScripts()
-      showAppFeedback('Stopped running scripts.', 'info')
+      showAppFeedback('Stopped running tasks.', 'info')
       return
     }
 
@@ -324,15 +324,15 @@ export function useCommandPalette({
         return
       }
 
-      const { repoPath: scriptRepoPath, scriptName } = script
+      const { repoPath: scriptRepoPath, taskId } = script
 
       if (selectedDetails.value?.path === scriptRepoPath) {
-        await runScript(scriptName)
+        await runScript(taskId)
         return
       }
 
       const pinnedScript = pinnedScripts.value.find((script) =>
-        script.repoPath === scriptRepoPath && script.scriptName === scriptName,
+        script.repoPath === scriptRepoPath && script.taskId === taskId,
       )
 
       if (pinnedScript) {
@@ -356,8 +356,8 @@ export function useCommandPalette({
   }
 }
 
-function paletteScriptId(repoPath: string, scriptName: string) {
-  return `${repoPath}${SCRIPT_REFERENCE_SEPARATOR}${scriptName}`
+function paletteScriptId(repoPath: string, taskId: string) {
+  return `${repoPath}${SCRIPT_REFERENCE_SEPARATOR}${taskId}`
 }
 
 function parsePaletteScriptId(value: string): ScriptPaletteReference | null {
@@ -368,6 +368,30 @@ function parsePaletteScriptId(value: string): ScriptPaletteReference | null {
 
   return {
     repoPath: value.slice(0, separatorIndex),
-    scriptName: value.slice(separatorIndex + 1),
+    taskId: value.slice(separatorIndex + 1),
   }
+}
+
+function sourceLabel(source: string) {
+  if (source === 'node') {
+    return 'Node'
+  }
+
+  if (source === 'gradle') {
+    return 'Gradle'
+  }
+
+  if (source === 'maven') {
+    return 'Maven'
+  }
+
+  if (source === 'rails') {
+    return 'Rails'
+  }
+
+  if (source === 'rake') {
+    return 'Rake'
+  }
+
+  return 'Task'
 }

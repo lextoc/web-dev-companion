@@ -2,7 +2,7 @@
 
 Desktop companion for managing local web development repositories.
 
-Web Dev Companion is an Electron, Vue 3, and TypeScript app for keeping local projects in view. It tracks saved repositories, shows Git status and branch details, opens projects in your editor or terminal, and runs repository scripts from a focused desktop UI.
+Web Dev Companion is an Electron, Vue 3, and TypeScript app for keeping local projects in view. It tracks saved repositories, shows Git status and branch details, opens projects in your editor or terminal, and runs project tasks from a focused desktop UI.
 
 ## Features
 
@@ -15,8 +15,9 @@ Web Dev Companion is an Electron, Vue 3, and TypeScript app for keeping local pr
 - Review project health, including package manager detection, Node configuration, lockfile and install state, outdated dependencies, and common script checks.
 - Run available health scripts from the health panel or before committing.
 - Open repositories in the file manager, configured editor, or terminal.
-- Run, pin, monitor, restart, and stop package scripts in managed terminals.
-- Receive desktop notifications when managed scripts fail or finish after a longer run.
+- Run, pin, monitor, restart, and stop detected project tasks in managed terminals.
+- Detect tasks from Node package scripts, Gradle, Maven, Rails, and Rake projects.
+- Receive desktop notifications when managed tasks fail or finish after a longer run.
 - Auto-refresh repository state, including refresh-on-focus for the active repository.
 - Use the command palette, recent commands, keyboard shortcuts, and desktop menu shortcuts for common actions.
 - Configure theme, editor command, refresh interval, sync confirmation behavior, and commit celebration effects.
@@ -36,12 +37,12 @@ Branch links are persisted in the app state, so the app can remember repository/
 
 ## Feature Ideas
 
-The current app already covers the daily repository cockpit: saved projects, Git state, commits, branches, scripts, terminals, pins, and fast navigation. Good next features would deepen that workflow without turning the app into a full IDE.
+The current app already covers the daily repository cockpit: saved projects, Git state, commits, branches, tasks, terminals, pins, and fast navigation. Good next features would deepen that workflow without turning the app into a full IDE.
 
 ### High-Impact Additions
 
 - **Workspace groups**: group repositories by client, product, stack, or workflow so the dashboard can switch between focused sets instead of one flat list.
-- **Script presets**: save multi-script launch profiles such as `dev + api + storybook` and start or stop them together from the dashboard or command palette.
+- **Task presets**: save multi-task launch profiles such as `dev + api + storybook` and start or stop them together from the dashboard or command palette.
 - **Pull request context**: show the current branch's PR link, review state, checks, and mergeability when the repository has a GitHub remote.
 - **Commit assistant**: draft a conventional commit message from staged diffs, with editable suggestions before committing.
 - **Cross-repository branch cleanup view**: list stale, merged, gone, or local-only branches across repositories and offer safe cleanup actions.
@@ -50,19 +51,19 @@ The current app already covers the daily repository cockpit: saved projects, Git
 
 ### Nice Quality-of-Life Features
 
-- **Dashboard filters**: add saved filters for dirty repositories, running scripts, branch divergence, package manager, and repo group.
-- **Command palette workflows**: support compound commands like opening a repo, starting pinned scripts, and opening the terminal in one action.
-- **Recent activity timeline**: show recent commits, script runs, branch checkouts, failed commands, and app actions across repositories.
+- **Dashboard filters**: add saved filters for dirty repositories, running tasks, branch divergence, package manager, and repo group.
+- **Command palette workflows**: support compound commands like opening a repo, starting pinned tasks, and opening the terminal in one action.
+- **Recent activity timeline**: show recent commits, task runs, branch checkouts, failed commands, and app actions across repositories.
 - **Dependency upgrade lane**: detect package updates and run the relevant check or test script after selected upgrades.
 - **Environment file awareness**: flag missing `.env` files from `.env.example` and expose quick open/copy actions.
-- **Terminal search and markers**: search script output, jump to errors, and preserve important log markers after a run finishes.
+- **Terminal search and markers**: search task output, jump to errors, and preserve important log markers after a run finishes.
 - **Repository import scan**: choose a parent folder and discover Git repositories recursively with a review step before saving.
-- **Ready-pattern notifications**: let scripts define output patterns that signal when a dev server is ready, then notify or open its local URL.
+- **Ready-pattern notifications**: let tasks define output patterns that signal when a dev server is ready, then notify or open its local URL.
 
 ### Larger Bets
 
-- **Task board for local work**: lightweight per-repository task tracking tied to branches, scripts, notes, and recent commits.
-- **Multi-repository operations**: refresh, fetch, install, test, or run scripts across selected repositories with progress and failure summaries.
+- **Task board for local work**: lightweight per-repository task tracking tied to branches, runnable tasks, notes, and recent commits.
+- **Multi-repository operations**: refresh, fetch, install, test, or run tasks across selected repositories with progress and failure summaries.
 - **Issue tracker integration**: connect branches and commits to Linear, GitHub Issues, or Jira so local work has product context.
 - **AI troubleshooting helper**: summarize failing terminal output and suggest the next command or file to inspect.
 
@@ -93,7 +94,7 @@ pnpm rebuild electron
 pnpm run dev
 ```
 
-The app stores saved repositories, pinned scripts, settings, recent commands, and repository/submodule branch links in Electron's per-user app data directory.
+The app stores saved repositories, pinned tasks, settings, recent commands, and repository/submodule branch links in Electron's per-user app data directory.
 
 ## Verification
 

@@ -29,7 +29,7 @@ defineEmits<{
 }>()
 
 const searchQuery = ref('')
-const sortMode = ref<'dirty' | 'name' | 'scripts'>('dirty')
+const sortMode = ref<'dirty' | 'name' | 'tasks'>('dirty')
 const isAddRepositoryOpen = ref(false)
 const isRefreshIconSettling = ref(false)
 const refreshButtonElement = ref<HTMLElement | null>(null)
@@ -41,7 +41,7 @@ let refreshIconSettleTimer: number | undefined
 const sortOptions = [
   { label: 'Changes first', value: 'dirty' },
   { label: 'Name', value: 'name' },
-  { label: 'Script count', value: 'scripts' },
+  { label: 'Task count', value: 'tasks' },
 ]
 
 const filteredRepositories = computed(() => {
@@ -69,8 +69,8 @@ const filteredRepositories = computed(() => {
         return repositoryA.name.localeCompare(repositoryB.name)
       }
 
-      if (sortMode.value === 'scripts') {
-        return repositoryB.npmScriptCount - repositoryA.npmScriptCount ||
+      if (sortMode.value === 'tasks') {
+        return repositoryB.taskCount - repositoryA.taskCount ||
           repositoryA.name.localeCompare(repositoryB.name)
       }
 

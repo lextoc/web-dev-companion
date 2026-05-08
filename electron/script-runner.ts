@@ -1,34 +1,20 @@
 import { spawn } from 'node:child_process'
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
-import type { ScriptOutput, ScriptRunRequest } from '../src/repositories'
-import {
-  detectPackageManager,
-  normalizeRepositoryPath,
-  readPackageScripts,
-} from './git'
+import path from 'node:path'
+import type { ProjectTask, ScriptOutput, ScriptRunRequest } from '../src/repositories'
+import { normalizeRepositoryPath } from './git'
 import { childProcessEnv } from './process-env'
+import { findProjectTask } from './project-tasks'
 
 interface ScriptRunnerOptions {
   sendOutput: (output: ScriptOutput) => void
 }
 
-function commandForPackageManager(packageManager: string | undefined) {
-  return packageManager || 'npm'
-}
-
-function shellQuote(value: string) {
-  return `'${value.replace(/'/g, "'\\''")}'`
-}
-
-function scriptCommand(packageManager: string, scriptName: string) {
-  return `${shellQuote(packageManager)} run ${shellQuote(scriptName)}`
-}
-
-function launchCommand(packageManager: string, scriptName: string) {
+function launchCommand(command: string) {
   if (process.platform === 'win32') {
     return {
-      command: packageManager,
-      args: ['run', scriptName],
+      command,
+      args: [],
       shell: true,
     }
   }
@@ -36,16 +22,20 @@ function launchCommand(packageManager: string, scriptName: string) {
   if (process.platform === 'darwin') {
     return {
       command: process.env.SHELL || '/bin/zsh',
-      args: ['-ilc', scriptCommand(packageManager, scriptName)],
+      args: ['-ilc', command],
       shell: false,
     }
   }
 
   return {
     command: process.env.SHELL || '/bin/sh',
-    args: ['-lc', scriptCommand(packageManager, scriptName)],
+    args: ['-lc', command],
     shell: false,
   }
+}
+
+function taskCwd(repoPath: string, task: ProjectTask) {
+  return task.cwd ? path.resolve(repoPath, task.cwd) : repoPath
 }
 
 export function createScriptRunner({ sendOutput }: ScriptRunnerOptions) {
@@ -80,16 +70,16 @@ export function createScriptRunner({ sendOutput }: ScriptRunnerOptions) {
     }
   }
 
-  function launchScript(runId: string, repoPath: string, packageManager: string, scriptName: string) {
+  function launchScript(runId: string, repoPath: string, task: ProjectTask) {
     if (!pendingScriptRuns.has(runId)) {
       return
     }
 
     pendingScriptRuns.delete(runId)
 
-    const launch = launchCommand(packageManager, scriptName)
+    const launch = launchCommand(task.command)
     const child = spawn(launch.command, launch.args, {
-      cwd: repoPath,
+      cwd: taskCwd(repoPath, task),
       detached: process.platform !== 'win32',
       env: childProcessEnv(),
       shell: launch.shell,
@@ -139,24 +129,22 @@ export function createScriptRunner({ sendOutput }: ScriptRunnerOptions) {
 
   async function startScript(request: ScriptRunRequest) {
     const repoPath = await normalizeRepositoryPath(request.repoPath)
-    const npmScripts = await readPackageScripts(repoPath)
+    const task = await findProjectTask(repoPath, request.taskId)
 
-    if (!npmScripts[request.scriptName]) {
-      throw new Error(`Script "${request.scriptName}" was not found.`)
+    if (!task) {
+      throw new Error(`Task "${request.taskId}" was not found.`)
     }
 
-    const packageManager = commandForPackageManager(request.packageManager || (await detectPackageManager(repoPath)))
     const runId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
-    const command = `${packageManager} run ${request.scriptName}`
 
     pendingScriptRuns.add(runId)
     setTimeout(() => {
-      launchScript(runId, repoPath, packageManager, request.scriptName)
+      launchScript(runId, repoPath, task)
     }, 0)
 
     return {
       runId,
-      command,
+      command: task.command,
     }
   }
 

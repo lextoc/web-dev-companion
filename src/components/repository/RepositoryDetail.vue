@@ -5,6 +5,7 @@ import type {
   GitStatusEntry,
   ProjectDependencyHealth,
   ProjectHealth,
+  ProjectTask,
   RepositoryDetails,
   RepositorySummary,
   ScriptTerminal,
@@ -32,8 +33,8 @@ const props = defineProps<{
   commitShortcutLabel: string;
   stageAllShortcutLabel: string;
   unstageAllShortcutLabel: string;
-  npmScripts: [string, string][];
-  pinnedScriptNames: string[];
+  projectTasks: ProjectTask[];
+  pinnedTaskIds: string[];
   scriptTerminalsByScript: Record<string, ScriptTerminal>;
 }>();
 
@@ -44,11 +45,11 @@ const emit = defineEmits<{
   resetTrackedChanges: [paths?: string[]];
   commit: [request: { message: string; checkHealthBeforeCommit: boolean; healthScriptNames: string[] }];
   commitDraftChange: [hasDraft: boolean];
-  runScript: [scriptName: string];
-  togglePinScript: [scriptName: string];
-  stopScript: [scriptName: string];
-  restartScript: [scriptName: string];
-  openTerminal: [scriptName: string];
+  runScript: [taskId: string];
+  togglePinScript: [task: ProjectTask];
+  stopScript: [taskId: string];
+  restartScript: [taskId: string];
+  openTerminal: [taskId: string];
   openCommitInBrowser: [hash: string];
   "update:activeDetailTab": [tab: RepositoryDetailTab];
 }>();
@@ -64,7 +65,7 @@ const detailTabs: AppTabItem[] = [
   { key: "git", label: "Git overview" },
   { key: "log", label: "Git log" },
   { key: "health", label: "Health" },
-  { key: "scripts", label: "NPM scripts" },
+  { key: "scripts", label: "Tasks" },
 ];
 const statusLineStats = ref<Record<string, { additions: number; deletions: number }>>({});
 const selectedStatusDiff = ref<StatusFileDiff | null>(null);
@@ -101,6 +102,37 @@ const stagedLineTotals = computed(() =>
 const availableProjectHealthScriptNames = computed(() =>
   projectHealth.value?.scripts.filter((script) => script.present).map((script) => script.name) ?? [],
 );
+const projectHealthTerminalsByScript = computed(() =>
+  Object.fromEntries(
+    (projectHealth.value?.scripts ?? []).flatMap((script) => {
+      const task = taskForHealthScript(script.name);
+      const terminal = task ? props.scriptTerminalsByScript[task.id] : undefined;
+
+      return terminal ? [[script.name, terminal]] : [];
+    }),
+  ),
+);
+
+function taskForHealthScript(scriptName: string) {
+  return props.projectTasks.find((task) => task.id === `node:${scriptName}`) ??
+    props.projectTasks.find((task) => task.name === scriptName);
+}
+
+function emitHealthScript(eventName: "runScript" | "restartScript" | "openTerminal", scriptName: string) {
+  const task = taskForHealthScript(scriptName);
+
+  if (!task) {
+    return;
+  }
+
+  if (eventName === "runScript") {
+    emit("runScript", task.id);
+  } else if (eventName === "restartScript") {
+    emit("restartScript", task.id);
+  } else {
+    emit("openTerminal", task.id);
+  }
+}
 
 watch(
   () => props.commitClearToken,
@@ -647,9 +679,9 @@ function triggerCommitConfetti() {
                     class="secondary commit-run-scripts"
                     :health="projectHealth"
                     :loading="projectHealthLoading"
-                    :script-terminals-by-script="scriptTerminalsByScript"
-                    @run-script="$emit('runScript', $event)"
-                    @restart-script="$emit('restartScript', $event)"
+                    :script-terminals-by-script="projectHealthTerminalsByScript"
+                    @run-script="emitHealthScript('runScript', $event)"
+                    @restart-script="emitHealthScript('restartScript', $event)"
                   />
                 </div>
 
@@ -945,19 +977,19 @@ function triggerCommitConfetti() {
           :loading="projectHealthLoading"
           :error="projectHealthError"
           :outdated-loading="projectOutdatedLoading"
-          :script-terminals-by-script="scriptTerminalsByScript"
+          :script-terminals-by-script="projectHealthTerminalsByScript"
           @refresh="loadProjectHealth"
           @check-outdated="checkOutdatedDependencies"
-          @run-script="$emit('runScript', $event)"
-          @restart-script="$emit('restartScript', $event)"
-          @open-terminal="$emit('openTerminal', $event)"
+          @run-script="emitHealthScript('runScript', $event)"
+          @restart-script="emitHealthScript('restartScript', $event)"
+          @open-terminal="emitHealthScript('openTerminal', $event)"
         />
         </template>
 
         <template #scripts>
         <NpmScriptsPanel
-          :npm-scripts="npmScripts"
-          :pinned-script-names="pinnedScriptNames"
+          :project-tasks="projectTasks"
+          :pinned-task-ids="pinnedTaskIds"
           :script-terminals-by-script="scriptTerminalsByScript"
           @run="$emit('runScript', $event)"
           @toggle-pin="$emit('togglePinScript', $event)"

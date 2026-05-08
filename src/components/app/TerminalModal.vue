@@ -85,7 +85,7 @@ const terminalStatusLabel = computed(() => {
       <div class="terminal-modal-header">
         <div>
           <p>{{ terminal.repoName }}</p>
-          <h2 id="terminal-modal-title">{{ terminal.scriptName }}</h2>
+          <h2 id="terminal-modal-title">{{ terminal.taskName }}</h2>
           <code>{{ terminal.command }}</code>
         </div>
         <span

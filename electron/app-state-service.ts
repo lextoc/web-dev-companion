@@ -1,20 +1,48 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import type { PersistedAppState, RepositoryBranchLink } from '../src/app-state'
-import type { PinnedScript } from '../src/repositories'
+import type { PinnedScript, ProjectTaskSource } from '../src/repositories'
 import { normalizeAppSettings, type AppSettings } from '../src/settings'
 
-function isPinnedScript(script: unknown): script is PinnedScript {
-  return (
-    typeof script === 'object' &&
-    script !== null &&
-    typeof (script as Pick<PinnedScript, 'repoPath'>).repoPath === 'string' &&
-    typeof (script as Pick<PinnedScript, 'repoName'>).repoName === 'string' &&
-    typeof (script as Pick<PinnedScript, 'scriptName'>).scriptName === 'string' &&
-    typeof (script as Pick<PinnedScript, 'command'>).command === 'string' &&
-    ((script as Pick<PinnedScript, 'packageManager'>).packageManager === undefined ||
-      typeof (script as Pick<PinnedScript, 'packageManager'>).packageManager === 'string')
-  )
+const taskSources: ProjectTaskSource[] = ['node', 'gradle', 'maven', 'rails', 'rake']
+
+function normalizeTaskSource(value: unknown): ProjectTaskSource {
+  return taskSources.includes(value as ProjectTaskSource) ? value as ProjectTaskSource : 'node'
+}
+
+function normalizePinnedScript(script: unknown): PinnedScript | null {
+  if (typeof script !== 'object' || script === null) {
+    return null
+  }
+
+  const value = script as Partial<PinnedScript> & {
+    packageManager?: unknown
+    scriptName?: unknown
+  }
+  const legacyScriptName = typeof value.scriptName === 'string' ? value.scriptName : undefined
+  const taskName = typeof value.taskName === 'string' ? value.taskName : legacyScriptName
+  const taskId = typeof value.taskId === 'string' ? value.taskId : legacyScriptName ? `node:${legacyScriptName}` : undefined
+  const source = normalizeTaskSource(value.source)
+
+  if (
+    typeof value.repoPath !== 'string' ||
+    typeof value.repoName !== 'string' ||
+    typeof taskId !== 'string' ||
+    typeof taskName !== 'string' ||
+    typeof value.command !== 'string'
+  ) {
+    return null
+  }
+
+  return {
+    repoPath: value.repoPath,
+    repoName: value.repoName,
+    taskId,
+    taskName,
+    command: value.command,
+    source,
+    cwd: typeof value.cwd === 'string' ? value.cwd : undefined,
+  }
 }
 
 function normalizePinnedScripts(value: unknown): PinnedScript[] {
@@ -22,7 +50,10 @@ function normalizePinnedScripts(value: unknown): PinnedScript[] {
     return []
   }
 
-  return value.filter(isPinnedScript)
+  return value.flatMap((script) => {
+    const pinnedScript = normalizePinnedScript(script)
+    return pinnedScript ? [pinnedScript] : []
+  })
 }
 
 function isRepositoryBranchLink(link: unknown): link is RepositoryBranchLink {

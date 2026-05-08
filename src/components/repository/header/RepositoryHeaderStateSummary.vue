@@ -26,9 +26,9 @@ const changedFileLabel = computed(() => {
 });
 
 const scriptCountLabel = computed(() => {
-  const count = props.selectedDetails.npmScriptCount;
+  const count = props.selectedDetails.taskCount;
 
-  return count === 1 ? "1 script" : `${count} scripts`;
+  return count === 1 ? "1 task" : `${count} tasks`;
 });
 </script>
 

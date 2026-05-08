@@ -23,7 +23,8 @@ interface TerminalEntry {
   key: string;
   repoPath: string;
   repoName: string;
-  scriptName: string;
+  taskId: string;
+  taskName: string;
   command: string;
   pinnedScript?: PinnedScript;
   terminal?: ScriptTerminal;
@@ -53,26 +54,28 @@ const terminalEntriesByKey = computed<TerminalEntryMap>(() => {
   const entriesByKey = new Map<string, TerminalEntry>();
 
   for (const terminal of props.terminals) {
-    const key = getTerminalKey(terminal.repoPath, terminal.scriptName);
+    const key = getTerminalKey(terminal.repoPath, terminal.taskId);
     entriesByKey.set(key, {
       key,
       repoPath: terminal.repoPath,
       repoName: terminal.repoName,
-      scriptName: terminal.scriptName,
+      taskId: terminal.taskId,
+      taskName: terminal.taskName,
       command: terminal.command,
       terminal,
     });
   }
 
   for (const pinnedScript of props.pinnedScripts) {
-    const key = getTerminalKey(pinnedScript.repoPath, pinnedScript.scriptName);
+    const key = getTerminalKey(pinnedScript.repoPath, pinnedScript.taskId);
     const existingEntry = entriesByKey.get(key);
 
     entriesByKey.set(key, {
       key,
       repoPath: pinnedScript.repoPath,
       repoName: pinnedScript.repoName,
-      scriptName: pinnedScript.scriptName,
+      taskId: pinnedScript.taskId,
+      taskName: pinnedScript.taskName,
       command: existingEntry?.command ?? pinnedScript.command,
       terminal: existingEntry?.terminal,
       pinnedScript,
@@ -99,7 +102,7 @@ const terminalGroups = computed<TerminalGroup[]>(() => {
 const pinnedIdleCount = computed(() => {
   const activeScriptKeys = new Set(
     props.terminals.map((terminal) =>
-      getTerminalKey(terminal.repoPath, terminal.scriptName),
+      getTerminalKey(terminal.repoPath, terminal.taskId),
     ),
   );
 
@@ -107,7 +110,7 @@ const pinnedIdleCount = computed(() => {
   for (const pinnedScript of props.pinnedScripts) {
     if (
       !activeScriptKeys.has(
-        getTerminalKey(pinnedScript.repoPath, pinnedScript.scriptName),
+        getTerminalKey(pinnedScript.repoPath, pinnedScript.taskId),
       )
     ) {
       count += 1;
@@ -165,8 +168,8 @@ function createGroup(repoPath: string, entries: TerminalEntry[]) {
   };
 }
 
-function getTerminalKey(repoPath: string, scriptName: string) {
-  return `${repoPath}\n${scriptName}`;
+function getTerminalKey(repoPath: string, taskId: string) {
+  return `${repoPath}\n${taskId}`;
 }
 
 function sortEntriesByRepository(
@@ -187,7 +190,7 @@ function compareTerminalEntries(entryA: TerminalEntry, entryB: TerminalEntry) {
     Number(entryB.terminal ? getTerminalStatus(entryB.terminal) === "failed" : false) -
       Number(entryA.terminal ? getTerminalStatus(entryA.terminal) === "failed" : false) ||
     Number(Boolean(entryB.terminal)) - Number(Boolean(entryA.terminal)) ||
-    entryA.scriptName.localeCompare(entryB.scriptName)
+    entryA.taskName.localeCompare(entryB.taskName)
   );
 }
 
@@ -252,10 +255,10 @@ function formatCommandTime(startedAt: string) {
 </script>
 
 <template>
-  <aside class="active-terminals" aria-label="Active terminal scripts">
+  <aside class="active-terminals" aria-label="Active terminal tasks">
     <div class="active-terminals-heading">
       <div class="active-terminals-title">
-        <h2>Scripts</h2>
+        <h2>Tasks</h2>
         <span>{{ sidebarScriptCount }}</span>
       </div>
     </div>
@@ -270,7 +273,7 @@ function formatCommandTime(startedAt: string) {
           <button
             type="button"
             class="active-terminal-repo-link"
-            :title="`Open ${group.repoName} scripts`"
+            :title="`Open ${group.repoName} tasks`"
             @click="$emit('openRepositoryScripts', group.repoPath)"
           >
             {{ group.repoName }}
@@ -299,7 +302,7 @@ function formatCommandTime(startedAt: string) {
             :class="{ pinned: entry.pinnedScript && !entry.terminal }"
             :role="entry.terminal ? 'button' : undefined"
             :tabindex="entry.terminal ? 0 : undefined"
-            :title="entry.terminal ? 'Open full terminal' : 'Pinned script'"
+            :title="entry.terminal ? 'Open full terminal' : 'Pinned task'"
             @click="entry.terminal && $emit('open', entry.terminal.runId)"
             @keydown.enter="
               entry.terminal && $emit('open', entry.terminal.runId)
@@ -310,7 +313,7 @@ function formatCommandTime(startedAt: string) {
           >
             <div class="active-terminal-main">
               <div class="active-terminal-item-heading">
-                <strong>{{ entry.scriptName }}</strong>
+                <strong>{{ entry.taskName }}</strong>
                 <span
                   class="active-terminal-status"
                   :class="{
@@ -350,15 +353,15 @@ function formatCommandTime(startedAt: string) {
                 :variant="entry.terminal?.isRunning ? 'primary' : 'secondary'"
                 :aria-label="
                   entry.terminal
-                    ? `${entry.terminal.isRunning ? 'Stop' : 'Close'} ${entry.scriptName}`
-                    : `Start ${entry.scriptName}`
+                    ? `${entry.terminal.isRunning ? 'Stop' : 'Close'} ${entry.taskName}`
+                    : `Start ${entry.taskName}`
                 "
                 :title="
                   entry.terminal
                     ? entry.terminal.isRunning
-                      ? 'Stop script'
+                      ? 'Stop task'
                       : 'Close terminal'
-                    : 'Start script'
+                    : 'Start task'
                 "
                 @click.stop="
                   entry.terminal
@@ -383,8 +386,8 @@ function formatCommandTime(startedAt: string) {
                 size="icon"
                 icon="restart"
                 class="terminal-restart"
-                :aria-label="`Restart ${entry.scriptName}`"
-                title="Restart script"
+                :aria-label="`Restart ${entry.taskName}`"
+                title="Restart task"
                 @click.stop="$emit('restart', entry.terminal.runId)"
                 @keydown.enter.stop
                 @keydown.space.stop
@@ -402,8 +405,8 @@ function formatCommandTime(startedAt: string) {
                 size="icon"
                 icon="pin-off"
                 class="terminal-pin"
-                :aria-label="`Unpin ${entry.scriptName}`"
-                title="Unpin script"
+                :aria-label="`Unpin ${entry.taskName}`"
+                title="Unpin task"
                 @click.stop="$emit('unpinPinned', entry.pinnedScript)"
                 @keydown.enter.stop
                 @keydown.space.stop
@@ -421,7 +424,7 @@ function formatCommandTime(startedAt: string) {
       </section>
     </div>
 
-    <p v-else class="active-terminals-empty">No active or pinned scripts.</p>
+    <p v-else class="active-terminals-empty">No active or pinned tasks.</p>
 
     <section class="git-command-pane" aria-label="Git command history">
       <div class="git-command-pane-heading">

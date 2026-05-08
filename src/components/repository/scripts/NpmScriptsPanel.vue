@@ -2,44 +2,50 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
 import { parseAnsiOutput } from '../../../output-formatting'
-import type { ScriptTerminal } from '../../../repositories'
+import type { ProjectTask, ProjectTaskSource, ScriptTerminal } from '../../../repositories'
 import { AppButton, AppIcon } from '../../ui'
 
 const props = defineProps<{
-  npmScripts: [string, string][]
-  pinnedScriptNames: string[]
+  projectTasks: ProjectTask[]
+  pinnedTaskIds: string[]
   scriptTerminalsByScript: Record<string, ScriptTerminal>
 }>()
 
 defineEmits<{
-  run: [scriptName: string]
-  stop: [scriptName: string]
-  restart: [scriptName: string]
-  open: [scriptName: string]
-  togglePin: [scriptName: string]
+  run: [taskId: string]
+  stop: [taskId: string]
+  restart: [taskId: string]
+  open: [taskId: string]
+  togglePin: [task: ProjectTask]
 }>()
 
 const terminalOutputElements = ref<Record<string, HTMLPreElement>>({})
-const pinnedScriptNameSet = computed(() => new Set(props.pinnedScriptNames))
+const pinnedTaskIdSet = computed(() => new Set(props.pinnedTaskIds))
 const terminalOutputSegmentsByScript = computed(() =>
   Object.fromEntries(
-    Object.entries(props.scriptTerminalsByScript).map(([scriptName, terminal]) => [
-      scriptName,
+    Object.entries(props.scriptTerminalsByScript).map(([taskId, terminal]) => [
+      taskId,
       parseAnsiOutput(terminal.output),
     ]),
   ),
 )
 const runningScriptCount = computed(() => Object.keys(props.scriptTerminalsByScript).length)
 const pinnedScriptCount = computed(() =>
-  props.npmScripts.filter(([scriptName]) => isPinned(scriptName)).length,
+  props.projectTasks.filter((task) => isPinned(task.id)).length,
 )
 const scriptOverviewStats = computed(() => [
-  { key: 'available', label: 'Available', value: props.npmScripts.length },
+  { key: 'available', label: 'Available', value: props.projectTasks.length },
   { key: 'pinned', label: 'Pinned', value: pinnedScriptCount.value },
   { key: 'running', label: 'Running', value: runningScriptCount.value },
 ])
 
-function scriptCategory(scriptName: string) {
+function scriptCategory(task: ProjectTask) {
+  if (task.source !== 'node') {
+    return task.source
+  }
+
+  const scriptName = task.name
+
   if (/dev|start|serve|watch/i.test(scriptName)) {
     return 'dev'
   }
@@ -56,8 +62,8 @@ function scriptCategory(scriptName: string) {
 }
 
 const scriptGroups = computed(() => {
-  const pinnedScripts = props.npmScripts.filter(([scriptName]) => isPinned(scriptName))
-  const regularScripts = props.npmScripts.filter(([scriptName]) => !isPinned(scriptName))
+  const pinnedScripts = props.projectTasks.filter((task) => isPinned(task.id))
+  const regularScripts = props.projectTasks.filter((task) => !isPinned(task.id))
   const groups = [
     {
       key: 'pinned',
@@ -69,19 +75,31 @@ const scriptGroups = computed(() => {
       key: 'dev',
       title: 'Dev',
       description: 'Run local servers and watchers',
-      scripts: regularScripts.filter(([scriptName]) => scriptCategory(scriptName) === 'dev'),
+      scripts: regularScripts.filter((task) => scriptCategory(task) === 'dev'),
     },
     {
       key: 'quality',
       title: 'Quality',
       description: 'Tests, checks, linting, and formatting',
-      scripts: regularScripts.filter(([scriptName]) => scriptCategory(scriptName) === 'quality'),
+      scripts: regularScripts.filter((task) => scriptCategory(task) === 'quality'),
     },
     {
       key: 'build',
       title: 'Build',
       description: 'Build, preview, package, and release',
-      scripts: regularScripts.filter(([scriptName]) => scriptCategory(scriptName) === 'build'),
+      scripts: regularScripts.filter((task) => scriptCategory(task) === 'build'),
+    },
+    {
+      key: 'java',
+      title: 'Java',
+      description: 'Gradle and Maven tasks',
+      scripts: regularScripts.filter((task) => ['gradle', 'maven'].includes(scriptCategory(task))),
+    },
+    {
+      key: 'ruby',
+      title: 'Ruby',
+      description: 'Rails and Rake tasks',
+      scripts: regularScripts.filter((task) => ['rails', 'rake'].includes(scriptCategory(task))),
     },
   ]
 
@@ -91,28 +109,48 @@ const scriptGroups = computed(() => {
       key: 'other',
       title: 'Other',
       description: 'Project-specific commands',
-      scripts: regularScripts.filter(([scriptName]) => scriptCategory(scriptName) === 'other'),
+      scripts: regularScripts.filter((task) => scriptCategory(task) === 'other'),
     },
   ].filter((group) => group.scripts.length > 0)
 })
 
-function isPinned(scriptName: string) {
-  return pinnedScriptNameSet.value.has(scriptName)
+function isPinned(taskId: string) {
+  return pinnedTaskIdSet.value.has(taskId)
 }
 
-function setTerminalOutputElement(scriptName: string, element: Element | ComponentPublicInstance | null) {
+function sourceLabel(source: ProjectTaskSource) {
+  if (source === 'node') {
+    return 'Node'
+  }
+
+  if (source === 'gradle') {
+    return 'Gradle'
+  }
+
+  if (source === 'maven') {
+    return 'Maven'
+  }
+
+  if (source === 'rails') {
+    return 'Rails'
+  }
+
+  return 'Rake'
+}
+
+function setTerminalOutputElement(taskId: string, element: Element | ComponentPublicInstance | null) {
   if (element instanceof HTMLPreElement) {
-    terminalOutputElements.value[scriptName] = element
-    scrollTerminalToBottom(scriptName)
+    terminalOutputElements.value[taskId] = element
+    scrollTerminalToBottom(taskId)
     return
   }
 
-  delete terminalOutputElements.value[scriptName]
+  delete terminalOutputElements.value[taskId]
 }
 
-function scrollTerminalToBottom(scriptName: string) {
+function scrollTerminalToBottom(taskId: string) {
   void nextTick(() => {
-    const terminalOutputElement = terminalOutputElements.value[scriptName]
+    const terminalOutputElement = terminalOutputElements.value[taskId]
 
     if (!terminalOutputElement) {
       return
@@ -125,8 +163,8 @@ function scrollTerminalToBottom(scriptName: string) {
 watch(
   () => props.scriptTerminalsByScript,
   () => {
-    for (const scriptName of Object.keys(props.scriptTerminalsByScript)) {
-      scrollTerminalToBottom(scriptName)
+    for (const taskId of Object.keys(props.scriptTerminalsByScript)) {
+      scrollTerminalToBottom(taskId)
     }
   },
   { deep: true, flush: 'post' },
@@ -137,17 +175,17 @@ watch(
   <section class="detail-panel scripts-panel">
     <div class="panel-heading">
       <div>
-        <h3>NPM scripts</h3>
-        <span class="panel-subtitle">{{ npmScripts.length }} available commands</span>
+        <h3>Project tasks</h3>
+        <span class="panel-subtitle">{{ projectTasks.length }} available commands</span>
       </div>
-      <div v-if="npmScripts.length" class="script-overview-stats" aria-label="Script overview">
+      <div v-if="projectTasks.length" class="script-overview-stats" aria-label="Task overview">
         <div v-for="stat in scriptOverviewStats" :key="stat.key" class="script-overview-stat">
           <strong>{{ stat.value }}</strong>
           <span>{{ stat.label }}</span>
         </div>
       </div>
     </div>
-    <div v-if="npmScripts.length" class="script-command-center">
+    <div v-if="projectTasks.length" class="script-command-center">
       <section
         v-for="group in scriptGroups"
         :key="group.key"
@@ -164,75 +202,75 @@ watch(
 
         <div class="script-list">
           <div
-            v-for="[scriptName, command] in group.scripts"
-            :key="scriptName"
+            v-for="task in group.scripts"
+            :key="task.id"
             class="script-item"
             :class="{
-              'is-running': Boolean(scriptTerminalsByScript[scriptName]),
-              'is-pinned': isPinned(scriptName),
+              'is-running': Boolean(scriptTerminalsByScript[task.id]),
+              'is-pinned': isPinned(task.id),
             }"
           >
             <div
-              v-if="scriptTerminalsByScript[scriptName]"
+              v-if="scriptTerminalsByScript[task.id]"
               class="script-terminal"
               role="button"
               tabindex="0"
               title="Open full terminal"
-              @click="$emit('open', scriptName)"
-              @keydown.enter="$emit('open', scriptName)"
-              @keydown.space.prevent="$emit('open', scriptName)"
+              @click="$emit('open', task.id)"
+              @keydown.enter="$emit('open', task.id)"
+              @keydown.space.prevent="$emit('open', task.id)"
             >
               <div class="terminal-toolbar">
                 <div class="terminal-title">
                   <span class="terminal-title-icon">
                     <AppIcon name="terminal" />
                   </span>
-                  <code>{{ scriptTerminalsByScript[scriptName].command }}</code>
+                  <code>{{ scriptTerminalsByScript[task.id].command }}</code>
                 </div>
                 <div class="terminal-actions">
                   <AppButton
                     variant="secondary"
                     size="icon"
-                    :icon="isPinned(scriptName) ? 'pin-off' : 'pin'"
+                    :icon="isPinned(task.id) ? 'pin-off' : 'pin'"
                     class="terminal-pin"
-                    :active="isPinned(scriptName)"
-                    :aria-label="`${isPinned(scriptName) ? 'Unpin' : 'Pin'} ${scriptName}`"
-                    :title="isPinned(scriptName) ? 'Unpin script' : 'Pin script'"
-                    @click.stop="$emit('togglePin', scriptName)"
+                    :active="isPinned(task.id)"
+                    :aria-label="`${isPinned(task.id) ? 'Unpin' : 'Pin'} ${task.name}`"
+                    :title="isPinned(task.id) ? 'Unpin task' : 'Pin task'"
+                    @click.stop="$emit('togglePin', task)"
                     @keydown.enter.stop
                     @keydown.space.stop
                   >
-                    {{ isPinned(scriptName) ? 'Unpin' : 'Pin' }}
+                    {{ isPinned(task.id) ? 'Unpin' : 'Pin' }}
                   </AppButton>
                   <AppButton
                     variant="secondary"
                     size="icon"
                     icon="restart"
                     class="terminal-restart"
-                    :aria-label="`Restart ${scriptName}`"
-                    title="Restart script"
-                    @click.stop="$emit('restart', scriptName)"
+                    :aria-label="`Restart ${task.name}`"
+                    title="Restart task"
+                    @click.stop="$emit('restart', task.id)"
                     @keydown.enter.stop
                     @keydown.space.stop
                   >
                     Restart
                   </AppButton>
                   <AppButton
-                    :icon="scriptTerminalsByScript[scriptName].isRunning ? 'stop' : 'close'"
+                    :icon="scriptTerminalsByScript[task.id].isRunning ? 'stop' : 'close'"
                     class="terminal-stop terminal-action-button"
-                    :variant="scriptTerminalsByScript[scriptName].isRunning ? 'primary' : 'secondary'"
-                    :aria-label="`${scriptTerminalsByScript[scriptName].isRunning ? 'Stop' : 'Close'} ${scriptName}`"
-                    @click.stop="$emit('stop', scriptName)"
+                    :variant="scriptTerminalsByScript[task.id].isRunning ? 'primary' : 'secondary'"
+                    :aria-label="`${scriptTerminalsByScript[task.id].isRunning ? 'Stop' : 'Close'} ${task.name}`"
+                    @click.stop="$emit('stop', task.id)"
                     @keydown.enter.stop
                     @keydown.space.stop
                   >
-                    {{ scriptTerminalsByScript[scriptName].isRunning ? 'Stop' : 'Close' }}
+                    {{ scriptTerminalsByScript[task.id].isRunning ? 'Stop' : 'Close' }}
                   </AppButton>
                 </div>
               </div>
-              <pre :ref="(element) => setTerminalOutputElement(scriptName, element)" class="ansi-output"><template
-                v-for="segment in terminalOutputSegmentsByScript[scriptName]"
-                :key="`${scriptName}-${segment.key}`"
+              <pre :ref="(element) => setTerminalOutputElement(task.id, element)" class="ansi-output"><template
+                v-for="segment in terminalOutputSegmentsByScript[task.id]"
+                :key="`${task.id}-${segment.key}`"
               ><span :class="segment.className">{{ segment.text }}</span></template></pre>
             </div>
 
@@ -241,39 +279,40 @@ watch(
               class="script-row"
               role="button"
               tabindex="0"
-              @click="$emit('run', scriptName)"
-              @keydown.enter="$emit('run', scriptName)"
-              @keydown.space.prevent="$emit('run', scriptName)"
+              @click="$emit('run', task.id)"
+              @keydown.enter="$emit('run', task.id)"
+              @keydown.space.prevent="$emit('run', task.id)"
             >
               <div class="script-row-heading">
                 <div class="script-row-title">
                   <span class="script-run-icon">
                     <AppIcon name="play" />
                   </span>
-                  <code>{{ scriptName }}</code>
+                  <code>{{ task.name }}</code>
+                  <span class="script-source">{{ sourceLabel(task.source) }}</span>
                 </div>
                 <AppButton
                   variant="secondary"
                   size="icon"
-                  :icon="isPinned(scriptName) ? 'pin-off' : 'pin'"
+                  :icon="isPinned(task.id) ? 'pin-off' : 'pin'"
                   class="script-pin-button"
-                  :active="isPinned(scriptName)"
-                  :aria-label="`${isPinned(scriptName) ? 'Unpin' : 'Pin'} ${scriptName}`"
-                  :title="isPinned(scriptName) ? 'Unpin script' : 'Pin script'"
-                  @click.stop="$emit('togglePin', scriptName)"
+                  :active="isPinned(task.id)"
+                  :aria-label="`${isPinned(task.id) ? 'Unpin' : 'Pin'} ${task.name}`"
+                  :title="isPinned(task.id) ? 'Unpin task' : 'Pin task'"
+                  @click.stop="$emit('togglePin', task)"
                   @keydown.enter.stop
                   @keydown.space.stop
                 >
-                  {{ isPinned(scriptName) ? 'Unpin' : 'Pin' }}
+                  {{ isPinned(task.id) ? 'Unpin' : 'Pin' }}
                 </AppButton>
               </div>
-              <span class="script-command">{{ command }}</span>
+              <span class="script-command">{{ task.command }}</span>
             </div>
           </div>
         </div>
       </section>
     </div>
-    <p v-else class="muted">No scripts found.</p>
+    <p v-else class="muted">No tasks found.</p>
   </section>
 </template>
 
@@ -459,6 +498,16 @@ watch(
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.script-source {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 6px;
+  color: var(--muted);
+  font-size: var(--font-size-compact);
+  font-weight: 800;
 }
 
 .script-run-icon,

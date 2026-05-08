@@ -1,5 +1,5 @@
 import { computed, ref, type Ref } from 'vue'
-import type { PinnedScript, RepositoryDetails, ScriptOutput, ScriptTerminal } from '../repositories'
+import type { PinnedScript, ProjectTask, RepositoryDetails, ScriptOutput, ScriptTerminal } from '../repositories'
 
 interface UseTerminalsOptions {
   clearError: () => void
@@ -10,7 +10,7 @@ interface UseTerminalsOptions {
 interface ScriptRunResult {
   exitCode?: number | null
   runId: string
-  scriptName: string
+  taskName: string
   signal?: string | null
 }
 
@@ -36,7 +36,7 @@ export function useTerminals({
         return repoComparison
       }
 
-      return terminalA.scriptName.localeCompare(terminalB.scriptName)
+      return terminalA.taskName.localeCompare(terminalB.taskName)
     }),
   )
 
@@ -62,7 +62,7 @@ export function useTerminals({
     return Object.fromEntries(
       Object.values(scriptTerminals.value)
         .filter((terminal) => terminal.repoPath === selectedDetails.value?.path)
-        .map((terminal) => [terminal.scriptName, terminal]),
+        .map((terminal) => [terminal.taskId, terminal]),
     )
   })
 
@@ -70,10 +70,15 @@ export function useTerminals({
     selectedTerminalRunId.value ? scriptTerminals.value[selectedTerminalRunId.value] : undefined,
   )
 
-  function terminalForScript(repoPath: string, scriptName: string) {
+  function terminalForTask(repoPath: string, taskId: string) {
     return Object.values(scriptTerminals.value).find((terminal) =>
-      terminal.repoPath === repoPath && terminal.scriptName === scriptName,
+      terminal.repoPath === repoPath && terminal.taskId === taskId,
     )
+  }
+
+  function nodeTaskForScriptName(repository: Pick<RepositoryDetails, 'projectTasks'>, scriptName: string) {
+    return repository.projectTasks.find((task) => task.id === `node:${scriptName}`) ??
+      repository.projectTasks.find((task) => task.name === scriptName)
   }
 
   function handleScriptOutput(output: ScriptOutput) {
@@ -90,10 +95,10 @@ export function useTerminals({
       const didSucceed = output.exitCode === 0
       const elapsedMs = Date.now() - terminal.startedAt
       const title = didSucceed
-        ? `Script "${terminal.scriptName}" finished`
+        ? `Task "${terminal.taskName}" finished`
         : output.signal
-          ? `Script "${terminal.scriptName}" stopped`
-          : `Script "${terminal.scriptName}" failed`
+          ? `Task "${terminal.taskName}" stopped`
+          : `Task "${terminal.taskName}" failed`
 
       if (!output.signal && (!didSucceed || elapsedMs >= 10_000)) {
         void window.desktop.notify({
@@ -116,7 +121,7 @@ export function useTerminals({
       resolveScriptRun(output.runId, {
         exitCode: output.exitCode,
         runId: output.runId,
-        scriptName: terminal.scriptName,
+        taskName: terminal.taskName,
         signal: output.signal,
       })
     }
@@ -156,14 +161,12 @@ export function useTerminals({
   async function startTerminal(
     repoPath: string,
     repoName: string,
-    scriptName: string,
-    packageManager?: string,
+    task: ProjectTask,
   ) {
     try {
       const scriptRun = await window.repositories.startScript({
         repoPath,
-        scriptName,
-        packageManager,
+        taskId: task.id,
       })
 
       appOwnedRunIds.add(scriptRun.runId)
@@ -173,7 +176,9 @@ export function useTerminals({
           runId: scriptRun.runId,
           repoPath,
           repoName,
-          scriptName,
+          taskId: task.id,
+          taskName: task.name,
+          source: task.source,
           command: scriptRun.command,
           output: `$ ${scriptRun.command}\n`,
           isRunning: true,
@@ -190,8 +195,10 @@ export function useTerminals({
     }
   }
 
-  async function runScript(scriptName: string) {
-    if (!selectedDetails.value || terminalForScript(selectedDetails.value.path, scriptName)) {
+  async function runScript(taskId: string) {
+    const task = selectedDetails.value?.projectTasks.find((entry) => entry.id === taskId)
+
+    if (!selectedDetails.value || !task || terminalForTask(selectedDetails.value.path, task.id)) {
       return
     }
 
@@ -199,13 +206,12 @@ export function useTerminals({
     await startTerminal(
       selectedDetails.value.path,
       selectedDetails.value.name,
-      scriptName,
-      selectedDetails.value.packageManager,
+      task,
     )
   }
 
   async function runRepositoryScript(script: PinnedScript) {
-    const existingTerminal = terminalForScript(script.repoPath, script.scriptName)
+    const existingTerminal = terminalForTask(script.repoPath, script.taskId)
 
     if (existingTerminal) {
       selectedTerminalRunId.value = existingTerminal.runId
@@ -213,18 +219,30 @@ export function useTerminals({
     }
 
     clearError()
-    await startTerminal(script.repoPath, script.repoName, script.scriptName, script.packageManager)
+    await startTerminal(script.repoPath, script.repoName, {
+      id: script.taskId,
+      name: script.taskName,
+      command: script.command,
+      source: script.source,
+      cwd: script.cwd,
+    })
   }
 
   async function runRepositoryScriptsAndWait(
-    repository: Pick<RepositoryDetails, 'name' | 'packageManager' | 'path'>,
+    repository: Pick<RepositoryDetails, 'name' | 'path' | 'projectTasks'>,
     scriptNames: string[],
   ) {
     const uniqueScriptNames = [...new Set(scriptNames)]
     const pendingResults: Array<Promise<ScriptRunResult>> = []
 
     for (const scriptName of uniqueScriptNames) {
-      const existingTerminal = terminalForScript(repository.path, scriptName)
+      const task = nodeTaskForScriptName(repository, scriptName)
+
+      if (!task) {
+        throw new Error(`Could not find "${scriptName}".`)
+      }
+
+      const existingTerminal = terminalForTask(repository.path, task.id)
 
       if (existingTerminal?.isRunning) {
         pendingResults.push(waitForScriptRun(existingTerminal))
@@ -238,8 +256,7 @@ export function useTerminals({
       const runId = await startTerminal(
         repository.path,
         repository.name,
-        scriptName,
-        repository.packageManager,
+        task,
       )
 
       if (!runId) {
@@ -263,8 +280,8 @@ export function useTerminals({
         `Health check failed: ${failedResults
           .map((result) =>
             result.signal
-              ? `${result.scriptName} stopped with ${result.signal}`
-              : `${result.scriptName} exited with code ${result.exitCode ?? 'unknown'}`,
+              ? `${result.taskName} stopped with ${result.signal}`
+              : `${result.taskName} exited with code ${result.exitCode ?? 'unknown'}`,
           )
           .join(', ')}.`,
       )
@@ -294,8 +311,8 @@ export function useTerminals({
     }
   }
 
-  async function stopScript(scriptName: string) {
-    const terminal = currentRepoScriptTerminals.value[scriptName]
+  async function stopScript(taskId: string) {
+    const terminal = currentRepoScriptTerminals.value[taskId]
 
     if (!terminal) {
       return
@@ -322,7 +339,12 @@ export function useTerminals({
     delete nextTerminals[terminal.runId]
     scriptTerminals.value = nextTerminals
 
-    const newRunId = await startTerminal(terminal.repoPath, terminal.repoName, terminal.scriptName)
+    const newRunId = await startTerminal(terminal.repoPath, terminal.repoName, {
+      id: terminal.taskId,
+      name: terminal.taskName,
+      command: terminal.command,
+      source: terminal.source,
+    })
 
     if (newRunId && selectedTerminalRunId.value === runId) {
       selectedTerminalRunId.value = newRunId
@@ -331,19 +353,19 @@ export function useTerminals({
     }
   }
 
-  async function restartScript(scriptName: string) {
-    const terminal = currentRepoScriptTerminals.value[scriptName]
+  async function restartScript(taskId: string) {
+    const terminal = currentRepoScriptTerminals.value[taskId]
 
     if (!terminal) {
-      await runScript(scriptName)
+      await runScript(taskId)
       return
     }
 
     await restartTerminal(terminal.runId)
   }
 
-  function openScriptTerminal(scriptName: string) {
-    const terminal = currentRepoScriptTerminals.value[scriptName]
+  function openScriptTerminal(taskId: string) {
+    const terminal = currentRepoScriptTerminals.value[taskId]
 
     if (terminal) {
       selectedTerminalRunId.value = terminal.runId

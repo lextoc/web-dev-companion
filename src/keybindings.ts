@@ -151,9 +151,9 @@ export const KEYBINDINGS: KeybindingDefinition[] = [
   },
   {
     id: 'stop-scripts',
-    section: 'Scripts',
-    title: 'Stop running scripts',
-    scope: 'Scripts running',
+    section: 'Tasks',
+    title: 'Stop running tasks',
+    scope: 'Tasks running',
     keys: {
       mac: ['⌘⇧S'],
       other: ['Ctrl Shift S'],

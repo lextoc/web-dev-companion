@@ -4,9 +4,19 @@ export interface RepositorySummary {
   branch: string
   lastCommit: string
   dirty: boolean
-  npmScriptCount: number
+  taskCount: number
   remote?: string
   error?: string
+}
+
+export type ProjectTaskSource = 'node' | 'gradle' | 'maven' | 'rails' | 'rake'
+
+export interface ProjectTask {
+  id: string
+  name: string
+  command: string
+  source: ProjectTaskSource
+  cwd?: string
 }
 
 export interface GitLogEntry {
@@ -96,7 +106,7 @@ export interface RepositoryDetails extends RepositorySummary {
   gitRemoteBranches: GitRemoteBranchEntry[]
   gitSubmodules: GitSubmoduleEntry[]
   remotes: string
-  npmScripts: Record<string, string>
+  projectTasks: ProjectTask[]
   packageManager?: string
 }
 
@@ -296,8 +306,7 @@ export interface RepositoryActionRequest {
 
 export interface ScriptRunRequest {
   repoPath: string
-  scriptName: string
-  packageManager?: string
+  taskId: string
 }
 
 export interface ScriptRun {
@@ -328,7 +337,9 @@ export interface ScriptTerminal {
   runId: string
   repoPath: string
   repoName: string
-  scriptName: string
+  taskId: string
+  taskName: string
+  source: ProjectTaskSource
   command: string
   output: string
   isRunning: boolean
@@ -340,9 +351,11 @@ export interface ScriptTerminal {
 export interface PinnedScript {
   repoPath: string
   repoName: string
-  scriptName: string
+  taskId: string
+  taskName: string
   command: string
-  packageManager?: string
+  source: ProjectTaskSource
+  cwd?: string
 }
 
 export interface RepositoryApi {

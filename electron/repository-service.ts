@@ -35,7 +35,6 @@ import {
   readGitRemoteBranches,
   readGitStatus,
   readGitSubmodules,
-  readPackageScripts,
   runGit,
   tryRunGit,
 } from './git'
@@ -43,6 +42,7 @@ import {
   checkProjectOutdatedDependencies,
   readProjectHealth,
 } from './project-health'
+import { readProjectTasks } from './project-tasks'
 
 type ElectronShell = typeof import('electron').shell
 
@@ -169,12 +169,12 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     const name = path.basename(repoPath)
 
     try {
-      const [branch, lastCommit, status, remote, npmScripts] = await Promise.all([
+      const [branch, lastCommit, status, remote, projectTasks] = await Promise.all([
         tryRunGit(repoPath, ['branch', '--show-current']),
         tryRunGit(repoPath, ['log', '-1', '--pretty=format:%h %s (%cr)']),
         tryRunGit(repoPath, ['status', '--short']),
         tryRunGit(repoPath, ['remote', 'get-url', 'origin']),
-        readPackageScripts(repoPath),
+        readProjectTasks(repoPath),
       ])
 
       return {
@@ -183,7 +183,7 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
         branch: branch || 'detached',
         lastCommit: lastCommit || 'No commits found',
         dirty: status.length > 0,
-        npmScriptCount: Object.keys(npmScripts).length,
+        taskCount: projectTasks.length,
         remote: remote || undefined,
       }
     } catch (error) {
@@ -193,7 +193,7 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
         branch: 'unknown',
         lastCommit: 'Unavailable',
         dirty: false,
-        npmScriptCount: 0,
+        taskCount: 0,
         error: error instanceof Error ? error.message : 'Could not read repository.',
       }
     }
@@ -201,14 +201,14 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
 
   async function readRepositoryDetails(repoPath: string): Promise<RepositoryDetails> {
     const normalizedPath = await normalizeRepositoryPath(repoPath)
-    const [summary, gitLog, gitStatus, gitBranches, gitSubmodules, remotes, npmScripts, packageManager] = await Promise.all([
+    const [summary, gitLog, gitStatus, gitBranches, gitSubmodules, remotes, projectTasks, packageManager] = await Promise.all([
       readRepositorySummary(normalizedPath),
       readGitLogEntries(normalizedPath),
       readGitStatus(normalizedPath),
       readGitBranches(normalizedPath),
       readGitSubmodules(normalizedPath),
       tryRunGit(normalizedPath, ['remote', '-v']),
-      readPackageScripts(normalizedPath),
+      readProjectTasks(normalizedPath),
       detectPackageManager(normalizedPath),
     ])
     const gitRemoteBranches = await readGitRemoteBranches(normalizedPath, gitBranches)
@@ -221,7 +221,7 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
       gitRemoteBranches,
       gitSubmodules,
       remotes: remotes || 'No git remotes configured.',
-      npmScripts,
+      projectTasks,
       packageManager,
     }
   }

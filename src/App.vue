@@ -71,7 +71,6 @@ const {
   loadRepositories,
   resetAutoRefreshTimer: () => resetAutoRefreshTimer(),
   showRepositoryError,
-  stopAutoRefreshTimer: () => stopAutoRefreshTimer(),
 })
 const selectedSummary = selectedSummaryFrom(repositories)
 
@@ -269,10 +268,7 @@ async function saveAppSettings(settings: AppSettings) {
   try {
     await persistAppSettings(settings)
     showAppFeedback('Settings saved.')
-
-    if (selectedPath.value) {
-      resetAutoRefreshTimer()
-    }
+    resetAutoRefreshTimer()
   } catch (error) {
     showError(error)
   }
@@ -337,6 +333,10 @@ async function loadRepositories() {
   } finally {
     isLoading.value = false
     isRefreshingRepositories.value = false
+
+    if (!selectedPath.value) {
+      resetAutoRefreshTimer()
+    }
   }
 }
 
@@ -812,6 +812,8 @@ onBeforeUnmount(() => {
           :pinned-repository-paths="pinnedRepositoryPaths"
           :running-scripts-by-repository-path="runningScriptsByRepositoryPath"
           :last-refreshed-label="lastRepositoryRefreshLabel"
+          :auto-refresh-label="autoRefreshLabel"
+          :auto-refresh-progress="autoRefreshProgress"
           :is-loading="isLoading"
           :is-refreshing="isRefreshingRepositories"
           @add="addRepositoryByPath"

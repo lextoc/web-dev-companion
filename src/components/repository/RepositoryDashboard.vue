@@ -9,6 +9,8 @@ const props = defineProps<{
   pinnedRepositoryPaths: string[]
   runningScriptsByRepositoryPath: Record<string, number>
   lastRefreshedLabel: string
+  autoRefreshLabel: string
+  autoRefreshProgress: number
   repoPathInput: string
   isLoading: boolean
   isRefreshing: boolean
@@ -229,11 +231,17 @@ onBeforeUnmount(() => {
               :disabled="isLoading"
               :aria-busy="isRefreshing"
               :aria-label="isRefreshing ? 'Refreshing repositories' : 'Refresh repositories'"
-              title="Refresh repositories"
+              :title="isRefreshing ? 'Refreshing repositories' : autoRefreshLabel"
               @click="$emit('refresh')"
             >
               <AppIcon name="restart" class="button-icon" />
               <span class="refresh-button-label">Refresh</span>
+              <span class="refresh-progress" aria-hidden="true">
+                <span
+                  class="refresh-progress-fill"
+                  :style="{ width: `${autoRefreshProgress}%` }"
+                ></span>
+              </span>
             </button>
             <button
               type="button"
@@ -364,12 +372,12 @@ onBeforeUnmount(() => {
   }
 
   .dashboard-toolbar-actions {
-    grid-template-columns: minmax(180px, 240px) auto auto;
+    grid-template-columns: minmax(160px, 200px) auto auto;
     align-items: end;
     gap: 12px;
   }
 
-  .dashboard-toolbar span {
+  .dashboard-toolbar label > span {
     color: var(--muted-strong);
     font-size: var(--font-size-compact);
     font-weight: 900;
@@ -389,6 +397,11 @@ onBeforeUnmount(() => {
 
   .dashboard-toolbar .app-dropdown {
     width: 100%;
+  }
+
+  .dashboard-sort-control :deep(.app-dropdown-button) {
+    min-height: 36px;
+    padding: 0 9px 0 12px;
   }
 
   @media (max-width: 1280px) {
@@ -420,6 +433,7 @@ onBeforeUnmount(() => {
 
   .dashboard-refresh-button {
     justify-self: end;
+    padding: 0 12px;
   }
 
   .refresh-button {
@@ -444,6 +458,7 @@ onBeforeUnmount(() => {
   .refresh-button-label {
     position: relative;
     z-index: 1;
+    line-height: 1;
   }
 
   .refresh-progress {

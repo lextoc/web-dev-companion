@@ -11,7 +11,6 @@ interface UseRepositoryNavigationOptions {
   loadRepositories: () => Promise<void>
   resetAutoRefreshTimer: () => void
   showRepositoryError: (repoPath: string, title: string, error: unknown) => void
-  stopAutoRefreshTimer: () => void
 }
 
 export function useRepositoryNavigation({
@@ -20,7 +19,6 @@ export function useRepositoryNavigation({
   loadRepositories,
   resetAutoRefreshTimer,
   showRepositoryError,
-  stopAutoRefreshTimer,
 }: UseRepositoryNavigationOptions) {
   const selectedPath = ref<string | null>(null)
   const selectedDetails = ref<RepositoryDetails | null>(null)
@@ -55,10 +53,10 @@ export function useRepositoryNavigation({
   }
 
   function showDashboard() {
-    stopAutoRefreshTimer()
     selectedPath.value = null
     selectedDetails.value = null
     clearCommitDraft()
+    resetAutoRefreshTimer()
   }
 
   async function applyHistoryState(state: AppHistoryState | undefined) {

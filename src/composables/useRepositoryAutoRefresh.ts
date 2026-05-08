@@ -96,16 +96,21 @@ export function useRepositoryAutoRefresh({
     await loadRepositories()
   }
 
-  function updateAutoRefreshCountdown() {
-    if (!selectedPath.value) {
-      stopAutoRefreshTimer()
-      return
+  async function refreshCurrentView() {
+    if (selectedPath.value) {
+      await refreshSelectedRepository()
+    } else {
+      await loadRepositories()
     }
 
+    resetAutoRefreshTimer()
+  }
+
+  function updateAutoRefreshCountdown() {
     const remainingMs = nextAutoRefreshAt - Date.now()
     autoRefreshRemainingMs.value = Math.max(0, remainingMs)
 
-    if (remainingMs > 0 || isDetailLoading.value) {
+    if (remainingMs > 0 || isLoading.value || isDetailLoading.value) {
       return
     }
 
@@ -122,7 +127,7 @@ export function useRepositoryAutoRefresh({
       return
     }
 
-    void refreshSelectedRepository()
+    void refreshCurrentView()
   }
 
   function resetAutoRefreshTimer() {

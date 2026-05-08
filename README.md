@@ -16,6 +16,7 @@ Web Dev Companion is an Electron, Vue 3, and TypeScript app for keeping local pr
 - Run available health scripts from the health panel or before committing.
 - Open repositories in the file manager, configured editor, or terminal.
 - Run, pin, monitor, restart, and stop package scripts in managed terminals.
+- Receive desktop notifications when managed scripts fail or finish after a longer run.
 - Auto-refresh repository state, including refresh-on-focus for the active repository.
 - Use the command palette, recent commands, keyboard shortcuts, and desktop menu shortcuts for common actions.
 - Configure theme, editor command, refresh interval, sync confirmation behavior, and commit celebration effects.
@@ -56,7 +57,7 @@ The current app already covers the daily repository cockpit: saved projects, Git
 - **Environment file awareness**: flag missing `.env` files from `.env.example` and expose quick open/copy actions.
 - **Terminal search and markers**: search script output, jump to errors, and preserve important log markers after a run finishes.
 - **Repository import scan**: choose a parent folder and discover Git repositories recursively with a review step before saving.
-- **Notifications for long-running scripts**: notify when scripts fail, complete, or become ready based on output patterns.
+- **Ready-pattern notifications**: let scripts define output patterns that signal when a dev server is ready, then notify or open its local URL.
 
 ### Larger Bets
 

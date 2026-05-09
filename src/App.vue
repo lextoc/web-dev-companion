@@ -799,8 +799,13 @@ function handleGlobalKeydown(event: KeyboardEvent) {
 }
 
 onMounted(async () => {
-  isMacPlatform.value = navigator.platform.toLowerCase().includes('mac')
-  document.documentElement.dataset.platform = isMacPlatform.value ? 'mac' : 'other'
+  const platformName = navigator.platform.toLowerCase()
+  isMacPlatform.value = platformName.includes('mac')
+  document.documentElement.dataset.platform = isMacPlatform.value
+    ? 'mac'
+    : platformName.includes('win')
+      ? 'windows'
+      : 'other'
   replaceHistoryState({ view: 'dashboard' })
   await loadAppSettings()
   syncAutoRefreshInterval()
@@ -1095,6 +1100,10 @@ onBeforeUnmount(() => {
 
 :global(:root[data-platform="mac"]) .app-shell {
   --top-bar-height: 92px;
+}
+
+:global(:root[data-platform="windows"]) .app-shell {
+  --top-bar-height: 104px;
 }
 
 .modal-backdrop {

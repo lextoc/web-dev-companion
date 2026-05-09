@@ -89,6 +89,31 @@ const repositoryDetailMenuItemIds = [
   'menu-open-in-terminal',
 ]
 
+function platformWindowOptions(): Electron.BrowserWindowConstructorOptions {
+  if (process.platform === 'darwin') {
+    return {
+      titleBarStyle: 'hiddenInset' as const,
+      trafficLightPosition: { x: 18, y: 10 },
+      vibrancy: 'sidebar' as const,
+      visualEffectState: 'active' as const,
+    }
+  }
+
+  if (process.platform === 'win32') {
+    return {
+      autoHideMenuBar: true,
+      titleBarOverlay: {
+        color: '#f8fafc',
+        height: 36,
+        symbolColor: '#1f2937',
+      },
+      titleBarStyle: 'hidden' as const,
+    }
+  }
+
+  return {}
+}
+
 function appStateFilePath() {
   return path.join(app.getPath('userData'), appStateFileName)
 }
@@ -518,18 +543,15 @@ function createWindow() {
     ...windowBounds,
     title: appName,
     icon: appIconPath(),
-    ...(process.platform === 'darwin'
-      ? {
-          titleBarStyle: 'hiddenInset' as const,
-          trafficLightPosition: { x: 18, y: 10 },
-          vibrancy: 'sidebar' as const,
-          visualEffectState: 'active' as const,
-        }
-      : {}),
+    ...platformWindowOptions(),
     webPreferences: {
       preload: path.join(currentDirectory, 'preload.js'),
     },
   })
+
+  if (process.platform === 'win32') {
+    win.setMenuBarVisibility(false)
+  }
 
   win.webContents.setZoomFactor(1)
   win.webContents.setVisualZoomLevelLimits(1, 1)

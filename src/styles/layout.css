@@ -93,8 +93,18 @@
   min-height: 100px;
 }
 
-:root[data-platform="mac"] .app-titlebar {
+:root[data-platform="windows"] .top-bar {
+  min-height: 104px;
+}
+
+:root[data-platform="mac"] .app-titlebar,
+:root[data-platform="windows"] .app-titlebar {
   display: block;
+}
+
+:root[data-platform="windows"] .app-titlebar {
+  min-height: 32px;
+  padding-right: calc(var(--shell-x) + 140px);
 }
 
 .top-actions {

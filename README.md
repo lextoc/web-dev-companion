@@ -34,6 +34,7 @@ ongoing development, donations are welcome:
 ## Features
 
 - Save and browse local Git repositories.
+- Scan a parent folder for cloned repositories that have not been saved yet.
 - List and clone repositories from your GitHub account through GitHub CLI.
 - Search, sort, and pin frequently used repositories.
 - Review branch, remote, dirty state, file status details, diffs, and recent commits.
@@ -85,7 +86,6 @@ The current app already covers the daily repository cockpit: saved projects, Git
 - **Dependency upgrade lane**: detect package updates and run the relevant check or test script after selected upgrades.
 - **Environment file awareness**: flag missing `.env` files from `.env.example` and expose quick open/copy actions.
 - **Terminal search and markers**: search task output, jump to errors, and preserve important log markers after a run finishes.
-- **Repository import scan**: choose a parent folder and discover Git repositories recursively with a review step before saving.
 - **Ready-pattern notifications**: let tasks define output patterns that signal when a dev server is ready, then notify or open its local URL.
 
 ### Larger Bets

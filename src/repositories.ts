@@ -391,6 +391,7 @@ export interface RepositoryApi {
   chooseAndAdd: () => Promise<RepositorySummary[]>
   addByPath: (repoPath: string) => Promise<RepositorySummary[]>
   remove: (repoPath: string) => Promise<RepositorySummary[]>
+  scanLocalRepositories: () => Promise<RepositorySummary[]>
   listGitHubRepositories: () => Promise<GitHubRepositorySummary[]>
   cloneGitHubRepository: (nameWithOwner: string) => Promise<RepositorySummary[]>
   details: (repoPath: string) => Promise<RepositoryDetails>

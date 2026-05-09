@@ -53,6 +53,7 @@ type ElectronShell = typeof import('electron').shell
 const maxInlineFileDiffBytes = 500_000
 const syncOperationLocks = new Map<string, Promise<void>>()
 const execFileAsync = promisify(execFile)
+const maxLocalRepositoryScanDepth = 6
 const githubRepositoryFields = [
   'name',
   'nameWithOwner',
@@ -79,6 +80,26 @@ interface GitHubRepositoryPayload {
   updatedAt?: unknown
   primaryLanguage?: unknown
 }
+
+const ignoredRepositoryScanDirectoryNames = new Set([
+  '.git',
+  '.hg',
+  '.svn',
+  '.cache',
+  '.next',
+  '.nuxt',
+  '.output',
+  '.turbo',
+  'build',
+  'coverage',
+  'dist',
+  'dist-electron',
+  'node_modules',
+  'out',
+  'release',
+  'target',
+  'vendor',
+])
 
 function launchDetached(command: string, args: string[], cwd?: string) {
   return new Promise<void>((resolve, reject) => {
@@ -170,6 +191,12 @@ function validateGitHubRepositoryName(nameWithOwner: string) {
   }
 
   return trimmedName
+}
+
+function repositoryPathKey(repoPath: string) {
+  const resolvedPath = path.resolve(repoPath)
+
+  return process.platform === 'win32' ? resolvedPath.toLowerCase() : resolvedPath
 }
 
 function editorCommand(requestedCommand: string | undefined) {
@@ -362,6 +389,71 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
   async function listRepositories() {
     const repoPaths = await readRepositoryPaths()
     return Promise.all(repoPaths.map(readRepositorySummary))
+  }
+
+  async function hasGitDirectory(directoryPath: string) {
+    try {
+      await fs.access(path.join(directoryPath, '.git'))
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  async function scanDirectoryForRepositories(
+    directoryPath: string,
+    depth: number,
+    foundRepositoryPaths: Map<string, string>,
+  ): Promise<void> {
+    if (depth > maxLocalRepositoryScanDepth) {
+      return
+    }
+
+    if (await hasGitDirectory(directoryPath)) {
+      try {
+        const normalizedPath = await normalizeRepositoryPath(directoryPath)
+        foundRepositoryPaths.set(repositoryPathKey(normalizedPath), normalizedPath)
+      } catch {
+        // Keep scanning sibling folders when a .git directory or worktree file is stale.
+      }
+
+      return
+    }
+
+    let entries: Array<import('node:fs').Dirent>
+
+    try {
+      entries = await fs.readdir(directoryPath, { withFileTypes: true })
+    } catch {
+      return
+    }
+
+    await Promise.all(
+      entries
+        .filter((entry) => entry.isDirectory() && !ignoredRepositoryScanDirectoryNames.has(entry.name))
+        .map((entry) => scanDirectoryForRepositories(path.join(directoryPath, entry.name), depth + 1, foundRepositoryPaths)),
+    )
+  }
+
+  async function scanLocalRepositories(parentDirectory: string) {
+    const normalizedParentDirectory = path.resolve(parentDirectory)
+    const parentStats = await fs.stat(normalizedParentDirectory)
+
+    if (!parentStats.isDirectory()) {
+      throw new Error('Scan location must be a folder.')
+    }
+
+    const savedRepositoryPaths = new Set((await readRepositoryPaths()).map(repositoryPathKey))
+    const foundRepositoryPaths = new Map<string, string>()
+
+    await scanDirectoryForRepositories(normalizedParentDirectory, 0, foundRepositoryPaths)
+
+    const candidatePaths = [...foundRepositoryPaths.entries()]
+      .filter(([repoPathKey]) => !savedRepositoryPaths.has(repoPathKey))
+      .map(([, repoPath]) => repoPath)
+      .sort((repoPathA, repoPathB) => repoPathA.localeCompare(repoPathB))
+
+    return Promise.all(candidatePaths.map(readRepositorySummary))
   }
 
   async function listGitHubRepositories() {
@@ -1134,6 +1226,7 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     openInTerminal,
     readRepositoryDetails,
     removeRepository,
+    scanLocalRepositories,
     stageFiles,
     resetTrackedChanges,
     syncBranch,

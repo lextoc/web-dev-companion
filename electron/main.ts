@@ -500,6 +500,7 @@ function registerRepositoryHandlers() {
   ipcMain.handle('repositories:start-script', (_event, request: ScriptRunRequest) => scriptRunner.startScript(request))
   ipcMain.handle('repositories:stop-script', (_event, runId: string) => scriptRunner.stopScript(runId))
   ipcMain.handle('repositories:choose-and-add', chooseAndAddRepository)
+  ipcMain.handle('repositories:scan-local-repositories', chooseAndScanLocalRepositories)
   ipcMain.handle('repositories:clone-github-repository', (_event, nameWithOwner: string) =>
     chooseAndCloneGitHubRepository(nameWithOwner),
   )
@@ -557,6 +558,20 @@ async function chooseAndCloneGitHubRepository(nameWithOwner: string) {
     nameWithOwner,
     parentDirectory: result.filePaths[0],
   })
+}
+
+async function chooseAndScanLocalRepositories() {
+  const dialogOptions: OpenDialogOptions = {
+    properties: ['openDirectory'],
+    title: 'Scan for local repositories',
+  }
+  const result = win ? await dialog.showOpenDialog(win, dialogOptions) : await dialog.showOpenDialog(dialogOptions)
+
+  if (result.canceled || !result.filePaths[0]) {
+    return []
+  }
+
+  return repositoryService.scanLocalRepositories(result.filePaths[0])
 }
 
 function createWindow() {

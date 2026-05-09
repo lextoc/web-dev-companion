@@ -30,10 +30,14 @@ const MAX_GIT_COMMAND_LOG_ENTRIES = 80
 type RepositoryDetailTab = 'git' | 'log' | 'health' | 'scripts'
 
 const repositories = ref<RepositorySummary[]>([])
+const localRepositoryCandidates = ref<RepositorySummary[]>([])
 const githubRepositories = ref<GitHubRepositorySummary[]>([])
 const repoPathInput = ref('')
 const isLoading = ref(false)
 const isRefreshingRepositories = ref(false)
+const isScanningLocalRepositories = ref(false)
+const hasScannedLocalRepositories = ref(false)
+const localRepositoryScanError = ref('')
 const isLoadingGitHubRepositories = ref(false)
 const hasLoadedGitHubRepositories = ref(false)
 const cloningGitHubRepositoryName = ref('')
@@ -317,6 +321,10 @@ function githubRepositoryErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Could not load GitHub repositories.'
 }
 
+function localRepositoryScanErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Could not scan for local repositories.'
+}
+
 function activeRepositoryPath() {
   return selectedDetails.value?.path ?? selectedSummary.value?.path
 }
@@ -408,6 +416,21 @@ async function chooseAndAddRepository() {
   }
 }
 
+async function scanLocalRepositories() {
+  isScanningLocalRepositories.value = true
+  localRepositoryScanError.value = ''
+  clearError()
+
+  try {
+    localRepositoryCandidates.value = await window.repositories.scanLocalRepositories()
+    hasScannedLocalRepositories.value = true
+  } catch (error) {
+    localRepositoryScanError.value = localRepositoryScanErrorMessage(error)
+  } finally {
+    isScanningLocalRepositories.value = false
+  }
+}
+
 async function cloneGitHubRepository(nameWithOwner: string) {
   isLoading.value = true
   cloningGitHubRepositoryName.value = nameWithOwner
@@ -440,6 +463,22 @@ async function addRepositoryByPath() {
     repositories.value = await window.repositories.addByPath(repoPathInput.value)
     lastRepositoryListRefreshAt.value = new Date()
     repoPathInput.value = ''
+  } catch (error) {
+    showError(error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function addScannedLocalRepository(repoPath: string) {
+  isLoading.value = true
+  clearError()
+
+  try {
+    repositories.value = await window.repositories.addByPath(repoPath)
+    localRepositoryCandidates.value = localRepositoryCandidates.value.filter((repository) => repository.path !== repoPath)
+    lastRepositoryListRefreshAt.value = new Date()
+    showAppFeedback('Added repository.')
   } catch (error) {
     showError(error)
   } finally {
@@ -972,6 +1011,7 @@ onBeforeUnmount(() => {
           v-if="!selectedPath"
           v-model:repo-path-input="repoPathInput"
           :repositories="repositories"
+          :local-repository-candidates="localRepositoryCandidates"
           :github-repositories="githubRepositories"
           :pinned-repository-paths="pinnedRepositoryPaths"
           :running-scripts-by-repository-path="runningScriptsByRepositoryPath"
@@ -980,6 +1020,9 @@ onBeforeUnmount(() => {
           :auto-refresh-progress="autoRefreshProgress"
           :is-loading="isLoading"
           :is-refreshing="isRefreshingRepositories"
+          :is-scanning-local-repositories="isScanningLocalRepositories"
+          :has-scanned-local-repositories="hasScannedLocalRepositories"
+          :local-repository-scan-error="localRepositoryScanError"
           :is-loading-git-hub-repositories="isLoadingGitHubRepositories"
           :has-loaded-git-hub-repositories="hasLoadedGitHubRepositories"
           :cloning-git-hub-repository-name="cloningGitHubRepositoryName"
@@ -987,6 +1030,8 @@ onBeforeUnmount(() => {
           @add="addRepositoryByPath"
           @browse="chooseAndAddRepository"
           @refresh="loadRepositories"
+          @scan-local-repositories="scanLocalRepositories"
+          @add-scanned-local-repository="addScannedLocalRepository"
           @load-git-hub-repositories="loadGitHubRepositories"
           @clone-git-hub-repository="cloneGitHubRepository"
           @open="openRepository"

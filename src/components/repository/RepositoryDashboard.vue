@@ -6,6 +6,7 @@ import RepositoryCard from './RepositoryCard.vue'
 
 const props = defineProps<{
   repositories: RepositorySummary[]
+  localRepositoryCandidates: RepositorySummary[]
   githubRepositories: GitHubRepositorySummary[]
   pinnedRepositoryPaths: string[]
   runningScriptsByRepositoryPath: Record<string, number>
@@ -15,6 +16,9 @@ const props = defineProps<{
   repoPathInput: string
   isLoading: boolean
   isRefreshing: boolean
+  isScanningLocalRepositories: boolean
+  hasScannedLocalRepositories: boolean
+  localRepositoryScanError: string
   isLoadingGitHubRepositories: boolean
   hasLoadedGitHubRepositories: boolean
   cloningGitHubRepositoryName: string
@@ -26,6 +30,8 @@ defineEmits<{
   add: []
   browse: []
   refresh: []
+  scanLocalRepositories: []
+  addScannedLocalRepository: [repoPath: string]
   loadGitHubRepositories: []
   cloneGitHubRepository: [nameWithOwner: string]
   open: [repository: RepositorySummary]
@@ -46,6 +52,10 @@ const refreshIconStartAngle = ref(0)
 const refreshIconEndAngle = ref(0)
 const refreshIconSettleDuration = ref(0)
 const pinnedRepositorySet = computed(() => new Set(props.pinnedRepositoryPaths))
+const savedRepositoryPathSet = computed(() => new Set(props.repositories.map((repository) => repositoryPathKey(repository.path))))
+const filteredLocalRepositoryCandidates = computed(() =>
+  props.localRepositoryCandidates.filter((repository) => !savedRepositoryPathSet.value.has(repositoryPathKey(repository.path))),
+)
 const savedGitHubRepositorySet = computed(() => {
   const keys = props.repositories.flatMap((repository) => {
     const remoteKey = repository.remote ? githubRepositoryKeyFromUrl(repository.remote) : undefined
@@ -60,6 +70,10 @@ const sortOptions = [
   { label: 'Name', value: 'name' },
   { label: 'Task count', value: 'tasks' },
 ]
+
+function repositoryPathKey(repoPath: string) {
+  return navigator.platform.toLowerCase().includes('win') ? repoPath.toLowerCase() : repoPath
+}
 
 function githubRepositoryKeyFromUrl(value: string) {
   const normalizedValue = value.trim().replace(/\.git\/?$/, '').replace(/\/+$/, '')
@@ -381,6 +395,84 @@ onBeforeUnmount(() => {
       </div>
     </template>
 
+    <section class="local-repositories">
+      <div class="local-section-heading">
+        <div>
+          <h2>Local repositories not added yet</h2>
+          <span v-if="filteredLocalRepositoryCandidates.length > 0">
+            {{ filteredLocalRepositoryCandidates.length }}
+          </span>
+        </div>
+        <button
+          type="button"
+          class="secondary local-scan-button"
+          :disabled="isScanningLocalRepositories"
+          @click="$emit('scanLocalRepositories')"
+        >
+          <AppIcon name="folder" class="button-icon" />
+          {{ hasScannedLocalRepositories ? 'Scan again' : 'Scan folder' }}
+        </button>
+      </div>
+
+      <div
+        v-if="isScanningLocalRepositories && filteredLocalRepositoryCandidates.length === 0"
+        class="local-repo-grid"
+        aria-label="Scanning local repositories"
+      >
+        <article v-for="index in 3" :key="index" class="local-repo-card local-skeleton-card">
+          <span></span>
+          <span></span>
+          <span></span>
+        </article>
+      </div>
+
+      <div
+        v-else-if="filteredLocalRepositoryCandidates.length === 0"
+        class="local-empty-state"
+        :class="{ error: localRepositoryScanError }"
+      >
+        <strong v-if="localRepositoryScanError">Local scan failed.</strong>
+        <span>
+          {{
+            localRepositoryScanError ||
+            (hasScannedLocalRepositories
+              ? 'No untracked local repositories found in that folder.'
+              : 'Scan a parent folder to find cloned projects that are not saved yet.')
+          }}
+        </span>
+      </div>
+
+      <div v-else class="local-repo-grid">
+        <article
+          v-for="repository in filteredLocalRepositoryCandidates"
+          :key="repository.path"
+          class="local-repo-card"
+        >
+          <div class="local-repo-main">
+            <div class="local-repo-title-row">
+              <strong :title="repository.name">{{ repository.name }}</strong>
+              <span class="local-branch-pill" :title="repository.branch">{{ repository.branch }}</span>
+            </div>
+            <p :title="repository.path">{{ repository.path }}</p>
+            <div class="local-repo-meta">
+              <span :class="{ dirty: repository.dirty }">{{ repository.dirty ? 'Changes' : 'Clean' }}</span>
+              <span>{{ repository.taskCount }} tasks</span>
+              <span v-if="repository.remote" :title="repository.remote">Remote</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="local-add-button"
+            :disabled="isLoading"
+            @click="$emit('addScannedLocalRepository', repository.path)"
+          >
+            <AppIcon name="repository" class="button-icon" />
+            Add
+          </button>
+        </article>
+      </div>
+    </section>
+
     <section class="github-repositories">
       <div class="github-section-heading">
         <div>
@@ -572,16 +664,21 @@ onBeforeUnmount(() => {
       grid-template-columns: 1fr;
     }
 
+    .local-section-heading,
+    .local-repo-card,
     .github-section-heading,
     .github-repo-card {
       align-items: stretch;
       grid-template-columns: 1fr;
     }
 
+    .local-section-heading,
     .github-section-heading {
       display: grid;
     }
 
+    .local-scan-button,
+    .local-add-button,
     .github-refresh-button,
     .github-clone-button {
       width: 100%;
@@ -700,6 +797,210 @@ onBeforeUnmount(() => {
   .repo-section {
     display: grid;
     gap: 9px;
+  }
+
+  .local-repositories {
+    display: grid;
+    gap: 10px;
+    padding-top: 4px;
+  }
+
+  .local-section-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .local-section-heading > div {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .local-section-heading h2 {
+    margin: 0;
+    color: var(--muted-strong);
+    font-size: var(--font-size-base);
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .local-section-heading span {
+    display: grid;
+    min-width: 24px;
+    height: 24px;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--surface-subtle);
+    color: var(--muted-strong);
+    font-size: var(--font-size-compact);
+    font-weight: 900;
+  }
+
+  .local-scan-button,
+  .local-add-button {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    white-space: nowrap;
+  }
+
+  .local-scan-button,
+  .local-add-button {
+    padding: 0 12px;
+  }
+
+  .local-scan-button .button-icon,
+  .local-add-button .button-icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .local-repo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+
+  .local-repo-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    min-height: 116px;
+    border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+    border-radius: 8px;
+    padding: 12px;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--surface) 90%, var(--app-bg)),
+        color-mix(in srgb, var(--surface-soft) 46%, var(--surface))
+      );
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #fff 42%, transparent),
+      0 1px 2px rgba(23, 32, 42, 0.08);
+  }
+
+  .local-repo-main {
+    display: grid;
+    min-width: 0;
+    gap: 7px;
+  }
+
+  .local-repo-title-row {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .local-repo-title-row strong,
+  .local-repo-main p {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .local-repo-title-row strong {
+    color: var(--text);
+    font-size: var(--font-size-base);
+    font-weight: 900;
+  }
+
+  .local-branch-pill,
+  .local-repo-meta span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+    border-radius: 999px;
+    padding: 0 8px;
+    background: color-mix(in srgb, var(--surface-subtle) 58%, var(--surface));
+    color: var(--muted-strong);
+    font-size: 0.72rem;
+    font-weight: 720;
+    white-space: nowrap;
+  }
+
+  .local-repo-meta span.dirty {
+    border-color: color-mix(in srgb, var(--warning-text) 24%, transparent);
+    background: color-mix(in srgb, var(--warning-soft) 72%, var(--surface));
+    color: var(--warning-text);
+  }
+
+  .local-repo-main p {
+    margin: 0;
+    color: var(--muted-strong);
+    font-size: var(--font-size-compact);
+  }
+
+  .local-repo-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .local-empty-state {
+    display: grid;
+    min-height: 78px;
+    gap: 6px;
+    place-items: center;
+    border: 1px dashed color-mix(in srgb, var(--border) 72%, transparent);
+    border-radius: 8px;
+    padding: 14px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .local-empty-state strong {
+    color: var(--text);
+  }
+
+  .local-empty-state span {
+    max-width: 680px;
+    overflow-wrap: anywhere;
+  }
+
+  .local-empty-state.error {
+    border-color: color-mix(in srgb, var(--warning-text) 36%, transparent);
+    background: color-mix(in srgb, var(--warning-soft) 24%, transparent);
+    color: var(--muted-strong);
+  }
+
+  .local-skeleton-card {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .local-skeleton-card span {
+    display: block;
+    height: 13px;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      var(--surface-subtle),
+      var(--surface-soft),
+      var(--surface-subtle)
+    );
+    background-size: 220% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  }
+
+  .local-skeleton-card span:first-child {
+    width: 68%;
+  }
+
+  .local-skeleton-card span:nth-child(2) {
+    width: 92%;
+  }
+
+  .local-skeleton-card span:nth-child(3) {
+    width: 48%;
   }
 
   .github-repositories {

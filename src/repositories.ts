@@ -412,6 +412,7 @@ export interface RepositoryApi {
 
 export type DesktopMenuCommand =
   | 'add-repository'
+  | 'check-for-updates'
   | 'dashboard'
   | 'keyboard-shortcuts'
   | 'open-in-editor'

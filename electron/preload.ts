@@ -1,6 +1,7 @@
 import * as electron from 'electron'
 import type { AppStateApi } from '../src/app-state'
 import type { DesktopApi, RepositoryApi } from '../src/repositories'
+import type { AppUpdatesApi } from '../src/updates'
 
 const { contextBridge, ipcRenderer } = electron
 
@@ -95,6 +96,24 @@ const desktop: DesktopApi = {
   },
 }
 
+const updates: AppUpdatesApi = {
+  getState: () => ipcRenderer.invoke('updates:get-state'),
+  check: () => ipcRenderer.invoke('updates:check'),
+  download: () => ipcRenderer.invoke('updates:download'),
+  install: () => ipcRenderer.invoke('updates:install'),
+  onStateChange: (listener) => {
+    const wrappedListener = (_event: Electron.IpcRendererEvent, state: Parameters<typeof listener>[0]) => {
+      listener(state)
+    }
+
+    ipcRenderer.on('updates:state-change', wrappedListener)
+
+    return () => {
+      ipcRenderer.off('updates:state-change', wrappedListener)
+    }
+  },
+}
+
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
   on(...args: Parameters<typeof ipcRenderer.on>) {
@@ -121,3 +140,4 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 contextBridge.exposeInMainWorld('appState', appState)
 contextBridge.exposeInMainWorld('repositories', repositories)
 contextBridge.exposeInMainWorld('desktop', desktop)
+contextBridge.exposeInMainWorld('updates', updates)

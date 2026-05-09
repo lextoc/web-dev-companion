@@ -24,7 +24,9 @@ import type {
   SyncBranchRequest,
   SyncSubmoduleBranchRequest,
 } from '../src/repositories'
+import type { AppUpdateState } from '../src/updates'
 import { createAppStateService } from './app-state-service'
+import { createAppUpdateService } from './app-update-service'
 import { createRepositoryService } from './repository-service'
 import { createScriptRunner } from './script-runner'
 import { onGitCommandLog } from './git'
@@ -102,14 +104,16 @@ function appIconPath() {
 function configureAppIdentity() {
   if (process.platform === 'darwin') {
     const appIcon = nativeImage.createFromPath(appIconPath())
+    const aboutPanelOptions: Electron.AboutPanelOptionsOptions = {
+      applicationName: appName,
+    }
 
     if (!appIcon.isEmpty()) {
       app.dock.setIcon(appIcon)
-      app.setAboutPanelOptions({
-        applicationName: appName,
-        iconPath: appIconPath(),
-      })
+      aboutPanelOptions.iconPath = appIconPath()
     }
+
+    app.setAboutPanelOptions(aboutPanelOptions)
   }
 }
 
@@ -143,6 +147,14 @@ function sendMenuCommand(command: DesktopMenuCommand) {
   }
 
   win.webContents.send('desktop:menu-command', command)
+}
+
+function sendAppUpdateState(state: AppUpdateState) {
+  if (!win || win.isDestroyed() || win.webContents.isDestroyed()) {
+    return
+  }
+
+  win.webContents.send('updates:state-change', state)
 }
 
 function sendThrottledRefreshCommand() {
@@ -207,6 +219,11 @@ function configureApplicationMenu() {
             label: appName,
             submenu: [
               { role: 'about' as const },
+              { type: 'separator' as const },
+              {
+                label: 'Check for Updates...',
+                click: () => sendMenuCommand('check-for-updates'),
+              },
               { type: 'separator' as const },
               {
                 label: 'Settings...',
@@ -338,6 +355,15 @@ function configureApplicationMenu() {
     {
       label: 'Help',
       submenu: [
+        ...(isMac
+          ? []
+          : [
+              {
+                label: 'Check for Updates...',
+                click: () => sendMenuCommand('check-for-updates'),
+              },
+              { type: 'separator' as const },
+            ]),
         {
           label: 'Keyboard Shortcuts',
           accelerator: isMac ? 'Command+/' : 'Ctrl+/',
@@ -354,6 +380,16 @@ function configureApplicationMenu() {
 const repositoryService = createRepositoryService(repositoriesFilePath, shell)
 const appStateService = createAppStateService(appStateFilePath)
 const scriptRunner = createScriptRunner({ sendOutput: sendScriptOutput })
+const appUpdateService = createAppUpdateService({
+  app,
+  isDevelopment: Boolean(VITE_DEV_SERVER_URL),
+  onBeforeInstall: async () => {
+    isFlushingAppStateBeforeQuit = true
+    scriptRunner.stopAllScripts()
+    await appStateService.flush()
+  },
+  sendState: sendAppUpdateState,
+})
 onGitCommandLog(sendGitCommandLog)
 
 function registerAppStateHandlers() {
@@ -452,6 +488,10 @@ function registerRepositoryHandlers() {
 
     return true
   })
+  ipcMain.handle('updates:get-state', () => appUpdateService.getState())
+  ipcMain.handle('updates:check', () => appUpdateService.checkForUpdates())
+  ipcMain.handle('updates:download', () => appUpdateService.downloadUpdate())
+  ipcMain.handle('updates:install', () => appUpdateService.installUpdate())
   ipcMain.on('repositories:stop-scripts', (_event, runIds: string[]) => {
     for (const runId of runIds) {
       scriptRunner.stopScript(runId)
@@ -583,4 +623,7 @@ app.whenReady().then(() => {
   registerAppStateHandlers()
   registerRepositoryHandlers()
   createWindow()
+  setTimeout(() => {
+    void appUpdateService.checkForUpdates()
+  }, 5000)
 })

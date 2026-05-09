@@ -47,7 +47,7 @@ Use `pnpm` for all package commands.
 - Commit the version and documentation changes after verification.
 - Create a matching Git tag named `v<version>`, for example `v0.1.0-alpha.2`.
 - Push both the branch and tag when publishing: `git push origin main` and `git push origin v<version>`.
-- Create or update the GitHub prerelease for that tag and upload the generated macOS and Windows artifacts so the README download links resolve.
+- Create or update the GitHub prerelease for that tag and upload the generated macOS and Windows artifacts, updater metadata files, and blockmap files so the README download links resolve and in-app updates work.
 - Do not commit generated `release/<version>/`, `dist/`, or `dist-electron/` output.
 
 ## Final Response

@@ -23,6 +23,7 @@ import type {
   RepositorySummary,
 } from './repositories'
 import type { AppSettings } from './settings'
+import type { AppUpdateState } from './updates'
 
 const MAX_GIT_COMMAND_LOG_ENTRIES = 80
 type RepositoryDetailTab = 'git' | 'log' | 'health' | 'scripts'
@@ -37,10 +38,12 @@ const isKeybindingsOpen = ref(false)
 const gitCommandLog = ref<GitCommandLogEntry[]>([])
 const branchShortcutTriggerToken = ref(0)
 const activeRepositoryDetailTab = ref<RepositoryDetailTab>('git')
+const appUpdateState = ref<AppUpdateState | null>(null)
 let removeScriptOutputListener: (() => void) | undefined
 let removeGitCommandListener: (() => void) | undefined
 let removeWindowFocusListener: (() => void) | undefined
 let removeMenuCommandListener: (() => void) | undefined
+let removeAppUpdateListener: (() => void) | undefined
 
 const {
   appToasts,
@@ -263,6 +266,32 @@ const unstageAllShortcutLabel = computed(() =>
 const syncShortcutLabel = computed(() =>
   keybindingLabel('sync-branch', keybindingPlatform.value),
 )
+const appUpdateBannerVisible = computed(() =>
+  ['available', 'downloading', 'downloaded'].includes(appUpdateState.value?.status ?? ''),
+)
+const appUpdateVersion = computed(() => appUpdateState.value?.update?.version ?? '')
+const appUpdateDownloadPercent = computed(() =>
+  Math.max(0, Math.min(100, Math.round(appUpdateState.value?.downloadPercent ?? 0))),
+)
+const appUpdateBannerMessage = computed(() => {
+  if (!appUpdateState.value) {
+    return ''
+  }
+
+  if (appUpdateState.value.status === 'downloaded') {
+    return `Version ${appUpdateVersion.value} is ready to install.`
+  }
+
+  if (appUpdateState.value.status === 'downloading') {
+    return `Downloading version ${appUpdateVersion.value} (${appUpdateDownloadPercent.value}%).`
+  }
+
+  return `Version ${appUpdateVersion.value} is available.`
+})
+const appUpdateActionLabel = computed(() =>
+  appUpdateState.value?.status === 'downloaded' ? 'Restart to update' : 'Update Web Dev Companion',
+)
+const appUpdateActionDisabled = computed(() => appUpdateState.value?.status === 'downloading')
 
 async function saveAppSettings(settings: AppSettings) {
   try {
@@ -456,9 +485,70 @@ async function openCommitInBrowser(hash: string) {
   }
 }
 
+async function runAppUpdateAction() {
+  if (!appUpdateState.value || appUpdateState.value.status === 'downloading') {
+    return
+  }
+
+  try {
+    const nextState =
+      appUpdateState.value.status === 'downloaded'
+        ? await window.updates.install()
+        : await window.updates.download()
+
+    appUpdateState.value = nextState
+
+    if (nextState.status === 'error') {
+      showError(new Error(nextState.error ?? 'Could not update Web Dev Companion.'))
+    }
+  } catch (error) {
+    showError(error)
+  }
+}
+
+async function checkForAppUpdates() {
+  try {
+    showAppFeedback('Checking for updates...', 'info')
+
+    const nextState = await window.updates.check()
+    appUpdateState.value = nextState
+
+    if (nextState.status === 'unsupported') {
+      showAppFeedback('Update checks are available in packaged macOS and Windows builds.', 'info')
+      return
+    }
+
+    if (nextState.status === 'not-available') {
+      showAppFeedback('Web Dev Companion is up to date.', 'success')
+      return
+    }
+
+    if (nextState.status === 'available' && nextState.update?.version) {
+      showAppFeedback(`Version ${nextState.update.version} is available.`, 'info')
+      return
+    }
+
+    if (nextState.status === 'downloaded' && nextState.update?.version) {
+      showAppFeedback(`Version ${nextState.update.version} is ready to install.`, 'info')
+      return
+    }
+
+    if (nextState.status === 'error') {
+      showError(new Error(nextState.error ?? 'Could not check for updates.'))
+    }
+  } catch (error) {
+    showError(error)
+  }
+}
+
 async function handleMenuCommand(command: DesktopMenuCommand) {
   if (command === 'settings') {
     isSettingsOpen.value = true
+    return
+  }
+
+  if (command === 'check-for-updates') {
+    await checkForAppUpdates()
     return
   }
 
@@ -727,6 +817,10 @@ onMounted(async () => {
   removeMenuCommandListener = window.desktop.onMenuCommand((command) => {
     void handleMenuCommand(command)
   })
+  removeAppUpdateListener = window.updates.onStateChange((state) => {
+    appUpdateState.value = state
+  })
+  appUpdateState.value = await window.updates.getState()
   window.addEventListener('popstate', handleHistoryNavigation)
   window.addEventListener('pagehide', handlePageExit)
   window.addEventListener('beforeunload', handlePageExit)
@@ -746,6 +840,7 @@ onBeforeUnmount(() => {
   removeGitCommandListener?.()
   removeWindowFocusListener?.()
   removeMenuCommandListener?.()
+  removeAppUpdateListener?.()
 })
 </script>
 
@@ -802,6 +897,20 @@ onBeforeUnmount(() => {
         />
       </template>
     </AppHeader>
+
+    <section v-if="appUpdateBannerVisible" class="app-update-banner" role="status">
+      <div class="app-update-copy">
+        <span class="state-chip info">Update</span>
+        <p>{{ appUpdateBannerMessage }}</p>
+      </div>
+      <AppButton
+        icon="pull"
+        :disabled="appUpdateActionDisabled"
+        @click="runAppUpdateAction"
+      >
+        {{ appUpdateActionLabel }}
+      </AppButton>
+    </section>
 
     <div class="app-layout">
       <div class="main-pane">
@@ -1002,6 +1111,34 @@ onBeforeUnmount(() => {
   z-index: 90;
 }
 
+.app-update-banner {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-soft);
+  margin: 0 calc(var(--shell-x) * -1);
+  padding: 10px var(--shell-x);
+  background: color-mix(in srgb, var(--info-soft) 58%, var(--surface));
+  color: var(--text);
+}
+
+.app-update-copy {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-update-copy p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--muted-strong);
+  font-size: var(--font-size-base);
+  font-weight: 720;
+}
+
 .confirm-dialog {
   display: grid;
   width: min(440px, 100%);
@@ -1194,6 +1331,15 @@ onBeforeUnmount(() => {
     bottom: 16px;
     left: 16px;
     width: auto;
+  }
+
+  .app-update-banner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .app-update-banner :deep(.app-button) {
+    width: 100%;
   }
 }
 

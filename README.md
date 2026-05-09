@@ -156,7 +156,7 @@ pnpm run release:alpha:mac
 pnpm run release:alpha:win
 ```
 
-Generated build output is intentionally ignored by Git. Commit source files, configuration, lockfiles, and assets instead.
+Generated build output is intentionally ignored by Git. Commit source files, configuration, lockfiles, and assets instead. Release builds also generate updater metadata such as `latest.yml`, `latest-mac.yml`, or prerelease channel equivalents; upload those files with the installer artifacts.
 
 ## Release Flow
 
@@ -174,7 +174,7 @@ Use this flow when preparing another alpha release:
 7. Review `git status`, then commit the version and documentation changes.
 8. Create a matching Git tag named `v<version>`, for example `v0.1.0-alpha.2`.
 9. Push the branch and tag with `git push origin main` and `git push origin v<version>`.
-10. Create or update the GitHub prerelease for that tag and upload the generated macOS and Windows artifacts.
+10. Create or update the GitHub prerelease for that tag and upload the generated macOS and Windows artifacts, including the updater metadata files and blockmap files.
 
 The release artifacts are written to `release/<version>/` and are not committed.
 

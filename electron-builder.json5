@@ -8,6 +8,14 @@
     "buildResources": "build",
     "output": "release/${version}"
   },
+  "publish": [
+    {
+      "provider": "github",
+      "owner": "lextoc",
+      "repo": "web-dev-companion",
+      "releaseType": "prerelease"
+    }
+  ],
   "files": [
     "dist",
     "dist-electron"
@@ -21,9 +29,10 @@
     "icon": "icon.icns",
     "notarize": true,
     "target": [
-      "dmg"
+      "dmg",
+      "zip"
     ],
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+    "artifactName": "${productName}-Mac-${version}.${ext}"
   },
   "win": {
     "icon": "icon.ico",

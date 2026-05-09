@@ -19,12 +19,20 @@ defineEmits<{
   openInTerminal: [repoPath: string]
 }>()
 
+function publicAssetUrl(path: string) {
+  const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+    ? import.meta.env.BASE_URL
+    : `${import.meta.env.BASE_URL}/`
+
+  return `${baseUrl}${path.replace(/^\/+/, '')}`
+}
+
 const ecosystemBadges: Record<ProjectTaskSource, { label: string; logo: string }> = {
-  node: { label: 'Node', logo: '/ecosystems/node.svg' },
-  gradle: { label: 'Gradle', logo: '/ecosystems/gradle.svg' },
-  maven: { label: 'Maven', logo: '/ecosystems/maven.svg' },
-  rails: { label: 'Rails', logo: '/ecosystems/rails.svg' },
-  rake: { label: 'Rake (Ruby)', logo: '/ecosystems/ruby.svg' },
+  node: { label: 'Node', logo: publicAssetUrl('ecosystems/node.svg') },
+  gradle: { label: 'Gradle', logo: publicAssetUrl('ecosystems/gradle.svg') },
+  maven: { label: 'Maven', logo: publicAssetUrl('ecosystems/maven.svg') },
+  rails: { label: 'Rails', logo: publicAssetUrl('ecosystems/rails.svg') },
+  rake: { label: 'Rake (Ruby)', logo: publicAssetUrl('ecosystems/ruby.svg') },
 }
 
 function ecosystemBadge(source: ProjectTaskSource) {

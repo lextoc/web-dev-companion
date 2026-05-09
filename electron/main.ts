@@ -52,6 +52,9 @@ const appStateFileName = 'app-state.json'
 const repositoriesFileName = 'repositories.json'
 const refreshCommandThrottleMs = 1000
 const devParentPollMs = 1000
+const appUpdateInitialCheckDelayMs = 5000
+const appUpdateBackgroundCheckIntervalMs = 6 * 60 * 60 * 1000
+const appUpdateFocusCheckStaleMs = 60 * 60 * 1000
 const windowBounds = {
   width: 1360,
   height: 820,
@@ -91,6 +94,9 @@ let lastRefreshCommandAt = 0
 let isFlushingAppStateBeforeQuit = false
 let isExitingAfterSignal = false
 let devParentWatcher: NodeJS.Timeout | undefined
+let appUpdateInitialCheckTimer: NodeJS.Timeout | undefined
+let appUpdateBackgroundCheckTimer: NodeJS.Timeout | undefined
+let lastAppUpdateCheckAt = 0
 const terminalWindowsByRunId = new Map<string, Set<BrowserWindowType>>()
 const terminalRunIdByWindowId = new Map<number, string>()
 const desktopMenuState: DesktopMenuState = {
@@ -678,12 +684,73 @@ const appUpdateService = createAppUpdateService({
   isDevelopment: Boolean(VITE_DEV_SERVER_URL),
   onBeforeInstall: async () => {
     isFlushingAppStateBeforeQuit = true
+    stopAppUpdateBackgroundChecks()
     scriptRunner.stopAllScripts()
     await appStateService.flush()
   },
   sendState: sendAppUpdateState,
 })
 onGitCommandLog(sendGitCommandLog)
+
+function appUpdateCheckCanRunInBackground() {
+  const { status } = appUpdateService.getState()
+
+  return !['available', 'downloading', 'downloaded'].includes(status)
+}
+
+async function checkForAppUpdatesInBackground() {
+  if (!appUpdateCheckCanRunInBackground()) {
+    return
+  }
+
+  lastAppUpdateCheckAt = Date.now()
+
+  try {
+    await appUpdateService.checkForUpdates()
+  } catch (error) {
+    console.error('Could not check for app updates in the background.', error)
+  }
+}
+
+async function checkForAppUpdatesByRequest() {
+  lastAppUpdateCheckAt = Date.now()
+  return appUpdateService.checkForUpdates()
+}
+
+function checkForAppUpdatesWhenStale() {
+  if (Date.now() - lastAppUpdateCheckAt < appUpdateFocusCheckStaleMs) {
+    return
+  }
+
+  void checkForAppUpdatesInBackground()
+}
+
+function startAppUpdateBackgroundChecks() {
+  if (!appUpdateInitialCheckTimer && lastAppUpdateCheckAt === 0) {
+    appUpdateInitialCheckTimer = setTimeout(() => {
+      appUpdateInitialCheckTimer = undefined
+      checkForAppUpdatesWhenStale()
+    }, appUpdateInitialCheckDelayMs)
+  }
+
+  if (!appUpdateBackgroundCheckTimer) {
+    appUpdateBackgroundCheckTimer = setInterval(() => {
+      void checkForAppUpdatesInBackground()
+    }, appUpdateBackgroundCheckIntervalMs)
+  }
+}
+
+function stopAppUpdateBackgroundChecks() {
+  if (appUpdateInitialCheckTimer) {
+    clearTimeout(appUpdateInitialCheckTimer)
+    appUpdateInitialCheckTimer = undefined
+  }
+
+  if (appUpdateBackgroundCheckTimer) {
+    clearInterval(appUpdateBackgroundCheckTimer)
+    appUpdateBackgroundCheckTimer = undefined
+  }
+}
 
 function registerAppStateHandlers() {
   ipcMain.handle('app-state:read', appStateService.read)
@@ -816,7 +883,7 @@ function registerRepositoryHandlers() {
     win.webContents.send('desktop:terminal-window-action', request)
   })
   ipcMain.handle('updates:get-state', () => appUpdateService.getState())
-  ipcMain.handle('updates:check', () => appUpdateService.checkForUpdates())
+  ipcMain.handle('updates:check', checkForAppUpdatesByRequest)
   ipcMain.handle('updates:download', () => appUpdateService.downloadUpdate())
   ipcMain.handle('updates:install', () => appUpdateService.installUpdate())
   ipcMain.on('repositories:stop-scripts', (_event, runIds: string[]) => {
@@ -891,6 +958,7 @@ function createWindow() {
 
   win.on('focus', () => {
     win?.webContents.send('repositories:window-focus')
+    checkForAppUpdatesWhenStale()
   })
 
   win.webContents.on('did-finish-load', () => {
@@ -921,6 +989,7 @@ function createWindow() {
 }
 
 app.on('window-all-closed', () => {
+  stopAppUpdateBackgroundChecks()
   scriptRunner.stopAllScripts()
 
   if (process.platform !== 'darwin') {
@@ -936,6 +1005,7 @@ app.on('before-quit', (event) => {
 
   event.preventDefault()
   isFlushingAppStateBeforeQuit = true
+  stopAppUpdateBackgroundChecks()
 
   void appStateService.flush()
     .catch((error) => {
@@ -953,6 +1023,7 @@ function flushAppStateAndExitAfterSignal(signal: NodeJS.Signals) {
 
   isExitingAfterSignal = true
   isFlushingAppStateBeforeQuit = true
+  stopAppUpdateBackgroundChecks()
   scriptRunner.stopAllScripts()
 
   void appStateService.flush()
@@ -971,6 +1042,7 @@ function flushAppStateAndExit(reason: string) {
 
   isExitingAfterSignal = true
   isFlushingAppStateBeforeQuit = true
+  stopAppUpdateBackgroundChecks()
   scriptRunner.stopAllScripts()
   closeAllTerminalWindows()
 
@@ -1019,6 +1091,7 @@ process.once('SIGTERM', flushAppStateAndExitAfterSignal)
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow()
+    startAppUpdateBackgroundChecks()
   }
 })
 
@@ -1029,7 +1102,5 @@ app.whenReady().then(() => {
   registerRepositoryHandlers()
   watchDevParentProcess()
   createWindow()
-  setTimeout(() => {
-    void appUpdateService.checkForUpdates()
-  }, 5000)
+  startAppUpdateBackgroundChecks()
 })

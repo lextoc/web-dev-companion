@@ -50,6 +50,7 @@
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
+    "include": "build/installer.nsh",
     "deleteAppDataOnUninstall": false
   },
   "linux": {

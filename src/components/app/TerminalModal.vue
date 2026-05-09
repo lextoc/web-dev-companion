@@ -397,6 +397,7 @@ const showsSystemWindowControls = computed(
 
 .terminal-window-system-controls {
   display: flex;
+  grid-column: 3;
   height: 100%;
   align-items: stretch;
   justify-self: end;

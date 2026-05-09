@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { ActiveTerminalsSidebar, CommandPalette, KeybindingsSheet, SettingsPanel, TerminalModal } from './components/app'
+import { ActiveTerminalsSidebar, CommandPalette, KeybindingsSheet, SettingsPanel } from './components/app'
 import { RepositoryDashboard, RepositoryDetail } from './components/repository'
 import { RepositoryHeaderControls } from './components/repository/header'
 import { AppButton, AppHeader } from './components/ui'
@@ -54,6 +54,8 @@ let removeGitCommandListener: (() => void) | undefined
 let removeWindowFocusListener: (() => void) | undefined
 let removeMenuCommandListener: (() => void) | undefined
 let removeAppUpdateListener: (() => void) | undefined
+let removeTerminalWindowStateRequestListener: (() => void) | undefined
+let removeTerminalWindowActionListener: (() => void) | undefined
 
 const {
   appToasts,
@@ -110,8 +112,8 @@ const {
 })
 const {
   activeTerminals,
-  closeTerminalModal,
   currentRepoScriptTerminals,
+  handleTerminalWindowAction,
   handleScriptOutput,
   hasRunningScripts,
   openScriptTerminal,
@@ -122,7 +124,7 @@ const {
   runRepositoryScriptsAndWait,
   runningScriptsByRepositoryPath,
   runScript,
-  selectedTerminal,
+  syncTerminalWindowState,
   stopOwnedScripts,
   stopScript,
   stopTerminal,
@@ -721,7 +723,6 @@ async function copyRepositoryPath(repoPath: string) {
 function handlePageExit() {
   cleanupToasts()
   closeConfirmation(false)
-  closeTerminalModal()
   closeKeybindingsSheet()
   stopAutoRefreshTimer()
   stopOwnedScripts()
@@ -749,7 +750,6 @@ function handleGlobalKeydown(event: KeyboardEvent) {
     selectedPath.value &&
     !isCommandPaletteOpen.value &&
     !isKeybindingsOpen.value &&
-    !selectedTerminal.value &&
     !confirmationDialog.value &&
     !isSettingsOpen.value &&
     (
@@ -774,7 +774,6 @@ function handleGlobalKeydown(event: KeyboardEvent) {
       canSyncCurrentBranch() &&
       !isCommandPaletteOpen.value &&
       !isKeybindingsOpen.value &&
-      !selectedTerminal.value &&
       !confirmationDialog.value &&
       !isSettingsOpen.value &&
       currentBranch.value
@@ -795,7 +794,6 @@ function handleGlobalKeydown(event: KeyboardEvent) {
       selectedDetails.value &&
       !isCommandPaletteOpen.value &&
       !isKeybindingsOpen.value &&
-      !selectedTerminal.value &&
       !confirmationDialog.value &&
       !isSettingsOpen.value
     ) {
@@ -828,7 +826,6 @@ function handleGlobalKeydown(event: KeyboardEvent) {
       selectedDetails.value &&
       !isCommandPaletteOpen.value &&
       !isKeybindingsOpen.value &&
-      !selectedTerminal.value &&
       !confirmationDialog.value &&
       !isSettingsOpen.value
     ) {
@@ -860,13 +857,6 @@ function handleGlobalKeydown(event: KeyboardEvent) {
     event.preventDefault()
     event.stopImmediatePropagation()
     closeKeybindingsSheet()
-    return
-  }
-
-  if (selectedTerminal.value) {
-    event.preventDefault()
-    event.stopImmediatePropagation()
-    closeTerminalModal()
     return
   }
 
@@ -913,6 +903,12 @@ onMounted(async () => {
   removeAppUpdateListener = window.updates.onStateChange((state) => {
     appUpdateState.value = state
   })
+  removeTerminalWindowStateRequestListener = window.desktop.onTerminalWindowStateRequest((runId) => {
+    syncTerminalWindowState(runId)
+  })
+  removeTerminalWindowActionListener = window.desktop.onTerminalWindowAction((request) => {
+    void handleTerminalWindowAction(request)
+  })
   appUpdateState.value = await window.updates.getState()
   window.addEventListener('popstate', handleHistoryNavigation)
   window.addEventListener('pagehide', handlePageExit)
@@ -934,6 +930,8 @@ onBeforeUnmount(() => {
   removeWindowFocusListener?.()
   removeMenuCommandListener?.()
   removeAppUpdateListener?.()
+  removeTerminalWindowStateRequestListener?.()
+  removeTerminalWindowActionListener?.()
 })
 </script>
 
@@ -1086,14 +1084,6 @@ onBeforeUnmount(() => {
         @unpin-pinned="unpinScript"
       />
     </div>
-
-    <TerminalModal
-      v-if="selectedTerminal"
-      :terminal="selectedTerminal"
-      @close="closeTerminalModal"
-      @stop="stopTerminal"
-      @restart="restartTerminal"
-    />
 
     <SettingsPanel
       v-if="isSettingsOpen"

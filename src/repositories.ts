@@ -446,8 +446,35 @@ export interface DesktopMenuState {
   hasRunningScripts: boolean
 }
 
+export interface TerminalWindowSnapshot {
+  runId: string
+  terminal: ScriptTerminal | null
+}
+
+export interface TerminalWindowActionRequest {
+  action: 'restart' | 'stop'
+  runId: string
+}
+
+export type TerminalWindowControlAction = 'close' | 'minimize' | 'toggle-maximize'
+
+export interface TerminalWindowReassignment {
+  previousRunId: string
+  terminal: ScriptTerminal
+}
+
 export interface DesktopApi {
   notify: (request: DesktopNotificationRequest) => Promise<boolean>
   setMenuState: (state: DesktopMenuState) => Promise<DesktopMenuState>
+  openTerminalWindow: (terminal: ScriptTerminal) => Promise<boolean>
+  updateTerminalWindow: (terminal: ScriptTerminal) => void
+  closeTerminalWindow: (runId: string) => void
+  reassignTerminalWindow: (reassignment: TerminalWindowReassignment) => void
+  requestTerminalWindowState: (runId: string) => void
+  controlTerminalWindow: (action: TerminalWindowControlAction) => void
+  sendTerminalWindowAction: (request: TerminalWindowActionRequest) => void
   onMenuCommand: (listener: (command: DesktopMenuCommand) => void) => () => void
+  onTerminalWindowState: (listener: (snapshot: TerminalWindowSnapshot) => void) => () => void
+  onTerminalWindowStateRequest: (listener: (runId: string) => void) => () => void
+  onTerminalWindowAction: (listener: (request: TerminalWindowActionRequest) => void) => () => void
 }

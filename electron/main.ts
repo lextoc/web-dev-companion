@@ -11,10 +11,14 @@ import type {
   DesktopMenuCommand,
   DesktopMenuState,
   DesktopNotificationRequest,
+  TerminalWindowActionRequest,
+  TerminalWindowControlAction,
+  TerminalWindowReassignment,
   MergeBranchRequest,
   MergeLinkedSubmoduleBranchRequest,
   OpenCommitInBrowserRequest,
   RepositoryActionRequest,
+  ScriptTerminal,
   ResetTrackedChangesRequest,
   ScriptOutput,
   GitCommandLogEntry,
@@ -39,6 +43,7 @@ const {
   Menu,
   nativeImage,
   Notification,
+  screen,
   shell,
 } = require('electron') as typeof import('electron')
 const currentDirectory = __dirname
@@ -46,12 +51,20 @@ const appName = 'Web Dev Companion'
 const appStateFileName = 'app-state.json'
 const repositoriesFileName = 'repositories.json'
 const refreshCommandThrottleMs = 1000
+const devParentPollMs = 1000
 const windowBounds = {
   width: 1360,
   height: 820,
   minWidth: 1360,
   minHeight: 820,
 }
+const terminalWindowBounds = {
+  width: 720,
+  height: 560,
+  minWidth: 520,
+  minHeight: 360,
+}
+const terminalWindowGutter = 16
 
 app.setName(appName)
 
@@ -77,6 +90,9 @@ let win: BrowserWindowType | null
 let lastRefreshCommandAt = 0
 let isFlushingAppStateBeforeQuit = false
 let isExitingAfterSignal = false
+let devParentWatcher: NodeJS.Timeout | undefined
+const terminalWindowsByRunId = new Map<string, Set<BrowserWindowType>>()
+const terminalRunIdByWindowId = new Map<number, string>()
 const desktopMenuState: DesktopMenuState = {
   hasRepositoryDetail: false,
   hasRunningScripts: false,
@@ -112,6 +128,16 @@ function platformWindowOptions(): Electron.BrowserWindowConstructorOptions {
   }
 
   return {}
+}
+
+function terminalPlatformWindowOptions(): Electron.BrowserWindowConstructorOptions {
+  return {
+    autoHideMenuBar: true,
+    backgroundColor: '#0c1116',
+    frame: false,
+    hasShadow: true,
+    titleBarStyle: 'default' as const,
+  }
 }
 
 function appStateFilePath() {
@@ -182,6 +208,238 @@ function sendAppUpdateState(state: AppUpdateState) {
   win.webContents.send('updates:state-change', state)
 }
 
+function terminalWindowTitle(terminal: Pick<ScriptTerminal, 'repoName' | 'taskName'>) {
+  return `${terminal.taskName} - ${terminal.repoName}`
+}
+
+function activeTerminalWindowCount() {
+  return [...terminalWindowsByRunId.values()].reduce((count, terminalWindows) => (
+    count + [...terminalWindows].filter((terminalWindow) => !terminalWindow.isDestroyed()).length
+  ), 0)
+}
+
+function terminalWindowWorkArea() {
+  if (!win || win.isDestroyed()) {
+    return screen.getPrimaryDisplay().workArea
+  }
+
+  const mainWindowBounds = win.getBounds()
+  const mainWindowCenter = {
+    x: mainWindowBounds.x + Math.round(mainWindowBounds.width / 2),
+    y: mainWindowBounds.y + Math.round(mainWindowBounds.height / 2),
+  }
+
+  return screen.getDisplayNearestPoint(mainWindowCenter).workArea
+}
+
+function terminalWindowPosition(): Pick<Electron.BrowserWindowConstructorOptions, 'x' | 'y'> {
+  const workArea = terminalWindowWorkArea()
+  const openWindowCount = activeTerminalWindowCount()
+  const columns = Math.max(
+    1,
+    Math.floor((workArea.width + terminalWindowGutter) / (terminalWindowBounds.width + terminalWindowGutter)),
+  )
+  const rows = Math.max(
+    1,
+    Math.floor((workArea.height + terminalWindowGutter) / (terminalWindowBounds.height + terminalWindowGutter)),
+  )
+  const slotIndex = openWindowCount % Math.max(1, columns * rows)
+  const columnIndex = slotIndex % columns
+  const rowIndex = Math.floor(slotIndex / columns)
+  const maxXOffset = Math.max(0, workArea.width - terminalWindowBounds.width)
+  const maxYOffset = Math.max(0, workArea.height - terminalWindowBounds.height)
+
+  return {
+    x: workArea.x + Math.min(maxXOffset, columnIndex * (terminalWindowBounds.width + terminalWindowGutter)),
+    y: workArea.y + Math.min(maxYOffset, rowIndex * (terminalWindowBounds.height + terminalWindowGutter)),
+  }
+}
+
+function sendTerminalWindowState(
+  terminalWindow: BrowserWindowType,
+  runId: string,
+  terminal: ScriptTerminal | null,
+) {
+  if (terminalWindow.isDestroyed() || terminalWindow.webContents.isDestroyed()) {
+    return
+  }
+
+  terminalWindow.webContents.send('desktop:terminal-window-state', {
+    runId,
+    terminal,
+  })
+}
+
+function terminalWindowSetForRun(runId: string) {
+  const existingWindows = terminalWindowsByRunId.get(runId)
+
+  if (existingWindows) {
+    return existingWindows
+  }
+
+  const terminalWindows = new Set<BrowserWindowType>()
+  terminalWindowsByRunId.set(runId, terminalWindows)
+  return terminalWindows
+}
+
+function removeTerminalWindow(terminalWindow: BrowserWindowType) {
+  const runId = terminalRunIdByWindowId.get(terminalWindow.id)
+
+  if (!runId) {
+    return
+  }
+
+  terminalRunIdByWindowId.delete(terminalWindow.id)
+  const terminalWindows = terminalWindowsByRunId.get(runId)
+  terminalWindows?.delete(terminalWindow)
+
+  if (terminalWindows?.size === 0) {
+    terminalWindowsByRunId.delete(runId)
+  }
+}
+
+function registerTerminalWindow(runId: string, terminalWindow: BrowserWindowType) {
+  terminalRunIdByWindowId.set(terminalWindow.id, runId)
+  terminalWindowSetForRun(runId).add(terminalWindow)
+
+  terminalWindow.on('closed', () => {
+    removeTerminalWindow(terminalWindow)
+  })
+}
+
+function loadRendererWindow(targetWindow: BrowserWindowType, query?: Record<string, string>) {
+  if (VITE_DEV_SERVER_URL) {
+    const rendererUrl = new URL(VITE_DEV_SERVER_URL)
+
+    for (const [key, value] of Object.entries(query ?? {})) {
+      rendererUrl.searchParams.set(key, value)
+    }
+
+    targetWindow.loadURL(rendererUrl.toString())
+    return
+  }
+
+  targetWindow.loadFile(path.join(RENDERER_DIST, 'index.html'), query ? { query } : undefined)
+}
+
+function createTerminalWindow(terminal: ScriptTerminal) {
+  const terminalWindow = new BrowserWindow({
+    ...terminalWindowBounds,
+    ...terminalWindowPosition(),
+    title: terminalWindowTitle(terminal),
+    icon: appIconPath(),
+    ...terminalPlatformWindowOptions(),
+    webPreferences: {
+      preload: path.join(currentDirectory, 'preload.js'),
+    },
+  })
+
+  if (process.platform === 'win32') {
+    terminalWindow.setMenuBarVisibility(false)
+  }
+
+  terminalWindow.webContents.setZoomFactor(1)
+  terminalWindow.webContents.setVisualZoomLevelLimits(1, 1)
+  registerTerminalWindow(terminal.runId, terminalWindow)
+
+  terminalWindow.webContents.on('before-input-event', (event, input) => {
+    if (!isCloseWindowShortcut(input)) {
+      return
+    }
+
+    event.preventDefault()
+    terminalWindow.close()
+  })
+
+  terminalWindow.webContents.on('did-finish-load', () => {
+    sendTerminalWindowState(terminalWindow, terminal.runId, terminal)
+  })
+
+  loadRendererWindow(terminalWindow, {
+    terminalRunId: terminal.runId,
+    window: 'terminal',
+  })
+
+  return true
+}
+
+function broadcastTerminalWindowState(terminal: ScriptTerminal) {
+  const terminalWindows = terminalWindowsByRunId.get(terminal.runId)
+
+  if (!terminalWindows) {
+    return
+  }
+
+  for (const terminalWindow of terminalWindows) {
+    terminalWindow.setTitle(terminalWindowTitle(terminal))
+    sendTerminalWindowState(terminalWindow, terminal.runId, terminal)
+  }
+}
+
+function closeTerminalWindows(runId: string) {
+  const terminalWindows = terminalWindowsByRunId.get(runId)
+
+  if (!terminalWindows) {
+    return
+  }
+
+  for (const terminalWindow of [...terminalWindows]) {
+    terminalWindow.close()
+  }
+}
+
+function closeAllTerminalWindows() {
+  for (const runId of [...terminalWindowsByRunId.keys()]) {
+    closeTerminalWindows(runId)
+  }
+}
+
+function reassignTerminalWindows({ previousRunId, terminal }: TerminalWindowReassignment) {
+  const terminalWindows = terminalWindowsByRunId.get(previousRunId)
+
+  if (!terminalWindows) {
+    return
+  }
+
+  terminalWindowsByRunId.delete(previousRunId)
+  const nextWindows = terminalWindowSetForRun(terminal.runId)
+
+  for (const terminalWindow of terminalWindows) {
+    terminalRunIdByWindowId.set(terminalWindow.id, terminal.runId)
+    nextWindows.add(terminalWindow)
+    terminalWindow.setTitle(terminalWindowTitle(terminal))
+    sendTerminalWindowState(terminalWindow, terminal.runId, terminal)
+  }
+}
+
+function controlTerminalWindow(
+  sender: Electron.WebContents,
+  action: TerminalWindowControlAction,
+) {
+  const terminalWindow = BrowserWindow.fromWebContents(sender)
+
+  if (!terminalWindow || !terminalRunIdByWindowId.has(terminalWindow.id)) {
+    return
+  }
+
+  if (action === 'close') {
+    terminalWindow.close()
+    return
+  }
+
+  if (action === 'minimize') {
+    terminalWindow.minimize()
+    return
+  }
+
+  if (terminalWindow.isMaximized()) {
+    terminalWindow.unmaximize()
+    return
+  }
+
+  terminalWindow.maximize()
+}
+
 function sendThrottledRefreshCommand() {
   const now = Date.now()
 
@@ -209,6 +467,16 @@ function isZoomShortcut(input: Electron.Input) {
   }
 
   return ['+', '=', '-', '_', '0'].includes(input.key)
+}
+
+function isCloseWindowShortcut(input: Electron.Input) {
+  return (
+    input.type === 'keyDown' &&
+    input.key.toLowerCase() === 'w' &&
+    !input.alt &&
+    !input.shift &&
+    ((input.meta && !input.control) || (input.control && !input.meta))
+  )
 }
 
 function setMenuItemEnabled(id: string, enabled: boolean) {
@@ -505,6 +773,7 @@ function registerRepositoryHandlers() {
     chooseAndCloneGitHubRepository(nameWithOwner),
   )
   ipcMain.handle('desktop:set-menu-state', (_event, state: DesktopMenuState) => updateDesktopMenuState(state))
+  ipcMain.handle('desktop:open-terminal-window', (_event, terminal: ScriptTerminal) => createTerminalWindow(terminal))
   ipcMain.handle('desktop:notify', (_event, request: DesktopNotificationRequest) => {
     if (!Notification.isSupported()) {
       return false
@@ -517,6 +786,34 @@ function registerRepositoryHandlers() {
     }).show()
 
     return true
+  })
+  ipcMain.on('desktop:update-terminal-window', (_event, terminal: ScriptTerminal) => {
+    broadcastTerminalWindowState(terminal)
+  })
+  ipcMain.on('desktop:close-terminal-window', (_event, runId: string) => {
+    closeTerminalWindows(runId)
+  })
+  ipcMain.on('desktop:reassign-terminal-window', (_event, reassignment: TerminalWindowReassignment) => {
+    reassignTerminalWindows(reassignment)
+  })
+  ipcMain.on('desktop:request-terminal-window-state', (_event, runId: string) => {
+    if (!win || win.isDestroyed() || win.webContents.isDestroyed()) {
+      closeTerminalWindows(runId)
+      return
+    }
+
+    win.webContents.send('desktop:terminal-window-state-request', runId)
+  })
+  ipcMain.on('desktop:terminal-window-control', (event, action: TerminalWindowControlAction) => {
+    controlTerminalWindow(event.sender, action)
+  })
+  ipcMain.on('desktop:terminal-window-action', (_event, request: TerminalWindowActionRequest) => {
+    if (!win || win.isDestroyed() || win.webContents.isDestroyed()) {
+      closeTerminalWindows(request.runId)
+      return
+    }
+
+    win.webContents.send('desktop:terminal-window-action', request)
   })
   ipcMain.handle('updates:get-state', () => appUpdateService.getState())
   ipcMain.handle('updates:check', () => appUpdateService.checkForUpdates())
@@ -600,6 +897,11 @@ function createWindow() {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
   })
 
+  win.on('closed', () => {
+    win = null
+    closeAllTerminalWindows()
+  })
+
   win.webContents.on('before-input-event', (event, input) => {
     if (isZoomShortcut(input)) {
       event.preventDefault()
@@ -615,11 +917,7 @@ function createWindow() {
     sendThrottledRefreshCommand()
   })
 
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL)
-  } else {
-    win.loadFile(path.join(RENDERER_DIST, 'index.html'))
-  }
+  loadRendererWindow(win)
 }
 
 app.on('window-all-closed', () => {
@@ -666,6 +964,55 @@ function flushAppStateAndExitAfterSignal(signal: NodeJS.Signals) {
     })
 }
 
+function flushAppStateAndExit(reason: string) {
+  if (isExitingAfterSignal) {
+    return
+  }
+
+  isExitingAfterSignal = true
+  isFlushingAppStateBeforeQuit = true
+  scriptRunner.stopAllScripts()
+  closeAllTerminalWindows()
+
+  void appStateService.flush()
+    .catch((error) => {
+      console.error(`Could not flush app state before ${reason}.`, error)
+    })
+    .finally(() => {
+      app.exit(0)
+    })
+}
+
+function isProcessAlive(pid: number) {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (error) {
+    return !(error instanceof Error && 'code' in error && error.code === 'ESRCH')
+  }
+}
+
+function watchDevParentProcess() {
+  if (!VITE_DEV_SERVER_URL || process.ppid <= 1) {
+    return
+  }
+
+  const devParentPid = process.ppid
+  devParentWatcher = setInterval(() => {
+    if (process.ppid !== 1 && isProcessAlive(devParentPid)) {
+      return
+    }
+
+    if (devParentWatcher) {
+      clearInterval(devParentWatcher)
+      devParentWatcher = undefined
+    }
+
+    flushAppStateAndExit('dev parent exit')
+  }, devParentPollMs)
+  devParentWatcher.unref()
+}
+
 process.once('SIGINT', flushAppStateAndExitAfterSignal)
 process.once('SIGTERM', flushAppStateAndExitAfterSignal)
 
@@ -680,6 +1027,7 @@ app.whenReady().then(() => {
   configureApplicationMenu()
   registerAppStateHandlers()
   registerRepositoryHandlers()
+  watchDevParentProcess()
   createWindow()
   setTimeout(() => {
     void appUpdateService.checkForUpdates()

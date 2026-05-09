@@ -87,6 +87,13 @@ const repositories: RepositoryApi = {
 const desktop: DesktopApi = {
   notify: (request) => ipcRenderer.invoke('desktop:notify', request),
   setMenuState: (state) => ipcRenderer.invoke('desktop:set-menu-state', state),
+  openTerminalWindow: (terminal) => ipcRenderer.invoke('desktop:open-terminal-window', terminal),
+  updateTerminalWindow: (terminal) => ipcRenderer.send('desktop:update-terminal-window', terminal),
+  closeTerminalWindow: (runId) => ipcRenderer.send('desktop:close-terminal-window', runId),
+  reassignTerminalWindow: (reassignment) => ipcRenderer.send('desktop:reassign-terminal-window', reassignment),
+  requestTerminalWindowState: (runId) => ipcRenderer.send('desktop:request-terminal-window-state', runId),
+  controlTerminalWindow: (action) => ipcRenderer.send('desktop:terminal-window-control', action),
+  sendTerminalWindowAction: (request) => ipcRenderer.send('desktop:terminal-window-action', request),
   onMenuCommand: (listener) => {
     const wrappedListener = (_event: Electron.IpcRendererEvent, command: Parameters<typeof listener>[0]) => {
       listener(command)
@@ -96,6 +103,39 @@ const desktop: DesktopApi = {
 
     return () => {
       ipcRenderer.off('desktop:menu-command', wrappedListener)
+    }
+  },
+  onTerminalWindowState: (listener) => {
+    const wrappedListener = (_event: Electron.IpcRendererEvent, snapshot: Parameters<typeof listener>[0]) => {
+      listener(snapshot)
+    }
+
+    ipcRenderer.on('desktop:terminal-window-state', wrappedListener)
+
+    return () => {
+      ipcRenderer.off('desktop:terminal-window-state', wrappedListener)
+    }
+  },
+  onTerminalWindowStateRequest: (listener) => {
+    const wrappedListener = (_event: Electron.IpcRendererEvent, runId: string) => {
+      listener(runId)
+    }
+
+    ipcRenderer.on('desktop:terminal-window-state-request', wrappedListener)
+
+    return () => {
+      ipcRenderer.off('desktop:terminal-window-state-request', wrappedListener)
+    }
+  },
+  onTerminalWindowAction: (listener) => {
+    const wrappedListener = (_event: Electron.IpcRendererEvent, request: Parameters<typeof listener>[0]) => {
+      listener(request)
+    }
+
+    ipcRenderer.on('desktop:terminal-window-action', wrappedListener)
+
+    return () => {
+      ipcRenderer.off('desktop:terminal-window-action', wrappedListener)
     }
   },
 }

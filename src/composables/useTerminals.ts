@@ -1,4 +1,4 @@
-import { computed, ref, type Ref } from 'vue'
+import { computed, ref, toRaw, type Ref } from 'vue'
 import type { PinnedScript, ProjectTask, RepositoryDetails, ScriptOutput, ScriptTerminal } from '../repositories'
 
 interface UseTerminalsOptions {
@@ -14,12 +14,15 @@ interface ScriptRunResult {
   signal?: string | null
 }
 
+function terminalWindowSnapshot(terminal: ScriptTerminal): ScriptTerminal {
+  return { ...toRaw(terminal) }
+}
+
 export function useTerminals({
   clearError,
   selectedDetails,
   showError,
 }: UseTerminalsOptions) {
-  const selectedTerminalRunId = ref<string | null>(null)
   const scriptTerminals = ref<Record<string, ScriptTerminal>>({})
   const appOwnedRunIds = new Set<string>()
   const scriptRunWaiters = new Map<string, Array<(result: ScriptRunResult) => void>>()
@@ -66,10 +69,6 @@ export function useTerminals({
     )
   })
 
-  const selectedTerminal = computed(() =>
-    selectedTerminalRunId.value ? scriptTerminals.value[selectedTerminalRunId.value] : undefined,
-  )
-
   function terminalForTask(repoPath: string, taskId: string) {
     return Object.values(scriptTerminals.value).find((terminal) =>
       terminal.repoPath === repoPath && terminal.taskId === taskId,
@@ -103,13 +102,15 @@ export function useTerminals({
       }
     }
 
-    scriptTerminals.value[output.runId] = {
+    const nextTerminal = {
       ...terminal,
       output: `${terminal.output}${output.text}`,
       isRunning: output.done ? false : terminal.isRunning,
       exitCode: output.done ? output.exitCode ?? null : terminal.exitCode,
       signal: output.done ? output.signal ?? null : terminal.signal,
     }
+    scriptTerminals.value[output.runId] = nextTerminal
+    window.desktop.updateTerminalWindow(terminalWindowSnapshot(nextTerminal))
 
     if (output.done) {
       appOwnedRunIds.delete(output.runId)
@@ -147,6 +148,10 @@ export function useTerminals({
   function stopOwnedScripts() {
     if (appOwnedRunIds.size > 0) {
       window.repositories.stopScripts([...appOwnedRunIds])
+    }
+
+    for (const runId of Object.keys(scriptTerminals.value)) {
+      window.desktop.closeTerminalWindow(runId)
     }
 
     appOwnedRunIds.clear()
@@ -209,7 +214,7 @@ export function useTerminals({
     const existingTerminal = terminalForTask(script.repoPath, script.taskId)
 
     if (existingTerminal) {
-      selectedTerminalRunId.value = existingTerminal.runId
+      await openDetachedTerminal(existingTerminal)
       return
     }
 
@@ -300,10 +305,7 @@ export function useTerminals({
     const nextTerminals = { ...scriptTerminals.value }
     delete nextTerminals[terminal.runId]
     scriptTerminals.value = nextTerminals
-
-    if (selectedTerminalRunId.value === terminal.runId) {
-      selectedTerminalRunId.value = null
-    }
+    window.desktop.closeTerminalWindow(terminal.runId)
   }
 
   async function stopScript(taskId: string) {
@@ -320,7 +322,7 @@ export function useTerminals({
     const terminal = scriptTerminals.value[runId]
 
     if (!terminal) {
-      return
+      return undefined
     }
 
     clearError()
@@ -341,11 +343,21 @@ export function useTerminals({
       source: terminal.source,
     })
 
-    if (newRunId && selectedTerminalRunId.value === runId) {
-      selectedTerminalRunId.value = newRunId
-    } else if (!newRunId && selectedTerminalRunId.value === runId) {
-      selectedTerminalRunId.value = null
+    if (!newRunId) {
+      window.desktop.closeTerminalWindow(runId)
+      return undefined
     }
+
+    const newTerminal = scriptTerminals.value[newRunId]
+
+    if (newTerminal) {
+      window.desktop.reassignTerminalWindow({
+        previousRunId: runId,
+        terminal: terminalWindowSnapshot(newTerminal),
+      })
+    }
+
+    return newRunId
   }
 
   async function restartScript(taskId: string) {
@@ -363,24 +375,50 @@ export function useTerminals({
     const terminal = currentRepoScriptTerminals.value[taskId]
 
     if (terminal) {
-      selectedTerminalRunId.value = terminal.runId
+      void openDetachedTerminal(terminal)
     }
   }
 
   function openTerminal(runId: string) {
-    if (scriptTerminals.value[runId]) {
-      selectedTerminalRunId.value = runId
+    const terminal = scriptTerminals.value[runId]
+
+    if (terminal) {
+      void openDetachedTerminal(terminal)
     }
   }
 
-  function closeTerminalModal() {
-    selectedTerminalRunId.value = null
+  async function openDetachedTerminal(terminal: ScriptTerminal) {
+    try {
+      await window.desktop.openTerminalWindow(terminalWindowSnapshot(terminal))
+    } catch (error) {
+      showError(error)
+    }
+  }
+
+  function syncTerminalWindowState(runId: string) {
+    const terminal = scriptTerminals.value[runId]
+
+    if (terminal) {
+      window.desktop.updateTerminalWindow(terminalWindowSnapshot(terminal))
+      return
+    }
+
+    window.desktop.closeTerminalWindow(runId)
+  }
+
+  async function handleTerminalWindowAction(request: { action: 'restart' | 'stop'; runId: string }) {
+    if (request.action === 'restart') {
+      await restartTerminal(request.runId)
+      return
+    }
+
+    await stopTerminal(request.runId)
   }
 
   return {
     activeTerminals,
-    closeTerminalModal,
     currentRepoScriptTerminals,
+    handleTerminalWindowAction,
     handleScriptOutput,
     hasRunningScripts,
     openScriptTerminal,
@@ -391,7 +429,7 @@ export function useTerminals({
     runRepositoryScriptsAndWait,
     runningScriptsByRepositoryPath,
     runScript,
-    selectedTerminal,
+    syncTerminalWindowState,
     stopOwnedScripts,
     stopScript,
     stopTerminal,

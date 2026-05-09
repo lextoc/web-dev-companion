@@ -26,6 +26,7 @@ import type {
 } from '../src/repositories'
 import {
   detectPackageManager,
+  fetchGitRemote,
   hasStagedOrUnstagedChanges,
   isGitAncestor,
   normalizeRepositoryPath,
@@ -47,6 +48,7 @@ import { readProjectTasks } from './project-tasks'
 type ElectronShell = typeof import('electron').shell
 
 const maxInlineFileDiffBytes = 500_000
+const syncOperationLocks = new Map<string, Promise<void>>()
 
 function launchDetached(command: string, args: string[], cwd?: string) {
   return new Promise<void>((resolve, reject) => {
@@ -124,6 +126,29 @@ function commitBrowserUrl(remoteUrl: string, hash: string) {
   }
 
   return `${browserUrl}/commit/${hash}`
+}
+
+async function withRepositorySyncLock<T>(repoPath: string, action: () => Promise<T>) {
+  const lockKey = process.platform === 'win32' ? path.resolve(repoPath).toLowerCase() : path.resolve(repoPath)
+  const previousLock = syncOperationLocks.get(lockKey) ?? Promise.resolve()
+  let releaseCurrentLock!: () => void
+  const currentLock = new Promise<void>((resolve) => {
+    releaseCurrentLock = resolve
+  })
+  const queuedLock = previousLock.catch(() => undefined).then(() => currentLock)
+
+  syncOperationLocks.set(lockKey, queuedLock)
+  await previousLock.catch(() => undefined)
+
+  try {
+    return await action()
+  } finally {
+    releaseCurrentLock()
+
+    if (syncOperationLocks.get(lockKey) === queuedLock) {
+      syncOperationLocks.delete(lockKey)
+    }
+  }
 }
 
 async function openWindowsTerminal(normalizedPath: string) {
@@ -486,74 +511,76 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
   }
 
   async function syncBranchInRepository(repoPath: string, branchName: string) {
-    const [gitStatus, branches] = await Promise.all([readGitStatus(repoPath), readGitBranches(repoPath)])
+    return withRepositorySyncLock(repoPath, async () => {
+      const [gitStatus, branches] = await Promise.all([readGitStatus(repoPath), readGitBranches(repoPath)])
 
-    if (hasStagedOrUnstagedChanges(gitStatus)) {
-      throw new Error('Commit, stash, or discard staged and unstaged changes before syncing branches.')
-    }
+      if (hasStagedOrUnstagedChanges(gitStatus)) {
+        throw new Error('Commit, stash, or discard staged and unstaged changes before syncing branches.')
+      }
 
-    const branch = branches.find((entry) => entry.name === branchName)
+      const branch = branches.find((entry) => entry.name === branchName)
 
-    if (!branch) {
-      throw new Error(`Branch "${branchName}" was not found.`)
-    }
+      if (!branch) {
+        throw new Error(`Branch "${branchName}" was not found.`)
+      }
 
-    if (!branch.upstream) {
-      throw new Error(`Branch "${branchName}" has no upstream remote branch.`)
-    }
+      if (!branch.upstream) {
+        throw new Error(`Branch "${branchName}" has no upstream remote branch.`)
+      }
 
-    if (branch.remoteGone) {
-      throw new Error(`Branch "${branchName}" tracks a remote branch that is gone.`)
-    }
+      if (branch.remoteGone) {
+        throw new Error(`Branch "${branchName}" tracks a remote branch that is gone.`)
+      }
 
-    const remoteName = await runGit(repoPath, ['config', '--get', `branch.${branchName}.remote`])
+      const remoteName = await runGit(repoPath, ['config', '--get', `branch.${branchName}.remote`])
 
-    if (!remoteName || remoteName === '.') {
-      throw new Error(`Branch "${branchName}" does not track a remote branch.`)
-    }
+      if (!remoteName || remoteName === '.') {
+        throw new Error(`Branch "${branchName}" does not track a remote branch.`)
+      }
 
-    const upstreamMergeRef = await runGit(repoPath, ['config', '--get', `branch.${branchName}.merge`])
+      const upstreamMergeRef = await runGit(repoPath, ['config', '--get', `branch.${branchName}.merge`])
 
-    if (!upstreamMergeRef) {
-      throw new Error(`Branch "${branchName}" does not track a remote branch.`)
-    }
+      if (!upstreamMergeRef) {
+        throw new Error(`Branch "${branchName}" does not track a remote branch.`)
+      }
 
-    await runGit(repoPath, ['fetch', remoteName], 120000)
+      await fetchGitRemote(repoPath, remoteName)
 
-    const refreshedBranch = (await readGitBranches(repoPath)).find((entry) => entry.name === branchName)
+      const refreshedBranch = (await readGitBranches(repoPath)).find((entry) => entry.name === branchName)
 
-    if (!refreshedBranch) {
-      throw new Error(`Branch "${branchName}" was not found.`)
-    }
+      if (!refreshedBranch) {
+        throw new Error(`Branch "${branchName}" was not found.`)
+      }
 
-    if (refreshedBranch.remoteGone) {
-      throw new Error(`Branch "${branchName}" tracks a remote branch that is gone.`)
-    }
+      if (refreshedBranch.remoteGone) {
+        throw new Error(`Branch "${branchName}" tracks a remote branch that is gone.`)
+      }
 
-    const branchRef = `refs/heads/${branchName}`
-    const localCommit = await runGit(repoPath, ['rev-parse', '--verify', branchRef])
-    const upstreamCommit = await runGit(repoPath, ['rev-parse', '--verify', `${branchName}@{upstream}`])
+      const branchRef = `refs/heads/${branchName}`
+      const localCommit = await runGit(repoPath, ['rev-parse', '--verify', branchRef])
+      const upstreamCommit = await runGit(repoPath, ['rev-parse', '--verify', `${branchName}@{upstream}`])
 
-    if (localCommit === upstreamCommit) {
-      return false
-    }
-
-    if (await isGitAncestor(repoPath, localCommit, upstreamCommit)) {
-      if (refreshedBranch.current) {
-        await runGit(repoPath, ['merge', '--ff-only', `${branchName}@{upstream}`], 120000)
+      if (localCommit === upstreamCommit) {
         return false
       }
 
-      await runGit(repoPath, ['update-ref', branchRef, upstreamCommit, localCommit], 120000)
-      return false
-    }
+      if (await isGitAncestor(repoPath, localCommit, upstreamCommit)) {
+        if (refreshedBranch.current) {
+          await runGit(repoPath, ['merge', '--ff-only', `${branchName}@{upstream}`], 120000)
+          return false
+        }
 
-    if (await isGitAncestor(repoPath, upstreamCommit, localCommit)) {
-      await runGit(repoPath, ['push', remoteName, `${branchRef}:${upstreamMergeRef}`], 120000)
-      return true
-    }
+        await runGit(repoPath, ['update-ref', branchRef, upstreamCommit, localCommit], 120000)
+        return false
+      }
 
-    throw new Error(`Branch "${branchName}" has both local and remote commits. Resolve it manually before syncing.`)
+      if (await isGitAncestor(repoPath, upstreamCommit, localCommit)) {
+        await runGit(repoPath, ['push', remoteName, `${branchRef}:${upstreamMergeRef}`], 120000)
+        return true
+      }
+
+      throw new Error(`Branch "${branchName}" has both local and remote commits. Resolve it manually before syncing.`)
+    })
   }
 
   async function syncBranch(request: SyncBranchRequest): Promise<SyncBranchResult> {

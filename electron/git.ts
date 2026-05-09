@@ -17,6 +17,7 @@ import { childProcessEnv } from './process-env'
 const execFileAsync = promisify(execFile)
 let nextGitCommandLogId = 0
 let gitCommandLogListener: ((entry: GitCommandLogEntry) => void) | undefined
+const fetchHeadRetryDelaysMs = [250, 750, 1500, 3000]
 
 export function onGitCommandLog(listener: (entry: GitCommandLogEntry) => void) {
   gitCommandLogListener = listener
@@ -89,6 +90,42 @@ export async function tryRunGit(repoPath: string, args: string[]) {
   } catch {
     return ''
   }
+}
+
+function delay(ms: number) {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
+function isFetchHeadPermissionError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error)
+
+  return /\bFETCH_HEAD\b/i.test(message) && /Permission denied/i.test(message)
+}
+
+export async function fetchGitRemote(repoPath: string, remoteName: string, timeout = 120000) {
+  const args = ['fetch', remoteName]
+
+  for (let attemptIndex = 0; attemptIndex <= fetchHeadRetryDelaysMs.length; attemptIndex += 1) {
+    try {
+      return await runGit(repoPath, args, timeout)
+    } catch (error) {
+      if (!isFetchHeadPermissionError(error) || attemptIndex >= fetchHeadRetryDelaysMs.length) {
+        if (isFetchHeadPermissionError(error)) {
+          throw new Error(
+            'Git could not write .git/FETCH_HEAD. Close other Git tools using this repository, check that the repository is writable, then try syncing again.',
+          )
+        }
+
+        throw error
+      }
+
+      await delay(fetchHeadRetryDelaysMs[attemptIndex])
+    }
+  }
+
+  return ''
 }
 
 export async function normalizeRepositoryPath(repoPath: string) {

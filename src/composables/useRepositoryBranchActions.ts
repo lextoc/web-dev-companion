@@ -207,7 +207,7 @@ export function useRepositoryBranchActions({
   }
 
   async function syncBranch(branchName: string) {
-    if (!selectedDetails.value) {
+    if (!selectedDetails.value || syncingBranchName.value) {
       return
     }
 
@@ -248,7 +248,7 @@ export function useRepositoryBranchActions({
   }
 
   async function syncSubmoduleBranch(submodulePath: string, branchName: string) {
-    if (!selectedDetails.value) {
+    if (!selectedDetails.value || syncingSubmoduleBranchName.value) {
       return
     }
 

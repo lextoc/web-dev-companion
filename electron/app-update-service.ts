@@ -1,7 +1,5 @@
-import type { ProgressInfo, UpdateInfo } from 'electron-updater'
+import { autoUpdater, type ProgressInfo, type UpdateInfo } from 'electron-updater'
 import type { AppUpdateRelease, AppUpdateState, AppUpdateStatus } from '../src/updates'
-
-const { autoUpdater } = require('electron-updater') as typeof import('electron-updater')
 
 interface AppUpdateServiceOptions {
   app: Electron.App

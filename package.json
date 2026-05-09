@@ -2,7 +2,7 @@
   "name": "web-dev-companion",
   "private": true,
   "license": "MIT",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "Desktop companion for managing local web development repositories.",
   "author": "Alexander Claes",
   "packageManager": "pnpm@10.14.0",

@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { spawn } from 'node:child_process'
+import { execFile, spawn } from 'node:child_process'
+import { promisify } from 'node:util'
 import type {
   CheckoutBranchRequest,
   CheckoutSubmoduleBranchRequest,
@@ -10,6 +11,7 @@ import type {
   CommitRequest,
   DeleteBranchRequest,
   DeleteSubmoduleBranchRequest,
+  GitHubRepositorySummary,
   MergeBranchRequest,
   MergeLinkedSubmoduleBranchRequest,
   OpenCommitInBrowserRequest,
@@ -44,11 +46,39 @@ import {
   readProjectHealth,
 } from './project-health'
 import { readProjectTasks } from './project-tasks'
+import { childProcessEnv } from './process-env'
 
 type ElectronShell = typeof import('electron').shell
 
 const maxInlineFileDiffBytes = 500_000
 const syncOperationLocks = new Map<string, Promise<void>>()
+const execFileAsync = promisify(execFile)
+const githubRepositoryFields = [
+  'name',
+  'nameWithOwner',
+  'description',
+  'url',
+  'isPrivate',
+  'isFork',
+  'updatedAt',
+  'primaryLanguage',
+].join(',')
+
+interface CloneGitHubRepositoryRequest {
+  nameWithOwner: string
+  parentDirectory: string
+}
+
+interface GitHubRepositoryPayload {
+  name?: unknown
+  nameWithOwner?: unknown
+  description?: unknown
+  url?: unknown
+  isPrivate?: unknown
+  isFork?: unknown
+  updatedAt?: unknown
+  primaryLanguage?: unknown
+}
 
 function launchDetached(command: string, args: string[], cwd?: string) {
   return new Promise<void>((resolve, reject) => {
@@ -64,6 +94,82 @@ function launchDetached(command: string, args: string[], cwd?: string) {
       resolve()
     })
   })
+}
+
+function isCommandNotFoundError(error: unknown) {
+  return error instanceof Error && 'code' in error && error.code === 'ENOENT'
+}
+
+function commandErrorOutput(error: unknown) {
+  if (error && typeof error === 'object' && 'stderr' in error && typeof error.stderr === 'string') {
+    return error.stderr.trim()
+  }
+
+  return error instanceof Error ? error.message : 'Command failed.'
+}
+
+async function runGitHubCli(args: string[], cwd?: string, timeout = 120000) {
+  try {
+    const { stdout } = await execFileAsync('gh', args, {
+      cwd,
+      encoding: 'utf8',
+      env: childProcessEnv(),
+      timeout,
+    })
+
+    return stdout.trim()
+  } catch (error) {
+    if (isCommandNotFoundError(error)) {
+      throw new Error('GitHub CLI is required to list and clone your repositories. Install gh, then run `gh auth login`.')
+    }
+
+    const output = commandErrorOutput(error)
+
+    if (/not logged in|authentication|auth login|no github hosts/i.test(output)) {
+      throw new Error('Sign in with GitHub CLI first by running `gh auth login`, then try again.')
+    }
+
+    throw new Error(output || 'GitHub CLI command failed.')
+  }
+}
+
+function normalizeGitHubRepository(payload: GitHubRepositoryPayload): GitHubRepositorySummary | null {
+  if (
+    typeof payload.name !== 'string' ||
+    typeof payload.nameWithOwner !== 'string' ||
+    typeof payload.url !== 'string'
+  ) {
+    return null
+  }
+
+  const primaryLanguage =
+    payload.primaryLanguage &&
+    typeof payload.primaryLanguage === 'object' &&
+    'name' in payload.primaryLanguage &&
+    typeof payload.primaryLanguage.name === 'string'
+      ? payload.primaryLanguage.name
+      : undefined
+
+  return {
+    name: payload.name,
+    nameWithOwner: payload.nameWithOwner,
+    description: typeof payload.description === 'string' ? payload.description : undefined,
+    url: payload.url,
+    isPrivate: payload.isPrivate === true,
+    isFork: payload.isFork === true,
+    updatedAt: typeof payload.updatedAt === 'string' ? payload.updatedAt : undefined,
+    primaryLanguage,
+  }
+}
+
+function validateGitHubRepositoryName(nameWithOwner: string) {
+  const trimmedName = nameWithOwner.trim()
+
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(trimmedName)) {
+    throw new Error('GitHub repository name must use the owner/name format.')
+  }
+
+  return trimmedName
 }
 
 function editorCommand(requestedCommand: string | undefined) {
@@ -258,6 +364,28 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     return Promise.all(repoPaths.map(readRepositorySummary))
   }
 
+  async function listGitHubRepositories() {
+    const output = await runGitHubCli([
+      'repo',
+      'list',
+      '--limit',
+      '100',
+      '--source',
+      '--json',
+      githubRepositoryFields,
+    ])
+    const parsed = JSON.parse(output) as unknown
+
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+
+    return parsed.flatMap((entry) => {
+      const repository = normalizeGitHubRepository(entry as GitHubRepositoryPayload)
+      return repository ? [repository] : []
+    })
+  }
+
   async function addRepository(repoPath: string) {
     const normalizedPath = await normalizeRepositoryPath(repoPath)
     const repoPaths = await readRepositoryPaths()
@@ -266,6 +394,37 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     await writeRepositoryPaths(nextPaths)
 
     return listRepositories()
+  }
+
+  async function cloneGitHubRepository(request: CloneGitHubRepositoryRequest) {
+    const nameWithOwner = validateGitHubRepositoryName(request.nameWithOwner)
+    const parentDirectory = path.resolve(request.parentDirectory)
+    const parentStats = await fs.stat(parentDirectory)
+
+    if (!parentStats.isDirectory()) {
+      throw new Error('Clone destination must be a folder.')
+    }
+
+    const repositoryName = nameWithOwner.split('/').pop() ?? ''
+    const targetPath = path.resolve(parentDirectory, repositoryName)
+    const relativeTargetPath = path.relative(parentDirectory, targetPath)
+
+    if (relativeTargetPath.startsWith('..') || path.isAbsolute(relativeTargetPath)) {
+      throw new Error('Clone destination must stay inside the selected folder.')
+    }
+
+    try {
+      await fs.access(targetPath)
+      throw new Error(`A folder named "${repositoryName}" already exists in the selected destination.`)
+    } catch (error) {
+      if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) {
+        throw error
+      }
+    }
+
+    await runGitHubCli(['repo', 'clone', nameWithOwner, targetPath], parentDirectory, 600000)
+
+    return addRepository(targetPath)
   }
 
   async function removeRepository(repoPath: string) {
@@ -958,11 +1117,13 @@ export function createRepositoryService(repositoriesFilePath: () => string, shel
     checkoutBranch,
     checkoutSubmoduleBranch,
     checkoutRemoteBranch,
+    cloneGitHubRepository,
     commit,
     deleteBranch,
     deleteSubmoduleBranch,
     diffFile,
     health,
+    listGitHubRepositories,
     mergeBranch,
     mergeLinkedSubmoduleBranch,
     openCommitInBrowser,

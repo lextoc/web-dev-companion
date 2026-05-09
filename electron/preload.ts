@@ -19,6 +19,9 @@ const repositories: RepositoryApi = {
   chooseAndAdd: () => ipcRenderer.invoke('repositories:choose-and-add'),
   addByPath: (repoPath: string) => ipcRenderer.invoke('repositories:add-by-path', repoPath),
   remove: (repoPath: string) => ipcRenderer.invoke('repositories:remove', repoPath),
+  listGitHubRepositories: () => ipcRenderer.invoke('repositories:list-github-repositories'),
+  cloneGitHubRepository: (nameWithOwner: string) =>
+    ipcRenderer.invoke('repositories:clone-github-repository', nameWithOwner),
   details: (repoPath: string) => ipcRenderer.invoke('repositories:details', repoPath),
   checkoutBranch: (request) => ipcRenderer.invoke('repositories:checkout-branch', request),
   checkoutSubmoduleBranch: (request) => ipcRenderer.invoke('repositories:checkout-submodule-branch', request),

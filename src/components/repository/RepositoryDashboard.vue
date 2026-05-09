@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import type { RepositorySummary } from '../../repositories'
+import type { GitHubRepositorySummary, RepositorySummary } from '../../repositories'
 import { AppDropdown, AppIcon } from '../ui'
 import RepositoryCard from './RepositoryCard.vue'
 
 const props = defineProps<{
   repositories: RepositorySummary[]
+  githubRepositories: GitHubRepositorySummary[]
   pinnedRepositoryPaths: string[]
   runningScriptsByRepositoryPath: Record<string, number>
   lastRefreshedLabel: string
@@ -14,6 +15,10 @@ const props = defineProps<{
   repoPathInput: string
   isLoading: boolean
   isRefreshing: boolean
+  isLoadingGitHubRepositories: boolean
+  hasLoadedGitHubRepositories: boolean
+  cloningGitHubRepositoryName: string
+  githubRepositoriesError: string
 }>()
 
 defineEmits<{
@@ -21,6 +26,8 @@ defineEmits<{
   add: []
   browse: []
   refresh: []
+  loadGitHubRepositories: []
+  cloneGitHubRepository: [nameWithOwner: string]
   open: [repository: RepositorySummary]
   remove: [repoPath: string]
   togglePin: [repoPath: string]
@@ -39,12 +46,76 @@ const refreshIconStartAngle = ref(0)
 const refreshIconEndAngle = ref(0)
 const refreshIconSettleDuration = ref(0)
 const pinnedRepositorySet = computed(() => new Set(props.pinnedRepositoryPaths))
+const savedGitHubRepositorySet = computed(() => {
+  const keys = props.repositories.flatMap((repository) => {
+    const remoteKey = repository.remote ? githubRepositoryKeyFromUrl(repository.remote) : undefined
+    return remoteKey ? [remoteKey] : []
+  })
+
+  return new Set(keys)
+})
 let refreshIconSettleTimer: number | undefined
 const sortOptions = [
   { label: 'Changes first', value: 'dirty' },
   { label: 'Name', value: 'name' },
   { label: 'Task count', value: 'tasks' },
 ]
+
+function githubRepositoryKeyFromUrl(value: string) {
+  const normalizedValue = value.trim().replace(/\.git\/?$/, '').replace(/\/+$/, '')
+
+  if (!normalizedValue) {
+    return undefined
+  }
+
+  if (/^https?:\/\//i.test(normalizedValue)) {
+    try {
+      const parsedUrl = new URL(normalizedValue)
+
+      if (!parsedUrl.hostname.toLowerCase().endsWith('github.com')) {
+        return undefined
+      }
+
+      const [owner, repo] = parsedUrl.pathname.replace(/^\/+/, '').split('/')
+
+      return owner && repo ? `${owner}/${repo}`.toLowerCase() : undefined
+    } catch {
+      return undefined
+    }
+  }
+
+  const scpLikeMatch = normalizedValue.match(/^(?:[^@]+@)?github\.com:(.+)$/i)
+
+  if (!scpLikeMatch) {
+    return undefined
+  }
+
+  const [owner, repo] = scpLikeMatch[1].split('/')
+
+  return owner && repo ? `${owner}/${repo}`.toLowerCase() : undefined
+}
+
+function isGitHubRepositorySaved(repository: GitHubRepositorySummary) {
+  return savedGitHubRepositorySet.value.has(repository.nameWithOwner.toLowerCase())
+}
+
+function updatedLabel(updatedAt: string | undefined) {
+  if (!updatedAt) {
+    return ''
+  }
+
+  const updatedDate = new Date(updatedAt)
+
+  if (Number.isNaN(updatedDate.getTime())) {
+    return ''
+  }
+
+  return `Updated ${updatedDate.toLocaleDateString([], {
+    month: 'short',
+    day: 'numeric',
+    year: updatedDate.getFullYear() === new Date().getFullYear() ? undefined : 'numeric',
+  })}`
+}
 
 const filteredRepositories = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
@@ -309,6 +380,83 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </template>
+
+    <section class="github-repositories">
+      <div class="github-section-heading">
+        <div>
+          <h2>GitHub repositories</h2>
+          <span v-if="githubRepositories.length > 0">{{ githubRepositories.length }}</span>
+        </div>
+        <button
+          type="button"
+          class="secondary github-refresh-button"
+          :disabled="isLoadingGitHubRepositories"
+          @click="$emit('loadGitHubRepositories')"
+        >
+          <AppIcon name="restart" class="button-icon" />
+          {{ hasLoadedGitHubRepositories ? 'Refresh GitHub' : 'Load GitHub' }}
+        </button>
+      </div>
+
+      <div
+        v-if="isLoadingGitHubRepositories && githubRepositories.length === 0"
+        class="github-repo-grid"
+        aria-label="Loading GitHub repositories"
+      >
+        <article v-for="index in 3" :key="index" class="github-repo-card github-skeleton-card">
+          <span></span>
+          <span></span>
+          <span></span>
+        </article>
+      </div>
+
+      <div
+        v-else-if="githubRepositories.length === 0"
+        class="github-empty-state"
+        :class="{ error: githubRepositoriesError }"
+      >
+        <strong v-if="githubRepositoriesError">GitHub setup needed.</strong>
+        <span>{{ githubRepositoriesError || 'Load repositories from your GitHub account through the GitHub CLI.' }}</span>
+      </div>
+
+      <div v-else class="github-repo-grid">
+        <article
+          v-for="repository in githubRepositories"
+          :key="repository.nameWithOwner"
+          class="github-repo-card"
+        >
+          <div class="github-repo-main">
+            <div class="github-repo-title-row">
+              <strong :title="repository.nameWithOwner">{{ repository.nameWithOwner }}</strong>
+              <span class="github-visibility-pill">{{ repository.isPrivate ? 'Private' : 'Public' }}</span>
+            </div>
+            <p :title="repository.description || repository.url">
+              {{ repository.description || repository.url }}
+            </p>
+            <div class="github-repo-meta">
+              <span v-if="repository.primaryLanguage">{{ repository.primaryLanguage }}</span>
+              <span v-if="repository.isFork">Fork</span>
+              <span v-if="updatedLabel(repository.updatedAt)">{{ updatedLabel(repository.updatedAt) }}</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="github-clone-button"
+            :disabled="
+              isLoading ||
+              isGitHubRepositorySaved(repository) ||
+              cloningGitHubRepositoryName === repository.nameWithOwner
+            "
+            @click="$emit('cloneGitHubRepository', repository.nameWithOwner)"
+          >
+            <AppIcon name="pull" class="button-icon" />
+            <span v-if="isGitHubRepositorySaved(repository)">Saved</span>
+            <span v-else-if="cloningGitHubRepositoryName === repository.nameWithOwner">Cloning</span>
+            <span v-else>Clone</span>
+          </button>
+        </article>
+      </div>
+    </section>
   </section>
 </template>
 
@@ -422,6 +570,21 @@ onBeforeUnmount(() => {
 
     .dashboard-toolbar-actions {
       grid-template-columns: 1fr;
+    }
+
+    .github-section-heading,
+    .github-repo-card {
+      align-items: stretch;
+      grid-template-columns: 1fr;
+    }
+
+    .github-section-heading {
+      display: grid;
+    }
+
+    .github-refresh-button,
+    .github-clone-button {
+      width: 100%;
     }
   }
 
@@ -537,6 +700,207 @@ onBeforeUnmount(() => {
   .repo-section {
     display: grid;
     gap: 9px;
+  }
+
+  .github-repositories {
+    display: grid;
+    gap: 10px;
+    padding-top: 4px;
+  }
+
+  .github-section-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .github-section-heading > div {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .github-section-heading h2 {
+    margin: 0;
+    color: var(--muted-strong);
+    font-size: var(--font-size-base);
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .github-section-heading span {
+    display: grid;
+    min-width: 24px;
+    height: 24px;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--surface-subtle);
+    color: var(--muted-strong);
+    font-size: var(--font-size-compact);
+    font-weight: 900;
+  }
+
+  .github-refresh-button,
+  .github-clone-button {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    white-space: nowrap;
+  }
+
+  .github-refresh-button {
+    padding: 0 12px;
+  }
+
+  .github-refresh-button .button-icon,
+  .github-clone-button .button-icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .github-repo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+
+  .github-repo-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    min-height: 116px;
+    border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+    border-radius: 8px;
+    padding: 12px;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--surface) 90%, var(--app-bg)),
+        color-mix(in srgb, var(--surface-soft) 46%, var(--surface))
+      );
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #fff 42%, transparent),
+      0 1px 2px rgba(23, 32, 42, 0.08);
+  }
+
+  .github-repo-main {
+    display: grid;
+    min-width: 0;
+    gap: 7px;
+  }
+
+  .github-repo-title-row {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .github-repo-title-row strong,
+  .github-repo-main p {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .github-repo-title-row strong {
+    color: var(--text);
+    font-size: var(--font-size-base);
+    font-weight: 900;
+  }
+
+  .github-visibility-pill,
+  .github-repo-meta span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+    border-radius: 999px;
+    padding: 0 8px;
+    background: color-mix(in srgb, var(--surface-subtle) 58%, var(--surface));
+    color: var(--muted-strong);
+    font-size: 0.72rem;
+    font-weight: 720;
+    white-space: nowrap;
+  }
+
+  .github-repo-main p {
+    margin: 0;
+    color: var(--muted-strong);
+    font-size: var(--font-size-compact);
+  }
+
+  .github-repo-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .github-clone-button {
+    padding: 0 12px;
+  }
+
+  .github-empty-state {
+    display: grid;
+    min-height: 78px;
+    gap: 6px;
+    place-items: center;
+    border: 1px dashed color-mix(in srgb, var(--border) 72%, transparent);
+    border-radius: 8px;
+    padding: 14px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .github-empty-state strong {
+    color: var(--text);
+  }
+
+  .github-empty-state span {
+    max-width: 680px;
+    overflow-wrap: anywhere;
+  }
+
+  .github-empty-state.error {
+    border-color: color-mix(in srgb, var(--warning-text) 36%, transparent);
+    background: color-mix(in srgb, var(--warning-soft) 24%, transparent);
+    color: var(--muted-strong);
+  }
+
+  .github-skeleton-card {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .github-skeleton-card span {
+    display: block;
+    height: 13px;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      var(--surface-subtle),
+      var(--surface-soft),
+      var(--surface-subtle)
+    );
+    background-size: 220% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  }
+
+  .github-skeleton-card span:first-child {
+    width: 68%;
+  }
+
+  .github-skeleton-card span:nth-child(2) {
+    width: 92%;
+  }
+
+  .github-skeleton-card span:nth-child(3) {
+    width: 48%;
   }
 
   .repo-section-heading {

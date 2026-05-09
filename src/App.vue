@@ -17,6 +17,7 @@ import { useToasts } from './composables/useToasts'
 import { KEYBINDINGS, keybindingLabel, type KeybindingPlatform } from './keybindings'
 import type {
   DesktopMenuCommand,
+  GitHubRepositorySummary,
   GitCommandLogEntry,
   PinnedScript,
   ProjectTask,
@@ -29,9 +30,14 @@ const MAX_GIT_COMMAND_LOG_ENTRIES = 80
 type RepositoryDetailTab = 'git' | 'log' | 'health' | 'scripts'
 
 const repositories = ref<RepositorySummary[]>([])
+const githubRepositories = ref<GitHubRepositorySummary[]>([])
 const repoPathInput = ref('')
 const isLoading = ref(false)
 const isRefreshingRepositories = ref(false)
+const isLoadingGitHubRepositories = ref(false)
+const hasLoadedGitHubRepositories = ref(false)
+const cloningGitHubRepositoryName = ref('')
+const githubRepositoriesError = ref('')
 const lastRepositoryListRefreshAt = ref<Date | null>(null)
 const isMacPlatform = ref(false)
 const isKeybindingsOpen = ref(false)
@@ -307,6 +313,10 @@ function showRepositoryError(_repoPath: string, _title: string, error: unknown) 
   showError(error)
 }
 
+function githubRepositoryErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Could not load GitHub repositories.'
+}
+
 function activeRepositoryPath() {
   return selectedDetails.value?.path ?? selectedSummary.value?.path
 }
@@ -369,6 +379,21 @@ async function loadRepositories() {
   }
 }
 
+async function loadGitHubRepositories() {
+  isLoadingGitHubRepositories.value = true
+  githubRepositoriesError.value = ''
+  clearError()
+
+  try {
+    githubRepositories.value = await window.repositories.listGitHubRepositories()
+    hasLoadedGitHubRepositories.value = true
+  } catch (error) {
+    githubRepositoriesError.value = githubRepositoryErrorMessage(error)
+  } finally {
+    isLoadingGitHubRepositories.value = false
+  }
+}
+
 async function chooseAndAddRepository() {
   isLoading.value = true
   clearError()
@@ -380,6 +405,30 @@ async function chooseAndAddRepository() {
     showError(error)
   } finally {
     isLoading.value = false
+  }
+}
+
+async function cloneGitHubRepository(nameWithOwner: string) {
+  isLoading.value = true
+  cloningGitHubRepositoryName.value = nameWithOwner
+  clearError()
+
+  try {
+    const savedPaths = new Set(repositories.value.map((repository) => repository.path))
+    const nextRepositories = await window.repositories.cloneGitHubRepository(nameWithOwner)
+    const clonedRepository = nextRepositories.find((repository) => !savedPaths.has(repository.path))
+
+    repositories.value = nextRepositories
+    lastRepositoryListRefreshAt.value = new Date()
+
+    if (clonedRepository) {
+      showAppFeedback(`Cloned ${clonedRepository.name}.`)
+    }
+  } catch (error) {
+    showError(error)
+  } finally {
+    isLoading.value = false
+    cloningGitHubRepositoryName.value = ''
   }
 }
 
@@ -923,6 +972,7 @@ onBeforeUnmount(() => {
           v-if="!selectedPath"
           v-model:repo-path-input="repoPathInput"
           :repositories="repositories"
+          :github-repositories="githubRepositories"
           :pinned-repository-paths="pinnedRepositoryPaths"
           :running-scripts-by-repository-path="runningScriptsByRepositoryPath"
           :last-refreshed-label="lastRepositoryRefreshLabel"
@@ -930,9 +980,15 @@ onBeforeUnmount(() => {
           :auto-refresh-progress="autoRefreshProgress"
           :is-loading="isLoading"
           :is-refreshing="isRefreshingRepositories"
+          :is-loading-git-hub-repositories="isLoadingGitHubRepositories"
+          :has-loaded-git-hub-repositories="hasLoadedGitHubRepositories"
+          :cloning-git-hub-repository-name="cloningGitHubRepositoryName"
+          :github-repositories-error="githubRepositoriesError"
           @add="addRepositoryByPath"
           @browse="chooseAndAddRepository"
           @refresh="loadRepositories"
+          @load-git-hub-repositories="loadGitHubRepositories"
+          @clone-git-hub-repository="cloneGitHubRepository"
           @open="openRepository"
           @remove="removeRepository"
           @toggle-pin="togglePinnedRepository"

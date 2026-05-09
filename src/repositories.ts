@@ -10,6 +10,17 @@ export interface RepositorySummary {
   error?: string
 }
 
+export interface GitHubRepositorySummary {
+  name: string
+  nameWithOwner: string
+  description?: string
+  url: string
+  isPrivate: boolean
+  isFork: boolean
+  updatedAt?: string
+  primaryLanguage?: string
+}
+
 export type ProjectTaskSource = 'node' | 'gradle' | 'maven' | 'rails' | 'rake'
 
 export interface ProjectTask {
@@ -380,6 +391,8 @@ export interface RepositoryApi {
   chooseAndAdd: () => Promise<RepositorySummary[]>
   addByPath: (repoPath: string) => Promise<RepositorySummary[]>
   remove: (repoPath: string) => Promise<RepositorySummary[]>
+  listGitHubRepositories: () => Promise<GitHubRepositorySummary[]>
+  cloneGitHubRepository: (nameWithOwner: string) => Promise<RepositorySummary[]>
   details: (repoPath: string) => Promise<RepositoryDetails>
   checkoutBranch: (request: CheckoutBranchRequest) => Promise<RepositoryDetails>
   checkoutSubmoduleBranch: (request: CheckoutSubmoduleBranchRequest) => Promise<RepositoryDetails>

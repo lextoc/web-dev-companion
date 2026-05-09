@@ -34,6 +34,7 @@ ongoing development, donations are welcome:
 ## Features
 
 - Save and browse local Git repositories.
+- List and clone repositories from your GitHub account through GitHub CLI.
 - Search, sort, and pin frequently used repositories.
 - Review branch, remote, dirty state, file status details, diffs, and recent commits.
 - Stage, unstage, and reset tracked changes, write commits, and inspect commit details from the repository view.
@@ -99,6 +100,7 @@ The current app already covers the daily repository cockpit: saved projects, Git
 - Node.js 20.19.4. Run `nvm use` from the project root if you use nvm.
 - pnpm 10.14.0.
 - Git available on your `PATH`.
+- GitHub CLI authenticated with `gh auth login` to list and clone GitHub repositories.
 
 ## Setup
 

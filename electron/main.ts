@@ -434,6 +434,7 @@ function registerAppStateHandlers() {
 
 function registerRepositoryHandlers() {
   ipcMain.handle('repositories:list', repositoryService.listRepositories)
+  ipcMain.handle('repositories:list-github-repositories', repositoryService.listGitHubRepositories)
   ipcMain.handle('repositories:add-by-path', (_event, repoPath: string) => repositoryService.addRepository(repoPath))
   ipcMain.handle('repositories:remove', (_event, repoPath: string) => repositoryService.removeRepository(repoPath))
   ipcMain.handle('repositories:details', (_event, repoPath: string) => repositoryService.readRepositoryDetails(repoPath))
@@ -499,6 +500,9 @@ function registerRepositoryHandlers() {
   ipcMain.handle('repositories:start-script', (_event, request: ScriptRunRequest) => scriptRunner.startScript(request))
   ipcMain.handle('repositories:stop-script', (_event, runId: string) => scriptRunner.stopScript(runId))
   ipcMain.handle('repositories:choose-and-add', chooseAndAddRepository)
+  ipcMain.handle('repositories:clone-github-repository', (_event, nameWithOwner: string) =>
+    chooseAndCloneGitHubRepository(nameWithOwner),
+  )
   ipcMain.handle('desktop:set-menu-state', (_event, state: DesktopMenuState) => updateDesktopMenuState(state))
   ipcMain.handle('desktop:notify', (_event, request: DesktopNotificationRequest) => {
     if (!Notification.isSupported()) {
@@ -536,6 +540,23 @@ async function chooseAndAddRepository() {
   }
 
   return repositoryService.addRepository(result.filePaths[0])
+}
+
+async function chooseAndCloneGitHubRepository(nameWithOwner: string) {
+  const dialogOptions: OpenDialogOptions = {
+    properties: ['openDirectory', 'createDirectory'],
+    title: 'Choose clone destination',
+  }
+  const result = win ? await dialog.showOpenDialog(win, dialogOptions) : await dialog.showOpenDialog(dialogOptions)
+
+  if (result.canceled || !result.filePaths[0]) {
+    return repositoryService.listRepositories()
+  }
+
+  return repositoryService.cloneGitHubRepository({
+    nameWithOwner,
+    parentDirectory: result.filePaths[0],
+  })
 }
 
 function createWindow() {

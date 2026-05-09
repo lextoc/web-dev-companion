@@ -9,6 +9,7 @@ const props = defineProps<{
   closeShortcutLabel?: string;
   mode?: "modal" | "window";
   terminal: ScriptTerminal;
+  windowPlatform?: "mac" | "windows" | "other";
 }>();
 
 defineEmits<{
@@ -118,6 +119,12 @@ const terminalStatusLabel = computed(() => {
 });
 
 const isWindowMode = computed(() => props.mode === "window");
+const showsMacWindowControls = computed(
+  () => isWindowMode.value && props.windowPlatform === "mac",
+);
+const showsSystemWindowControls = computed(
+  () => isWindowMode.value && props.windowPlatform !== "mac",
+);
 </script>
 
 <template>
@@ -133,10 +140,15 @@ const isWindowMode = computed(() => props.mode === "window");
     <div
       v-if="isWindowMode"
       class="terminal-window-titlebar"
+      :class="{ 'has-system-controls': showsSystemWindowControls }"
       role="presentation"
       @dblclick="controlTerminalWindow('toggle-maximize')"
     >
-      <div class="terminal-window-controls" @dblclick.stop>
+      <div
+        v-if="showsMacWindowControls"
+        class="terminal-window-controls"
+        @dblclick.stop
+      >
         <button
           class="terminal-window-control close"
           type="button"
@@ -160,6 +172,33 @@ const isWindowMode = computed(() => props.mode === "window");
         />
       </div>
       <strong class="terminal-window-app-title">web-dev-companion</strong>
+      <div
+        v-if="showsSystemWindowControls"
+        class="terminal-window-system-controls"
+        @dblclick.stop
+      >
+        <button
+          class="terminal-window-system-control minimize"
+          type="button"
+          aria-label="Minimize window"
+          title="Minimize"
+          @click.stop="controlTerminalWindow('minimize')"
+        />
+        <button
+          class="terminal-window-system-control maximize"
+          type="button"
+          aria-label="Maximize window"
+          title="Maximize"
+          @click.stop="controlTerminalWindow('toggle-maximize')"
+        />
+        <button
+          class="terminal-window-system-control close"
+          type="button"
+          aria-label="Close window"
+          title="Close"
+          @click.stop="controlTerminalWindow('close')"
+        />
+      </div>
     </div>
 
     <section
@@ -303,6 +342,10 @@ const isWindowMode = computed(() => props.mode === "window");
   -webkit-app-region: drag;
 }
 
+.terminal-window-titlebar.has-system-controls {
+  padding-right: 0;
+}
+
 .terminal-window-controls {
   display: flex;
   align-items: center;
@@ -350,6 +393,78 @@ const isWindowMode = computed(() => props.mode === "window");
 
 .terminal-window-control.maximize:hover:not(:disabled) {
   background: #28c840;
+}
+
+.terminal-window-system-controls {
+  display: flex;
+  height: 100%;
+  align-items: stretch;
+  justify-self: end;
+  -webkit-app-region: no-drag;
+}
+
+.terminal-window-system-control {
+  position: relative;
+  width: 46px;
+  min-width: 46px;
+  height: 100%;
+  min-height: 36px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--terminal-title);
+  box-shadow: none;
+}
+
+.terminal-window-system-control:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--terminal-text) 10%, transparent);
+}
+
+.terminal-window-system-control.close:hover:not(:disabled) {
+  background: #c42b1c;
+  color: #fff;
+}
+
+.terminal-window-system-control::before,
+.terminal-window-system-control.close::after {
+  position: absolute;
+  content: "";
+}
+
+.terminal-window-system-control.minimize::before {
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 1px;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+}
+
+.terminal-window-system-control.maximize::before {
+  top: 50%;
+  left: 50%;
+  width: 11px;
+  height: 9px;
+  border: 1px solid currentColor;
+  transform: translate(-50%, -50%);
+}
+
+.terminal-window-system-control.close::before,
+.terminal-window-system-control.close::after {
+  top: 50%;
+  left: 50%;
+  width: 13px;
+  height: 1px;
+  background: currentColor;
+}
+
+.terminal-window-system-control.close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.terminal-window-system-control.close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 .terminal-window-app-title {

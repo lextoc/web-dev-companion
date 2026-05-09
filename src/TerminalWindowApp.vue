@@ -8,6 +8,7 @@ import type { ScriptTerminal } from './repositories'
 const terminal = ref<ScriptTerminal | null>(null)
 const terminalRunId = ref(new URLSearchParams(window.location.search).get('terminalRunId') ?? '')
 const isMacPlatform = ref(navigator.platform.toLowerCase().includes('mac'))
+const windowPlatform = ref<'mac' | 'windows' | 'other'>(isMacPlatform.value ? 'mac' : 'other')
 const { loadAppSettings } = useSettings()
 let removeTerminalWindowStateListener: (() => void) | undefined
 
@@ -61,11 +62,12 @@ function handleKeydown(event: KeyboardEvent) {
 function syncPlatformDataset() {
   const platformName = navigator.platform.toLowerCase()
   isMacPlatform.value = platformName.includes('mac')
-  document.documentElement.dataset.platform = isMacPlatform.value
+  windowPlatform.value = isMacPlatform.value
     ? 'mac'
     : platformName.includes('win')
       ? 'windows'
       : 'other'
+  document.documentElement.dataset.platform = windowPlatform.value
 }
 
 onMounted(async () => {
@@ -97,6 +99,7 @@ onBeforeUnmount(() => {
     mode="window"
     :terminal="terminal"
     :close-shortcut-label="closeWindowShortcutLabel"
+    :window-platform="windowPlatform"
     @close="closeWindow"
     @stop="stopTerminal"
     @restart="restartTerminal"

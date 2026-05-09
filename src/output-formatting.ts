@@ -12,7 +12,7 @@ export interface DiffLine {
 }
 
 const sgrPattern = /(?:\x1b\[|\[)([0-9;]*)m/g
-const ansiControlPattern = /\x1b\[[0-?]*[ -/]*[@-~]/g
+const ansiControlPattern = /\x1b\[(?![0-9;]*m)[0-?]*[ -/]*[@-~]/g
 const foregroundClasses: Record<number, string> = {
   30: 'ansi-fg-black',
   31: 'ansi-fg-red',

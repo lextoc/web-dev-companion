@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/lextoc/web-dev-companion/releases/tag/v0.1.0-alpha.2"><img alt="Latest alpha" src="https://img.shields.io/badge/latest-0.1.0--alpha.2-2563EB"></a>
+  <a href="https://github.com/lextoc/web-dev-companion/releases/tag/v0.1.0-alpha.3"><img alt="Latest alpha" src="https://img.shields.io/badge/latest-0.1.0--alpha.3-2563EB"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-0F766E"></a>
   <a href="https://www.paypal.com/donate/?hosted_button_id=TAA8FBL4REKV6"><img alt="Donate with PayPal" src="https://img.shields.io/badge/Donate-PayPal-F59E0B"></a>
 </p>
@@ -16,10 +16,10 @@ Web Dev Companion is an Electron, Vue 3, and TypeScript app for keeping local pr
 
 ## Alpha Release
 
-Latest alpha: `0.1.0-alpha.2`
+Latest alpha: `0.1.0-alpha.3`
 
 - macOS: signed and notarized alpha pending.
-- [Download for Windows](https://github.com/lextoc/web-dev-companion/releases/download/v0.1.0-alpha.2/Web-Dev-Companion-Windows-0.1.0-alpha.2-Setup.exe)
+- [Download for Windows](https://github.com/lextoc/web-dev-companion/releases/download/v0.1.0-alpha.3/Web-Dev-Companion-Windows-0.1.0-alpha.3-Setup.exe)
 
 macOS release artifacts must be signed with a Developer ID Application
 certificate and notarized by Apple before they are published.

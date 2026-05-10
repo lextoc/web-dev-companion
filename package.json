@@ -12,7 +12,9 @@
   },
   "scripts": {
     "dev": "vite",
+    "pretest": "node scripts/verify-node-version.mjs",
     "test": "vue-tsc --noEmit && vitest run --config vitest.config.ts",
+    "pretest:unit": "node scripts/verify-node-version.mjs",
     "test:unit": "vitest run --config vitest.config.ts",
     "build": "vue-tsc && vite build && electron-builder --config.mac.identity=null --config.mac.forceCodeSigning=false --config.mac.notarize=false",
     "release:preflight:mac": "node scripts/verify-macos-release.mjs",

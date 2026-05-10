@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import type { ComponentPublicInstance } from "vue";
 import { parseAnsiOutput, plainTerminalText } from "../../output-formatting";
 import type { ScriptTerminal } from "../../repositories";
-import { AppButton } from "../ui";
+import { AppButton, AppCheckbox } from "../ui";
 
 const props = defineProps<{
   closeShortcutLabel?: string;
@@ -21,6 +21,7 @@ defineEmits<{
 const outputElement = ref<HTMLPreElement | null>(null);
 const outputSegments = computed(() => parseAnsiOutput(props.terminal.output));
 const copyStatus = ref<"idle" | "copied" | "failed">("idle");
+const isWordWrapEnabled = ref(false);
 let copyStatusTimeout: number | undefined;
 
 function setOutputElement(element: Element | ComponentPublicInstance | null) {
@@ -45,6 +46,10 @@ watch(
   },
   { flush: "post" },
 );
+
+watch(isWordWrapEnabled, () => {
+  scrollToBottom();
+});
 
 function resetCopyStatusSoon() {
   if (copyStatusTimeout !== undefined) {
@@ -242,12 +247,22 @@ const showsSystemWindowControls = computed(
         </span>
       </div>
 
-      <pre :ref="setOutputElement" class="ansi-output"><template
+      <pre
+        :ref="setOutputElement"
+        class="ansi-output"
+        :class="{ 'wrap-lines': isWordWrapEnabled }"
+      ><template
         v-for="segment in outputSegments"
         :key="segment.key"
       ><span :class="segment.className">{{ segment.text }}</span></template></pre>
 
       <div class="terminal-modal-actions">
+        <AppCheckbox
+          v-model="isWordWrapEnabled"
+          class="terminal-word-wrap-toggle"
+        >
+          Word wrap
+        </AppCheckbox>
         <span class="terminal-copy-status" aria-live="polite">
           {{
             copyStatus === "copied"
@@ -650,6 +665,35 @@ const showsSystemWindowControls = computed(
   -webkit-app-region: no-drag;
 }
 
+.terminal-word-wrap-toggle {
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, auto);
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+  color: var(--terminal-title);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  font-weight: 800;
+}
+
+.terminal-word-wrap-toggle :deep(input) {
+  width: 16px;
+  min-height: 16px;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+.terminal-word-wrap-toggle :deep(span) {
+  min-width: 0;
+}
+
+.terminal-word-wrap-toggle :deep(strong) {
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+}
+
 .terminal-copy-status {
   min-width: 92px;
   color: var(--muted);
@@ -676,6 +720,11 @@ const showsSystemWindowControls = computed(
 
 .ansi-output {
   color: var(--terminal-text);
+}
+
+.ansi-output.wrap-lines {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .ansi-bold {
@@ -739,6 +788,10 @@ const showsSystemWindowControls = computed(
   .terminal-modal .terminal-modal-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .terminal-word-wrap-toggle {
+    margin-right: 0;
   }
 
   .terminal-window-shell {

@@ -15,6 +15,9 @@ release
 coverage
 .vite
 *.local
+*.p12
+*.cer
+*.key
 
 # Editor directories and files
 .vscode/*

@@ -14,6 +14,8 @@
 
 Web Dev Companion is an Electron, Vue 3, and TypeScript app for keeping local projects in view. It tracks saved repositories, shows Git status and branch details, opens projects in your editor or terminal, and runs project tasks from a focused desktop UI.
 
+Website: [web-dev-companion.com](https://web-dev-companion.com)
+
 ## Alpha Release
 
 Latest alpha: `0.1.0-alpha.10`

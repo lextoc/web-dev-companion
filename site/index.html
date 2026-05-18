@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Web Dev Companion</title>
+    <meta
+      name="description"
+      content="A free desktop companion for keeping local web development repositories, Git status, health checks, and project tasks in view."
+    >
+    <meta name="theme-color" content="#10201d">
+    <meta property="og:title" content="Web Dev Companion">
+    <meta
+      property="og:description"
+      content="A focused desktop cockpit for local web development repositories."
+    >
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="assets/hero-workspace.jpg">
+    <link rel="icon" href="assets/web-dev-companion.png">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header" aria-label="Primary navigation">
+      <div class="site-header-inner">
+        <a class="brand-link" href="#top" aria-label="Web Dev Companion home">
+          <img src="assets/web-dev-companion.png" alt="" width="34" height="34">
+          <span>Web Dev Companion</span>
+        </a>
+        <nav class="nav-links" aria-label="Page sections">
+          <a class="nav-download button-rainbow" href="#download">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-media" aria-hidden="true"></div>
+        <div class="hero-content">
+          <p class="eyebrow">Free alpha desktop app</p>
+          <h1 id="hero-title">Web Dev Companion</h1>
+          <p class="hero-copy">
+            Manage local repositories, Git status, health checks, and project tasks from one
+            focused desktop app.
+          </p>
+          <div class="hero-actions" aria-label="Primary links">
+            <a class="button button-primary" href="#download">
+              Download the alpha
+            </a>
+            <a class="button button-secondary" href="https://github.com/lextoc/web-dev-companion">
+              View source
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="intro-section" id="why" aria-labelledby="why-title">
+        <div class="section-inner intro-inner">
+          <div class="section-kicker">What it is</div>
+          <div class="intro-grid">
+            <div>
+              <h2 id="why-title">For the projects already on your machine.</h2>
+            </div>
+            <div class="intro-copy">
+              <p>
+                Web Dev Companion helps keep a collection of local repositories legible without
+                turning into another editor, hosted dashboard, or commercial platform.
+              </p>
+              <p>
+                It is meant for the everyday loop: check what changed, jump into a repo, start
+                the right task, watch output, and move between projects without losing context.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="app-preview-section" aria-labelledby="preview-title">
+        <div class="section-inner app-preview-grid">
+          <div class="preview-copy">
+            <div class="section-kicker">App shape</div>
+            <h2 id="preview-title">A page shaped like the desktop app.</h2>
+            <p>
+              A simplified sketch of the desktop workspace: calm surfaces, clear grouping,
+              and enough structure to show the shape without the noise.
+            </p>
+          </div>
+          <div class="app-preview" aria-label="Web Dev Companion interface preview">
+            <div class="preview-titlebar">
+              <div class="preview-brand">
+                <img src="assets/web-dev-companion.png" alt="" width="36" height="36">
+                <div>
+                  <span>Web Dev Companion</span>
+                  <small>Local repository workspace</small>
+                </div>
+              </div>
+              <div class="preview-window-controls" aria-hidden="true">
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+            <div class="preview-dashboard preview-dashboard-simple" aria-hidden="true">
+              <div class="preview-skeleton-toolbar">
+                <span class="skeleton-line skeleton-line-wide"></span>
+                <span class="skeleton-pill"></span>
+              </div>
+              <div class="preview-skeleton-grid">
+                <div class="preview-skeleton-list">
+                  <article class="preview-skeleton-card active">
+                    <span class="skeleton-dot"></span>
+                    <div>
+                      <span class="skeleton-line skeleton-line-title"></span>
+                      <span class="skeleton-line skeleton-line-short"></span>
+                    </div>
+                  </article>
+                  <article class="preview-skeleton-card">
+                    <span class="skeleton-dot muted"></span>
+                    <div>
+                      <span class="skeleton-line skeleton-line-title"></span>
+                      <span class="skeleton-line skeleton-line-mid"></span>
+                    </div>
+                  </article>
+                  <article class="preview-skeleton-card">
+                    <span class="skeleton-dot muted"></span>
+                    <div>
+                      <span class="skeleton-line skeleton-line-title"></span>
+                      <span class="skeleton-line skeleton-line-short"></span>
+                    </div>
+                  </article>
+                </div>
+                <div class="preview-skeleton-panel">
+                  <span class="skeleton-line skeleton-line-mid"></span>
+                  <span class="skeleton-line skeleton-line-wide"></span>
+                  <span class="skeleton-line skeleton-line-wide"></span>
+                  <span class="skeleton-line skeleton-line-short"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="feature-section" aria-label="Core capabilities">
+        <div class="section-inner feature-grid">
+          <article class="feature-card">
+            <span class="feature-icon feature-icon-green" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img">
+                <path d="M4.5 7.5h5.7l1.8 2h7.5v8a2 2 0 0 1-2 2h-13Z"></path>
+                <path d="M4.5 7.5v-3h5.1l2.4 3"></path>
+                <path d="M8 13h7.5"></path>
+                <path d="M8 16h4.5"></path>
+              </svg>
+            </span>
+            <h3>Repository overview</h3>
+            <p>Save, pin, scan, sort, and search local Git repositories from one desktop view.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon feature-icon-blue" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img">
+                <path d="M7 5v10"></path>
+                <path d="M17 8v2.5A4.5 4.5 0 0 1 12.5 15H10"></path>
+                <circle cx="7" cy="5" r="2"></circle>
+                <circle cx="17" cy="8" r="2"></circle>
+                <circle cx="7" cy="17" r="2"></circle>
+              </svg>
+            </span>
+            <h3>Git context</h3>
+            <p>Review dirty state, branch details, recent commits, diffs, staging, and sync work.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon feature-icon-amber" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img">
+                <rect x="4.5" y="6.5" width="15" height="11" rx="1.7"></rect>
+                <path d="m8 10 2.5 2-2.5 2"></path>
+                <path d="M12.5 14h4"></path>
+                <path d="M7 20h10"></path>
+              </svg>
+            </span>
+            <h3>Task cockpit</h3>
+            <p>Run detected npm, Gradle, Maven, Rails, and Rake tasks in managed terminals.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon feature-icon-red" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img">
+                <path d="M12 20.5 5.4 14a4.2 4.2 0 0 1 0-6 4.2 4.2 0 0 1 6 0l.6.6.6-.6a4.2 4.2 0 0 1 6 6Z"></path>
+                <path d="M4 13h3l1.6-3.8 3.1 7.2 1.7-3.4H20"></path>
+              </svg>
+            </span>
+            <h3>Project health</h3>
+            <p>Check the local runtime signals that matter before committing or switching focus.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="flow-section" id="flow" aria-labelledby="flow-title">
+        <div class="section-inner flow-grid">
+          <div class="flow-copy">
+            <div class="section-kicker">Daily flow</div>
+            <h2 id="flow-title">A small surface for repeat work.</h2>
+            <p>
+              The app is intentionally practical: choose a repository, inspect its current state,
+              run the task you need, and keep terminal output attached to the project it belongs to.
+            </p>
+          </div>
+          <div class="workflow" aria-label="Typical workflow">
+            <div class="workflow-step">
+              <span>01</span>
+              <strong>Find the repo</strong>
+              <p>Use saved projects, pins, search, or local folder scans.</p>
+            </div>
+            <div class="workflow-step">
+              <span>02</span>
+              <strong>Read the state</strong>
+              <p>Branches, remotes, changed files, commits, and health checks stay close together.</p>
+            </div>
+            <div class="workflow-step">
+              <span>03</span>
+              <strong>Run the work</strong>
+              <p>Open the editor, launch a terminal, start scripts, and watch managed output.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="download-section" id="download" aria-labelledby="download-title">
+        <div class="section-inner download-inner">
+          <div>
+            <div class="section-kicker">Try it</div>
+            <h2 id="download-title">Download the current alpha.</h2>
+            <p>
+              Web Dev Companion is free software under the MIT license. The alpha is useful today,
+              but still evolving; feedback and focused improvements are welcome.
+            </p>
+          </div>
+          <div class="download-grid" aria-label="Download links">
+            <article class="download-card">
+              <div class="download-card-heading">
+                <span class="download-os">macOS</span>
+                <span class="state-chip success">DMG</span>
+              </div>
+              <p>
+                macOS disk image for Apple desktops. Use this if you want the standard installer
+                experience.
+              </p>
+              <dl class="download-meta">
+                <div>
+                  <dt>Version</dt>
+                  <dd>0.1.0-alpha.10</dd>
+                </div>
+                <div>
+                  <dt>Package</dt>
+                  <dd>Disk image</dd>
+                </div>
+              </dl>
+              <a class="button download-button" href="https://github.com/lextoc/web-dev-companion/releases/download/v0.1.0-alpha.10/Web-Dev-Companion-Mac-0.1.0-alpha.10.dmg">
+                Download for macOS
+              </a>
+            </article>
+            <article class="download-card">
+              <div class="download-card-heading">
+                <span class="download-os">Windows</span>
+                <span class="state-chip info">EXE</span>
+              </div>
+              <p>
+                Windows x64 setup installer for the current alpha. Best for trying the app on a
+                regular workstation.
+              </p>
+              <dl class="download-meta">
+                <div>
+                  <dt>Version</dt>
+                  <dd>0.1.0-alpha.10</dd>
+                </div>
+                <div>
+                  <dt>Package</dt>
+                  <dd>Setup installer</dd>
+                </div>
+              </dl>
+              <a class="button download-button" href="https://github.com/lextoc/web-dev-companion/releases/download/v0.1.0-alpha.10/Web-Dev-Companion-Windows-0.1.0-alpha.10-Setup.exe">
+                Download for Windows
+              </a>
+            </article>
+            <a class="button button-secondary contribute-link" href="https://github.com/lextoc/web-dev-companion#contributing">
+              Contribute or inspect source
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Web Dev Companion is developed as free software for local development workflows.</p>
+      <a href="https://github.com/lextoc/web-dev-companion/blob/main/LICENSE">MIT license</a>
+    </footer>
+  </body>
+</html>
